@@ -9,7 +9,7 @@ Well, I didn't even think that sway needed a menu, as I'm really happy with [wof
 more [pygobject](https://pygobject.readthedocs.io/en/latest).
 
 [The best menu I know](https://github.com/johanmalm/jgmenu), however, does not (yet?) behave well on sway. So, I thought
-to share the code, which already took me more time that I had ever expected.
+to share the code, which has already taken me more time that I had ever expected.
 
 [This code](https://github.com/johanmalm/jgmenu/blob/master/contrib/pmenu/jgmenu-pmenu.py) by 
 [Johan Malm](https://github.com/johanmalm) helped me understand how to make use of `.desktop` entries. Many thanks!
