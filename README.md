@@ -2,7 +2,7 @@
 This project is an attempt to create a **simple** menu, that behaves decently on sway window manager. 
 It uses `pygobject` to create a gtk3-based system menu.
 
-Well, I didn't even think that sway needed a menu, as I'm really happy with [wofi](https://hg.sr.ht/~scoopta/wofi) and/or 
+Well, I didn't even think that sway needed a menu, as I'm really happy with [wofi](https://hg.sr.ht/~scoopta/wofi) and 
 [dmenu-wayland](https://github.com/nyyManni/dmenu-wayland). I started coding just to find out what the freedesktop 
 [Desktop Menu Specification](https://specifications.freedesktop.org/menu-spec/latest) looks like, and also to learn some 
 more [pygobject](https://pygobject.readthedocs.io/en/latest).
@@ -35,6 +35,11 @@ optional arguments:
 - python (python3)
 - python-gobject
 - python-i3ipc (optionally)
+
+## How it works?
+
+The problem to resolve was, that Gtk.Menu behaves differently / unexpectedly when open over Wayland and X11 windows. 
+To avoid it, the script first creates a (semi-)transparent, floating window, that covers all the screen.
 
 ## TODO
 - Add support for localization;
