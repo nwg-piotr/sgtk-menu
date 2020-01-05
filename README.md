@@ -15,7 +15,7 @@ to share the code, which already took me more time that I had ever expected.
 
 ![screenshot](http://nwg.pl/Lychee/uploads/big/0d985b5db7bfd378c5b484562fd330cf.png)
 
-```bash
+```text
 $ /path/to/the/script/menu.py -h
 usage: menu.py [-h] [-b] [-r] [-s S] [-d D] [-o O]
 
