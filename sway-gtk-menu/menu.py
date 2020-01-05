@@ -262,17 +262,20 @@ def sub_menu(entries_list, name):
     for entry in entries_list:
         subitem = Gtk.MenuItem()
         hbox = Gtk.HBox()
-        icon_theme = Gtk.IconTheme.get_default()
-        if entry.icon.startswith('/'):
-            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(entry.icon, args.s, args.s)
-            image = Gtk.Image.new_from_pixbuf(pixbuf)
-        else:
-            image = None
-            try:
-                pixbuf = icon_theme.load_icon(entry.icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
+        image = None
+        if entry.icon:
+            icon_theme = Gtk.IconTheme.get_default()
+            if entry.icon.startswith('/'):
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(entry.icon, args.s, args.s)
                 image = Gtk.Image.new_from_pixbuf(pixbuf)
-            except:
-                pass
+            else:
+                try:
+                    if entry.icon.endswith('.svg') or entry.icon.endswith('.png'):
+                        entry.icon = entry.icon.split('.')[0]
+                    pixbuf = icon_theme.load_icon(entry.icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
+                    image = Gtk.Image.new_from_pixbuf(pixbuf)
+                except:
+                    pass
         label = Gtk.Label()
         label.set_text(entry.name)
         if image:
