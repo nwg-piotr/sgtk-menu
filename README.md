@@ -1,6 +1,7 @@
 # sway-gtk-menu
 This project is an attempt to create a **simple** menu, that behaves decently on sway window manager. 
-It uses `pygobject` to create a gtk3-based system menu.
+It uses `pygobject` to create a gtk3-based system menu. It's still a work in progress: 
+see [TODO](https://github.com/nwg-piotr/sway-gtk-menu/tree/master#todo).
 
 Well, I didn't even think that sway needed a menu, as I'm really happy with [wofi](https://hg.sr.ht/~scoopta/wofi) and 
 [dmenu-wayland](https://github.com/nyyManni/dmenu-wayland). I started coding just to find out what the freedesktop 
