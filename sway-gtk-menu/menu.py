@@ -34,7 +34,7 @@ except ModuleNotFoundError:
 
 # overlay window: force floating, disable border; the variable indicates if we succeeded
 swaymsg: bool = subprocess.run(
-    ['swaymsg', 'for_window', '[title=\"sway_gtk_menu\"]', 'floating', 'enable,', 'border', 'pixel', '0'],
+    ['swaymsg', 'for_window', '[title=\"sway_gtk_menu\"]', 'floating', 'enable'],
     stdout=subprocess.DEVNULL).returncode == 0
 
 c_audio_video, c_development, c_education, c_game, c_graphics, c_network, c_office, c_science, c_settings, c_system, \
@@ -67,10 +67,7 @@ class MainWindow(Gtk.Window):
         vbox = Gtk.VBox(spacing=0, border_width=0)
         hbox = Gtk.HBox(spacing=0, border_width=0)
         self.button = Gtk.Button.new_with_label('')
-        if args.right:
-            hbox.pack_end(self.button, False, False, 0)
-        else:
-            hbox.pack_start(self.button, False, False, 0)
+        hbox.pack_start(self.button, False, False, 0)
         if args.bottom:
             vbox.pack_end(hbox, False, False, 0)
         else:
@@ -102,7 +99,6 @@ def main():
 
     parser = argparse.ArgumentParser(description="A simple sway menu")
     parser.add_argument("-b", "--bottom", action="store_true", help="display at the bottom")
-    parser.add_argument("-r", "--right", action="store_true", help="display on the right side")
     parser.add_argument("-s", type=int, default=20, help="menu icon size (int, min: 16, max: 48, def: 20)")
     parser.add_argument("-d", type=int, default=50, help="menu delay in milliseconds (int, def: 50)")
     parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (float, min: 0.0, max: 1.0, def: 0.3)")
@@ -124,10 +120,17 @@ def main():
     Gtk.main()
 
 
+def kill_border():
+    subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
+
+
 def open_menu():
     if not swaymsg:
         subprocess.run(['i3-msg', 'floating', 'toggle'], stdout=subprocess.DEVNULL)
         subprocess.run(['i3-msg', 'border', 'pixel', '0'], stdout=subprocess.DEVNULL)
+    else:
+        subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
+
     win.menu.popup_at_widget(win.button, Gdk.Gravity.CENTER, Gdk.Gravity.CENTER, None)
 
 

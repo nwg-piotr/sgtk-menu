@@ -25,7 +25,6 @@ A simple sway menu
 optional arguments:
   -h, --help    show this help message and exit
   -b, --bottom  display at the bottom
-  -r, --right   display on the right side
   -s S          menu icon size (int, min: 16, max: 48, def: 20)
   -d D          menu delay in milliseconds (int, def: 50)
   -o O          overlay opacity (float, min: 0.0, max: 1.0, def: 0.3)
