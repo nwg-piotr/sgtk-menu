@@ -9,9 +9,6 @@ e-mail: nwg.piotr@gmail.com
 Website: http://nwg.pl
 Project: https://github.com/nwg-piotr/sway-gtk-menu
 License: GPL3
-
-Dependencies: python3, python-pygobject
-Optionally: python-i3ipc: to avoid GTK deprecation warning while the screen dimensions detection
 """
 
 import os
