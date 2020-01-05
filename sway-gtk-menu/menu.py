@@ -159,7 +159,9 @@ def list_entries():
                         if line.startswith('Name='):
                             _name = line.split('=')[1].strip()
                         if line.startswith('Exec='):
-                            _exec = line.split('=')[1].strip()
+                            cmd = line.split('=')[1:]
+                            c = '='.join(cmd)
+                            _exec = c.strip()
                             if '%' in _exec:
                                 _exec = _exec.split('%')[0].strip()
                         if line.startswith('Icon='):
@@ -290,6 +292,7 @@ def sub_menu(entries_list, name):
 
 
 def launch(item, command):
+    print(command)
     subprocess.Popen('exec {}'.format(command), shell=True)
     Gtk.main_quit()
 
