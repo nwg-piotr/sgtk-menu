@@ -48,6 +48,7 @@ category_names = ['AudioVideo', 'Development', 'Game', 'Graphics', 'Network', 'O
                   'System', 'Utility', 'Other']
 
 localized_names_dictionary = {}
+locale = ''
 
 win = None
 args = None
@@ -131,7 +132,9 @@ def main():
     elif args.s > 48:
         args.s = 48
 
-    category_names_dictionary = localized_category_names(get_locale_string(args.l))
+    global locale
+    locale = get_locale_string(args.l)
+    category_names_dictionary = localized_category_names(locale)
     for name in category_names:
         main_category_name = additional_to_main(name)
         try:
@@ -189,8 +192,14 @@ def list_entries():
                         read_me = line.strip() == "[Desktop Entry]"
                         continue
                     if read_me:
+                        loc_name = 'Name{}='.format(locale)
+                        
                         if line.startswith('Name='):
                             _name = line.split('=')[1].strip()
+
+                        if line.startswith(loc_name):
+                            _name = line.split('=')[1].strip()
+                            
                         if line.startswith('Exec='):
                             cmd = line.split('=')[1:]
                             c = '='.join(cmd)
