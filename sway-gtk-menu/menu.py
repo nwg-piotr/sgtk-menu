@@ -279,6 +279,10 @@ class DesktopEntry(object):
 
 def build_menu():
     menu = Gtk.Menu()
+    searchbox = Gtk.SearchEntry()
+    item = Gtk.MenuItem()
+    item.add(searchbox)
+    menu.add(item)
 
     if c_audio_video:
         append_submenu(c_audio_video, menu, 'AudioVideo')
