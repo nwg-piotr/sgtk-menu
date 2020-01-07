@@ -24,7 +24,8 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 import cairo
 
-from tools import localized_category_names, additional_to_main, get_locale_string
+from tools import localized_category_names, additional_to_main, get_locale_string, config_dirs, save_default_appendix, \
+    load_appendix
 
 try:
     from i3ipc import Connection
@@ -47,12 +48,6 @@ c_utility, c_other = [], [], [], [], [], [], [], [], [], [], []
 category_names = ['AudioVideo', 'Development', 'Game', 'Graphics', 'Network', 'Office', 'Science', 'Settings',
                   'System', 'Utility', 'Other']
 
-localized_names_dictionary = {}
-locale = ''
-
-win = None
-args = None
-
 category_icons = {"AudioVideo": "applications-multimedia",
                   "Development": "applications-development",
                   "Game": "applications-games",
@@ -64,6 +59,17 @@ category_icons = {"AudioVideo": "applications-multimedia",
                   "System": "preferences-system",
                   "Utility": "applications-accessories",
                   "Other": "applications-other"}
+
+localized_names_dictionary = {}
+locale = ''
+
+win = None
+args = None
+
+config_dir = config_dirs()[0]
+if not os.path.exists(config_dir):
+    os.makedirs(config_dir)
+appendix_file = os.path.join(config_dirs()[0], 'appendix')
 
 
 class MainWindow(Gtk.Window):
@@ -121,6 +127,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="A simple sway menu")
     parser.add_argument("-b", "--bottom", action="store_true", help="display at the bottom")
+    parser.add_argument("-a", "--append", action="store_true", help="append menu from {}".format(appendix_file))
     parser.add_argument("-l", type=str, help="force language (str, like \"en\" for English)")
     parser.add_argument("-s", type=int, default=20, help="menu icon size (int, min: 16, max: 48, def: 20)")
     parser.add_argument("-d", type=int, default=50, help="menu delay in milliseconds (int, def: 50)")
@@ -131,6 +138,9 @@ def main():
         args.s = 16
     elif args.s > 48:
         args.s = 48
+
+    if not os.path.isfile(appendix_file):
+        save_default_appendix(appendix_file)
 
     global locale
     locale = get_locale_string(args.l)
@@ -193,13 +203,13 @@ def list_entries():
                         continue
                     if read_me:
                         loc_name = 'Name{}='.format(locale)
-                        
+
                         if line.startswith('Name='):
                             _name = line.split('=')[1].strip()
 
                         if line.startswith(loc_name):
                             _name = line.split('=')[1].strip()
-                            
+
                         if line.startswith('Exec='):
                             cmd = line.split('=')[1:]
                             c = '='.join(cmd)
@@ -250,7 +260,7 @@ class DesktopEntry(object):
                 elif main_category == 'Utility' and self not in c_utility:
                     c_utility.append(self)
 
-        if self not in c_audio_video and self not in c_development  \
+        if self not in c_audio_video and self not in c_development \
                 and self not in c_game and self not in c_graphics and self not in c_network \
                 and self not in c_office and self not in c_science and self not in c_settings \
                 and self not in c_system and self not in c_utility:
@@ -289,6 +299,39 @@ def build_menu():
     if c_other:
         append_submenu(c_other, menu, 'Other')
 
+    if args.append:
+        item = Gtk.SeparatorMenuItem()
+        menu.append(item)
+        appendix = load_appendix(appendix_file)
+        icon_theme = Gtk.IconTheme.get_default()
+        for entry in appendix:
+            name = entry["name"]
+            exec = entry["exec"]
+            icon = entry["icon"]
+            hbox = Gtk.HBox()
+            label = Gtk.Label()
+            label.set_text(name)
+            image = None
+            if icon.startswith('/'):
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
+                image = Gtk.Image.new_from_pixbuf(pixbuf)
+            else:
+                try:
+                    if icon.endswith('.svg') or icon.endswith('.png'):
+                        icon = entry.icon.split('.')[0]
+                    pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
+                    image = Gtk.Image.new_from_pixbuf(pixbuf)
+                except Exception as e:
+                    print(e)
+            if image:
+                hbox.pack_start(image, False, False, 10)
+            if name:
+                hbox.pack_start(label, False, False, 0)
+            item = Gtk.MenuItem()
+            item.add(hbox)
+            item.connect('activate', launch, exec)
+            menu.append(item)
+
     menu.connect("hide", win.die)
     menu.set_property("reserve_toggle_size", False)
     menu.show_all()
@@ -308,6 +351,7 @@ def sub_menu(entries_list, name, localized_name):
     outer_hbox = Gtk.HBox()
     try:
         pixbuf = icon_theme.load_icon(category_icons[name], args.s, Gtk.IconLookupFlags.FORCE_SIZE)
+
         image = Gtk.Image.new_from_pixbuf(pixbuf)
     except:
         image = None

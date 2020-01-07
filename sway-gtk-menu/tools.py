@@ -11,6 +11,7 @@ Copyright (C) 2020 Piotr Miller <nwg.piotr@gmail.com>
 """
 import os
 import locale
+import json
 
 
 def get_locale_string(forced_lang=None):
@@ -79,6 +80,13 @@ def settings_dirs():
     return paths
 
 
+def config_dirs():
+    paths = [os.path.join(os.path.expanduser('~/.config'), 'sway-gtk-menu')]
+    if "XDG_CONFIG_HOME" in os.environ:
+        paths.append(os.path.join(os.environ("XDG_CONFIG_HOME"), 'sway-gtk-menu'))
+    return paths
+
+
 def additional_to_main(category):
     """
     See https://specifications.freedesktop.org/menu-spec/latest/apas02.html
@@ -136,4 +144,31 @@ def additional_to_main(category):
         return 'Other'
 
     else:
+        return None
+
+
+def save_default_appendix(path):
+    # icons: /usr/share/icons/theme_name/32x32/actions/
+    content = [{"name": "Lock",
+                "exec": "swaylock -f -c 000000",
+                "icon": "lock"},
+               {"name": "Logout",
+                "exec": "swaynagmode -t red -m ' Exit sway?' -b ' Logout ' 'swaymsg exit'",
+                "icon": "exit"},
+               {"name": "Reboot",
+                "exec": "swaynagmode -t red -m ' Restart the machine?' -b ' Reboot ' 'systemctl reboot'",
+                "icon": "reload"},
+               {"name": "Shutdown",
+                "exec": "swaynagmode -t red -m ' Shutdown the machine?' -b ' Shutdown ' 'systemctl -i poweroff'",
+                "icon": "window-close"}]
+
+    with open(path, 'w') as f:
+        json.dump(content, f, indent=2)
+
+        
+def load_appendix(path):
+    try:
+        with open(path, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
         return None
