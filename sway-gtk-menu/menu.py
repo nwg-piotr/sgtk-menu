@@ -192,40 +192,45 @@ def display_dimensions():
 
 
 def list_entries():
-    for f in os.listdir('/usr/share/applications'):
-        _name, _exec, _icon, _categories = '', '', '', ''
-        try:
-            with open(os.path.join('/usr/share/applications', f)) as d:
-                lines = d.readlines()
-                for line in lines:
-                    if line.startswith("["):
-                        read_me = line.strip() == "[Desktop Entry]"
-                        continue
-                    if read_me:
-                        loc_name = 'Name{}='.format(locale)
+    paths = [os.path.expanduser('~/.local/share/applications'), "/usr/share/applications",
+             "/usr/local/share/applications"]
+    for path in paths:
+        print(path)
+        if os.path.exists(path):
+            for f in os.listdir(path):
+                _name, _exec, _icon, _categories = '', '', '', ''
+                try:
+                    with open(os.path.join(path, f)) as d:
+                        lines = d.readlines()
+                        read_me = True
+                        for line in lines:
+                            if line.startswith("["):
+                                read_me = line.strip() == "[Desktop Entry]"
+                                continue
+                            if read_me:
+                                loc_name = 'Name{}='.format(locale)
 
-                        if line.startswith('Name='):
-                            _name = line.split('=')[1].strip()
+                                if line.startswith('Name='):
+                                    _name = line.split('=')[1].strip()
 
-                        if line.startswith(loc_name):
-                            _name = line.split('=')[1].strip()
+                                if line.startswith(loc_name):
+                                    _name = line.split('=')[1].strip()
 
-                        if line.startswith('Exec='):
-                            cmd = line.split('=')[1:]
-                            c = '='.join(cmd)
-                            _exec = c.strip()
-                            if '%' in _exec:
-                                _exec = _exec.split('%')[0].strip()
-                        if line.startswith('Icon='):
-                            _icon = line.split('=')[1].strip()
-                        if line.startswith('Categories'):
-                            _categories = line.split('=')[1].strip()
+                                if line.startswith('Exec='):
+                                    cmd = line.split('=')[1:]
+                                    c = '='.join(cmd)
+                                    _exec = c.strip()
+                                    if '%' in _exec:
+                                        _exec = _exec.split('%')[0].strip()
+                                if line.startswith('Icon='):
+                                    _icon = line.split('=')[1].strip()
+                                if line.startswith('Categories'):
+                                    _categories = line.split('=')[1].strip()
 
-                if _name and _exec and _categories:
-                    DesktopEntry(_name, _exec, _icon, _categories)
-
-        except Exception as e:
-            print(e)
+                        if _name and _exec and _categories:
+                            DesktopEntry(_name, _exec, _icon, _categories)
+                except Exception as e:
+                    print(e)
 
 
 class DesktopEntry(object):
