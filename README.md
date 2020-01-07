@@ -18,13 +18,15 @@ to share the code, which has already taken me more time that I had ever expected
 
 ```text
 $ /path/to/the/script/menu.py -h
-usage: menu.py [-h] [-b] [-r] [-s S] [-d D] [-o O]
+usage: menu.py [-h] [-b] [-a] [-l L] [-s S] [-d D] [-o O]
 
 A simple sway menu
 
 optional arguments:
   -h, --help    show this help message and exit
   -b, --bottom  display at the bottom
+  -a, --append  append menu from /home/piotr/.config/sway-gtk-menu/appendix
+  -l L          force language (str, like "en" for English)
   -s S          menu icon size (int, min: 16, max: 48, def: 20)
   -d D          menu delay in milliseconds (int, def: 50)
   -o O          overlay opacity (float, min: 0.0, max: 1.0, def: 0.3)
@@ -42,6 +44,5 @@ The problem to resolve was, that Gtk.Menu behaves differently / unexpectedly whe
 To avoid it, the script first creates a (semi-)transparent, floating window, that covers all the screen.
 
 ## TODO
-- Add support for localization;
-- resolve the missing overflow marks issue on sway;
+- Resolve the missing overflow marks issue on sway;
 - either improve or give up on i3 support.
