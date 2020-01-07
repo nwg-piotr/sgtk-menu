@@ -14,7 +14,7 @@ to share the code, which has already taken me more time that I had ever expected
 [This code](https://github.com/johanmalm/jgmenu/blob/master/contrib/pmenu/jgmenu-pmenu.py) by 
 [Johan Malm](https://github.com/johanmalm) helped me understand how to make use of `.desktop` entries. Many thanks!
 
-![screenshot](http://nwg.pl/Lychee/uploads/big/0d985b5db7bfd378c5b484562fd330cf.png)
+![screenshot](http://nwg.pl/Lychee/uploads/big/b86cca1f81d24cdb0bac16e1ae42bc72.png)
 
 ```text
 $ /path/to/the/script/menu.py -h
