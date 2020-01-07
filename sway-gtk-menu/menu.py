@@ -195,7 +195,6 @@ def list_entries():
     paths = [os.path.expanduser('~/.local/share/applications'), "/usr/share/applications",
              "/usr/local/share/applications"]
     for path in paths:
-        print(path)
         if os.path.exists(path):
             for f in os.listdir(path):
                 _name, _exec, _icon, _categories = '', '', '', ''
