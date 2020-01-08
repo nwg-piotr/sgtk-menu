@@ -66,7 +66,8 @@ locale = ''
 win = None
 args = None
 search_list = []
-filtered_list = []
+all_items_list = []
+all_copies_list = []
 menu_items_list = []
 
 config_dir = config_dirs()[0]
@@ -109,34 +110,52 @@ class MainWindow(Gtk.Window):
         outer_box.pack_start(vbox, True, True, 0)
         self.add(outer_box)
 
-    def update_search_phrase(self, menu, event):
+    def filter_items(self, menu, event):
         if event.type == Gdk.EventType.KEY_RELEASE:
-            # print(event.string, event.keyval, event.hardware_keycode)
+            update = False
             if event.string and event.string.isalnum() or event.string == ' ':
-                for item in menu_items_list[1:]:
-                    item.hide()
+                update = True
+                # remove menu items, except for filter box
+                items = win.menu.get_children()
+                if len(items) > 1:
+                    for item in items[1:]:
+                        win.menu.remove(item)
+
                 self.search_phrase += event.string
                 self.search_box.set_text(self.search_phrase)
-            elif event.keyval == 65288:
+                
+            elif event.keyval == 65288: # backspace
+                update = True
                 self.search_phrase = self.search_phrase[:-1]
                 self.search_box.set_text(self.search_phrase)
-            if self.search_phrase:
-                global filtered_list
-                filtered_list = []
-                for item in search_list:
-                    if self.search_phrase.upper() in item["name"].upper():
-                        found = False
-                        for i in filtered_list:
-                            if i["name"] == item["name"]:
-                                found = True
-                        if not found:
-                            filtered_list.append(item)
-                print('--- filtered:')
-                for item in filtered_list:
-                    print(item)
-            else:
-                for item in menu_items_list:
-                    item.show()
+                
+            if update:
+                if len(self.search_phrase) > 1:
+                    filtered_items_list = []
+                    for item in all_copies_list:
+                        win.menu.remove(item)
+                        if self.search_phrase.upper() in item.name.upper():
+                            # avoid adding twice
+                            found = False
+                            if len(filtered_items_list) > 0:
+                                for i in filtered_items_list:
+                                    if i.name == item.name:
+                                        found = True
+                            if not found:
+                                filtered_items_list.append(item)
+
+                    if len(filtered_items_list) > 0:
+                        print('qwerty')
+                        for item in win.menu.get_children()[1:]:
+                            win.menu.remove(item)
+                        for item in filtered_items_list:
+                            win.menu.append(item)
+                    win.menu.show_all()
+                else:
+                    for item in win.menu.get_children():
+                        win.menu.remove(item)
+                    for item in menu_items_list:
+                        win.menu.append(item)
         return True
     
     def resize(self, w, h):
@@ -198,7 +217,7 @@ def main():
     menu_items_list = win.menu.get_children()
     
     win.menu.propagate_key_event = False
-    win.menu.connect("key-release-event", win.update_search_phrase)
+    win.menu.connect("key-release-event", win.filter_items)
     win.show_all()
     GLib.timeout_add(args.d, open_menu)
     Gtk.main()
@@ -401,7 +420,6 @@ def sub_menu(entries_list, name, localized_name):
     outer_hbox = Gtk.HBox()
     try:
         pixbuf = icon_theme.load_icon(category_icons[name], args.s, Gtk.IconLookupFlags.FORCE_SIZE)
-
         image = Gtk.Image.new_from_pixbuf(pixbuf)
     except:
         image = None
@@ -414,36 +432,49 @@ def sub_menu(entries_list, name, localized_name):
     submenu = Gtk.Menu()
     submenu.set_property("reserve_toggle_size", False)
     for entry in entries_list:
-        subitem = Gtk.MenuItem()
-        hbox = Gtk.HBox()
-        image = None
-        if entry.icon:
-            if entry.icon.startswith('/'):
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(entry.icon, args.s, args.s)
-                image = Gtk.Image.new_from_pixbuf(pixbuf)
-            else:
-                try:
-                    if entry.icon.endswith('.svg') or entry.icon.endswith('.png'):
-                        entry.icon = entry.icon.split('.')[0]
-                    pixbuf = icon_theme.load_icon(entry.icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
-                    image = Gtk.Image.new_from_pixbuf(pixbuf)
-                except:
-                    pass
-        label = Gtk.Label()
-        label.set_text(entry.name)
-        if image:
-            hbox.pack_start(image, False, False, 0)
-        hbox.pack_start(label, False, False, 4)
-        subitem.add(hbox)
+        subitem = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
         subitem.connect('activate', launch, entry.exec)
+        all_items_list.append(subitem)
+
+        subitem_copy = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
+        subitem_copy.connect('activate', launch, entry.exec)
+        subitem_copy.show()
+        all_copies_list.append(subitem_copy)
+
         submenu.append(subitem)
-        
-        search_list.append({"name": entry.name, "icon": image, "exec": entry.exec})
 
     item.add(outer_hbox)
     item.set_submenu(submenu)
 
     return item
+
+
+class DesktopMenuItem(Gtk.MenuItem):
+    def __init__(self, icon_theme, name, _exec, icon_name=None):
+        Gtk.MenuItem.__init__(self)
+        self.name = name
+        self.exec = _exec
+        hbox = Gtk.HBox()
+        image = None
+        if icon_name:
+            if icon_name.startswith('/'):
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon_name, args.s, args.s)
+                image = Gtk.Image.new_from_pixbuf(pixbuf)
+            else:
+                try:
+                    if icon_name.endswith('.svg') or icon_name.endswith('.png'):
+                        icon_name = icon_name.split('.')[0]
+                    pixbuf = icon_theme.load_icon(icon_name, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
+                    image = Gtk.Image.new_from_pixbuf(pixbuf)
+                except:
+                    pass
+        self.icon = image
+        label = Gtk.Label()
+        label.set_text(self.name)
+        if image:
+            hbox.pack_start(image, False, False, 0)
+        hbox.pack_start(label, False, False, 4)
+        self.add(hbox)
 
 
 def launch(item, command):
