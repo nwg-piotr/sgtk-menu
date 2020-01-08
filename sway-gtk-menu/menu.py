@@ -145,7 +145,6 @@ class MainWindow(Gtk.Window):
                                 filtered_items_list.append(item)
 
                     if len(filtered_items_list) > 0:
-                        print('qwerty')
                         for item in win.menu.get_children()[1:]:
                             win.menu.remove(item)
                         for item in filtered_items_list:
@@ -444,6 +443,7 @@ def sub_menu(entries_list, name, localized_name):
         submenu.append(subitem)
 
     item.add(outer_hbox)
+    submenu.connect("key-release-event", win.filter_items)
     item.set_submenu(submenu)
 
     return item
