@@ -65,6 +65,8 @@ locale = ''
 
 win = None
 args = None
+search_list = []
+filtered_list = []
 
 config_dir = config_dirs()[0]
 if not os.path.exists(config_dir):
@@ -78,8 +80,11 @@ class MainWindow(Gtk.Window):
         self.set_title('sway_gtk_menu')
         self.set_role('sway_gtk_menu')
         self.connect("destroy", Gtk.main_quit)
-        self.connect("button-press-event", self.die)
+        #self.connect("button-release-event", self.type)
         self.connect('draw', self.draw)
+        self.search_box = Gtk.SearchEntry()
+        self.search_box.set_text('Filter')
+        self.search_phrase = ''
 
         # Credits for transparency go to  KurtJacobson:
         # https://gist.github.com/KurtJacobson/374c8cb83aee4851d39981b9c7e2c22c
@@ -103,6 +108,30 @@ class MainWindow(Gtk.Window):
         outer_box.pack_start(vbox, True, True, 0)
         self.add(outer_box)
 
+    def update_search_phrase(self, menu, event):
+        if event.type == Gdk.EventType.KEY_RELEASE:
+            # print(event.string, event.keyval, event.hardware_keycode)
+            if event.string and event.string.isalnum() or event.string == ' ':
+                self.search_phrase += event.string
+                self.search_box.set_text(self.search_phrase)
+            elif event.keyval == 65288:
+                self.search_phrase = self.search_phrase[:-1]
+                self.search_box.set_text(self.search_phrase)
+            global filtered_list
+            filtered_list = []
+            for item in search_list:
+                if self.search_phrase.upper() in item["name"].upper():
+                    found = False
+                    for i in filtered_list:
+                        if i["name"] == item["name"]:
+                            found = True
+                    if not found:
+                        filtered_list.append(item)
+            print('--- filtered:')
+            for item in filtered_list:
+                print(item)
+        return True
+    
     def resize(self, w, h):
         self.set_size_request(w, h)
 
@@ -158,6 +187,10 @@ def main():
     w, h = display_dimensions()
     win.resize(w, h)
     win.menu = build_menu()
+    for item in search_list:
+        print(item)
+    win.menu.propagate_key_event = False
+    win.menu.connect("key-release-event", win.update_search_phrase)
     win.show_all()
     GLib.timeout_add(args.d, open_menu)
     Gtk.main()
@@ -279,10 +312,11 @@ class DesktopEntry(object):
 
 def build_menu():
     menu = Gtk.Menu()
-    searchbox = Gtk.SearchEntry()
-    item = Gtk.MenuItem()
-    item.add(searchbox)
-    menu.add(item)
+    
+    win.search_item = Gtk.MenuItem()
+    win.search_item.add(win.search_box)
+    win.search_item.set_sensitive(False)
+    menu.add(win.search_item)
 
     if c_audio_video:
         append_submenu(c_audio_video, menu, 'AudioVideo')
@@ -395,6 +429,9 @@ def sub_menu(entries_list, name, localized_name):
         subitem.add(hbox)
         subitem.connect('activate', launch, entry.exec)
         submenu.append(subitem)
+        
+        search_list.append({"name": entry.name, "icon": image, "exec": entry.exec})
+
     item.add(outer_hbox)
     item.set_submenu(submenu)
 
