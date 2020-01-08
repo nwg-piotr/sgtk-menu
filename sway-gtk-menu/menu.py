@@ -86,6 +86,7 @@ class MainWindow(Gtk.Window):
         self.connect('draw', self.draw)
         self.search_box = Gtk.SearchEntry()
         self.search_box.set_text('Filter')
+        self.search_box.set_tooltip_text('Type 2 or more chars')
         self.search_phrase = ''
 
         # Credits for transparency go to  KurtJacobson:
@@ -137,24 +138,26 @@ class MainWindow(Gtk.Window):
                         if self.search_phrase.upper() in item.name.upper():
                             # avoid adding twice
                             found = False
-                            if len(filtered_items_list) > 0:
-                                for i in filtered_items_list:
-                                    if i.name == item.name:
-                                        found = True
+                            for i in filtered_items_list:
+                                if i.name == item.name:
+                                    found = True
                             if not found:
                                 filtered_items_list.append(item)
 
-                    if len(filtered_items_list) > 0:
-                        for item in win.menu.get_children()[1:]:
-                            win.menu.remove(item)
-                        for item in filtered_items_list:
-                            win.menu.append(item)
+                    for item in win.menu.get_children()[1:]:
+                        win.menu.remove(item)
+                    for item in filtered_items_list:
+                        win.menu.append(item)
                     win.menu.show_all()
                 else:
                     for item in win.menu.get_children():
                         win.menu.remove(item)
                     for item in menu_items_list:
                         win.menu.append(item)
+            if len(self.search_phrase) == 0:
+                self.search_box.set_text('Filter')
+            elif len(self.search_phrase) == 1:
+                self.search_box.set_text(self.search_phrase + "_")
         return True
     
     def resize(self, w, h):
@@ -205,6 +208,13 @@ def main():
             localized_names_dictionary[main_category_name] = category_names_dictionary[main_category_name]
         except:
             pass
+
+    screen = Gdk.Screen.get_default()
+    provider = Gtk.CssProvider()
+    style_context = Gtk.StyleContext()
+    style_context.add_provider_for_screen(
+        screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+    )
 
     list_entries()
     global win
