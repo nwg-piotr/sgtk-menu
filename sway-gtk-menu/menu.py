@@ -67,6 +67,7 @@ win = None
 args = None
 search_list = []
 filtered_list = []
+menu_items_list = []
 
 config_dir = config_dirs()[0]
 if not os.path.exists(config_dir):
@@ -112,24 +113,30 @@ class MainWindow(Gtk.Window):
         if event.type == Gdk.EventType.KEY_RELEASE:
             # print(event.string, event.keyval, event.hardware_keycode)
             if event.string and event.string.isalnum() or event.string == ' ':
+                for item in menu_items_list[1:]:
+                    item.hide()
                 self.search_phrase += event.string
                 self.search_box.set_text(self.search_phrase)
             elif event.keyval == 65288:
                 self.search_phrase = self.search_phrase[:-1]
                 self.search_box.set_text(self.search_phrase)
-            global filtered_list
-            filtered_list = []
-            for item in search_list:
-                if self.search_phrase.upper() in item["name"].upper():
-                    found = False
-                    for i in filtered_list:
-                        if i["name"] == item["name"]:
-                            found = True
-                    if not found:
-                        filtered_list.append(item)
-            print('--- filtered:')
-            for item in filtered_list:
-                print(item)
+            if self.search_phrase:
+                global filtered_list
+                filtered_list = []
+                for item in search_list:
+                    if self.search_phrase.upper() in item["name"].upper():
+                        found = False
+                        for i in filtered_list:
+                            if i["name"] == item["name"]:
+                                found = True
+                        if not found:
+                            filtered_list.append(item)
+                print('--- filtered:')
+                for item in filtered_list:
+                    print(item)
+            else:
+                for item in menu_items_list:
+                    item.show()
         return True
     
     def resize(self, w, h):
@@ -187,8 +194,9 @@ def main():
     w, h = display_dimensions()
     win.resize(w, h)
     win.menu = build_menu()
-    for item in search_list:
-        print(item)
+    global menu_items_list
+    menu_items_list = win.menu.get_children()
+    
     win.menu.propagate_key_event = False
     win.menu.connect("key-release-event", win.update_search_phrase)
     win.show_all()
