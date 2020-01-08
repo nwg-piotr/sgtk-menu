@@ -65,6 +65,10 @@ locale = ''
 
 win = None
 args = None
+search_list = []
+all_items_list = []
+all_copies_list = []
+menu_items_list = []
 
 config_dir = config_dirs()[0]
 if not os.path.exists(config_dir):
@@ -78,8 +82,12 @@ class MainWindow(Gtk.Window):
         self.set_title('sway_gtk_menu')
         self.set_role('sway_gtk_menu')
         self.connect("destroy", Gtk.main_quit)
-        self.connect("button-press-event", self.die)
+        # self.connect("button-release-event", self.type)
         self.connect('draw', self.draw)
+        self.search_box = Gtk.SearchEntry()
+        self.search_box.set_text('Type to search')
+        self.search_phrase = ''
+        self.screen_dimensions = (0, 0)
 
         # Credits for transparency go to  KurtJacobson:
         # https://gist.github.com/KurtJacobson/374c8cb83aee4851d39981b9c7e2c22c
@@ -94,7 +102,7 @@ class MainWindow(Gtk.Window):
         outer_box = Gtk.Box(spacing=0, orientation=Gtk.Orientation.VERTICAL)
         vbox = Gtk.VBox(spacing=0, border_width=0)
         hbox = Gtk.HBox(spacing=0, border_width=0)
-        self.button = Gtk.Button.new_with_label('')
+        self.button = Gtk.Box()
         hbox.pack_start(self.button, False, False, 0)
         if args.bottom:
             vbox.pack_end(hbox, False, False, 0)
@@ -103,8 +111,65 @@ class MainWindow(Gtk.Window):
         outer_box.pack_start(vbox, True, True, 0)
         self.add(outer_box)
 
+    def filter_items(self, menu, event):
+        if event.type == Gdk.EventType.KEY_RELEASE:
+            update = False
+            if event.string and event.string.isalnum() or event.string == ' ':
+                update = True
+                # remove menu items, except for filter box
+                items = win.menu.get_children()
+                if len(items) > 1:
+                    for item in items[1:]:
+                        win.menu.remove(item)
+
+                self.search_phrase += event.string
+                self.search_box.set_text(self.search_phrase)
+
+            elif event.keyval == 65288:  # backspace
+                update = True
+                self.search_phrase = self.search_phrase[:-1]
+                self.search_box.set_text(self.search_phrase)
+
+            if update:
+                if len(self.search_phrase) > 0:
+                    filtered_items_list = []
+                    for item in all_copies_list:
+                        win.menu.remove(item)
+                        # We'll search the entry name and the first element of its command
+                        if self.search_phrase.upper() in item.name.upper() or self.search_phrase.upper() in \
+                                item.exec.split()[0].upper():
+                            # avoid adding twice
+                            found = False
+                            for i in filtered_items_list:
+                                if i.name == item.name:
+                                    found = True
+                            if not found:
+                                filtered_items_list.append(item)
+
+                    for item in win.menu.get_children()[1:]:
+                        win.menu.remove(item)
+                    for item in filtered_items_list:
+                        win.menu.append(item)
+                    win.menu.show_all()
+                    win.search_item.set_sensitive(True)
+                    win.menu.reposition()
+                else:
+                    for item in win.menu.get_children():
+                        win.menu.remove(item)
+                    for item in menu_items_list:
+                        win.menu.append(item)
+                    win.search_item.set_sensitive(False)
+                    win.menu.reposition()
+            if len(self.search_phrase) == 0:
+                self.search_box.set_text('Type to search')
+            # elif len(self.search_phrase) == 1:
+            #    self.search_box.set_text(self.search_phrase + "_")
+
+        return True
+
     def resize(self, w, h):
         self.set_size_request(w, h)
+        self.screen_dimensions = w, h
 
     def draw(self, widget, context):
         context.set_source_rgba(0, 0, 0, args.o)
@@ -129,9 +194,10 @@ def main():
     parser.add_argument("-b", "--bottom", action="store_true", help="display at the bottom")
     parser.add_argument("-a", "--append", action="store_true", help="append menu from {}".format(appendix_file))
     parser.add_argument("-l", type=str, help="force language (str, like \"en\" for English)")
-    parser.add_argument("-s", type=int, default=20, help="menu icon size (int, min: 16, max: 48, def: 20)")
-    parser.add_argument("-d", type=int, default=50, help="menu delay in milliseconds (int, def: 50)")
-    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (float, min: 0.0, max: 1.0, def: 0.3)")
+    parser.add_argument("-s", type=int, default=20, help="menu icon size (int, min: 16, max: 48, default: 20)")
+    parser.add_argument("-w", type=int, help="menu width in px (int, default: screen width / 8)")
+    parser.add_argument("-d", type=int, default=50, help="menu delay in milliseconds (int, default: 50)")
+    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (float, min: 0.0, max: 1.0, default: 0.3)")
     global args
     args = parser.parse_args()
     if args.s < 16:
@@ -152,13 +218,32 @@ def main():
         except:
             pass
 
+    screen = Gdk.Screen.get_default()
+    provider = Gtk.CssProvider()
+    style_context = Gtk.StyleContext()
+    style_context.add_provider_for_screen(
+        screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+    )
+
     list_entries()
     global win
     win = MainWindow()
     w, h = display_dimensions()
     win.resize(w, h)
     win.menu = build_menu()
+
+    global menu_items_list
+    menu_items_list = win.menu.get_children()
+
+    win.menu.propagate_key_event = False
+    win.menu.connect("key-release-event", win.filter_items)
+    # Let's reserve some width for long entries found with the search box
+    if args.w:
+        win.menu.set_property("width_request", args.w)
+    else:
+        win.menu.set_property("width_request", int(win.screen_dimensions[0] / 8))
     win.show_all()
+
     GLib.timeout_add(args.d, open_menu)
     Gtk.main()
 
@@ -280,6 +365,11 @@ class DesktopEntry(object):
 def build_menu():
     menu = Gtk.Menu()
 
+    win.search_item = Gtk.MenuItem()
+    win.search_item.add(win.search_box)
+    win.search_item.set_sensitive(False)
+    menu.add(win.search_item)
+
     if c_audio_video:
         append_submenu(c_audio_video, menu, 'AudioVideo')
     if c_development:
@@ -355,7 +445,6 @@ def sub_menu(entries_list, name, localized_name):
     outer_hbox = Gtk.HBox()
     try:
         pixbuf = icon_theme.load_icon(category_icons[name], args.s, Gtk.IconLookupFlags.FORCE_SIZE)
-
         image = Gtk.Image.new_from_pixbuf(pixbuf)
     except:
         image = None
@@ -368,33 +457,50 @@ def sub_menu(entries_list, name, localized_name):
     submenu = Gtk.Menu()
     submenu.set_property("reserve_toggle_size", False)
     for entry in entries_list:
-        subitem = Gtk.MenuItem()
-        hbox = Gtk.HBox()
-        image = None
-        if entry.icon:
-            if entry.icon.startswith('/'):
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(entry.icon, args.s, args.s)
-                image = Gtk.Image.new_from_pixbuf(pixbuf)
-            else:
-                try:
-                    if entry.icon.endswith('.svg') or entry.icon.endswith('.png'):
-                        entry.icon = entry.icon.split('.')[0]
-                    pixbuf = icon_theme.load_icon(entry.icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
-                    image = Gtk.Image.new_from_pixbuf(pixbuf)
-                except:
-                    pass
-        label = Gtk.Label()
-        label.set_text(entry.name)
-        if image:
-            hbox.pack_start(image, False, False, 0)
-        hbox.pack_start(label, False, False, 4)
-        subitem.add(hbox)
+        subitem = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
         subitem.connect('activate', launch, entry.exec)
+        all_items_list.append(subitem)
+
+        subitem_copy = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
+        subitem_copy.connect('activate', launch, entry.exec)
+        subitem_copy.show()
+        all_copies_list.append(subitem_copy)
+
         submenu.append(subitem)
+
     item.add(outer_hbox)
+    submenu.connect("key-release-event", win.filter_items)
     item.set_submenu(submenu)
 
     return item
+
+
+class DesktopMenuItem(Gtk.MenuItem):
+    def __init__(self, icon_theme, name, _exec, icon_name=None):
+        Gtk.MenuItem.__init__(self)
+        self.name = name
+        self.exec = _exec
+        hbox = Gtk.HBox()
+        image = None
+        if icon_name:
+            if icon_name.startswith('/'):
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon_name, args.s, args.s)
+                image = Gtk.Image.new_from_pixbuf(pixbuf)
+            else:
+                try:
+                    if icon_name.endswith('.svg') or icon_name.endswith('.png'):
+                        icon_name = icon_name.split('.')[0]
+                    pixbuf = icon_theme.load_icon(icon_name, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
+                    image = Gtk.Image.new_from_pixbuf(pixbuf)
+                except:
+                    pass
+        self.icon = image
+        label = Gtk.Label()
+        label.set_text(self.name)
+        if image:
+            hbox.pack_start(image, False, False, 0)
+        hbox.pack_start(label, False, False, 4)
+        self.add(hbox)
 
 
 def launch(item, command):
