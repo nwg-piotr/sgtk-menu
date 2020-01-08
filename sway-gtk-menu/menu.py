@@ -85,7 +85,7 @@ class MainWindow(Gtk.Window):
         #self.connect("button-release-event", self.type)
         self.connect('draw', self.draw)
         self.search_box = Gtk.SearchEntry()
-        self.search_box.set_text('Filter')
+        self.search_box.set_text('Type to search')
         self.search_box.set_tooltip_text('Type 2 or more chars')
         self.search_phrase = ''
 
@@ -155,7 +155,7 @@ class MainWindow(Gtk.Window):
                     for item in menu_items_list:
                         win.menu.append(item)
             if len(self.search_phrase) == 0:
-                self.search_box.set_text('Filter')
+                self.search_box.set_text('Type to search')
             elif len(self.search_phrase) == 1:
                 self.search_box.set_text(self.search_phrase + "_")
         return True
