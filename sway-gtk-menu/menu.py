@@ -2,7 +2,7 @@
 # _*_ coding: utf-8 _*_
 
 """
-This is an attempt to create a menu that behaves decently on sway window manager.
+This is an attempt to create a menu that behaves decently on sway window manager (and also works on i3).
 
 Author: Piotr Miller
 e-mail: nwg.piotr@gmail.com
@@ -35,13 +35,14 @@ try:
 except ModuleNotFoundError:
     i3ipc = False
 
-# Overlay window: force floating, disable border
-# The variable indicates if we succeeded. If not, we'll need further command, as we're probably running i3.
-# This needs further consideration: if to improve or to give on i3 support. For now it doesn't look well enough.
+# Overlay window: force floating, disable border; we can't do so outside the config on i3.
+# We'll do it for i3 by applying commands to the focused window in open_menu method.
+# The variable indicates if we succeeded / are on sway.
 swaymsg: bool = subprocess.run(
     ['swaymsg', 'for_window', '[title=\"sway_gtk_menu\"]', 'floating', 'enable'],
     stdout=subprocess.DEVNULL).returncode == 0
 
+# Lists to hold DesktopEntry objects of each category
 c_audio_video, c_development, c_game, c_graphics, c_network, c_office, c_science, c_settings, c_system, \
 c_utility, c_other = [], [], [], [], [], [], [], [], [], [], []
 
@@ -60,15 +61,14 @@ category_icons = {"AudioVideo": "applications-multimedia",
                   "Utility": "applications-accessories",
                   "Other": "applications-other"}
 
-localized_names_dictionary = {}
+localized_names_dictionary = {}  # name => translated name
 locale = ''
 
-win = None
+win = None  # overlay window
 args = None
-search_list = []
-all_items_list = []
-all_copies_list = []
-menu_items_list = []
+all_items_list = []     # list of all DesktopMenuItem objects assigned to a .desktop entry
+all_copies_list = []    # list of copies of above used while searching (not assigned to a submenu!)
+menu_items_list = []    # created / updated with menu.get_children()
 
 config_dir = config_dirs()[0]
 if not os.path.exists(config_dir):
@@ -82,7 +82,6 @@ class MainWindow(Gtk.Window):
         self.set_title('sway_gtk_menu')
         self.set_role('sway_gtk_menu')
         self.connect("destroy", Gtk.main_quit)
-        # self.connect("button-release-event", self.type)
         self.connect('draw', self.draw)
         self.search_box = Gtk.SearchEntry()
         self.search_box.set_text('Type to search')
@@ -95,28 +94,28 @@ class MainWindow(Gtk.Window):
         visual = screen.get_rgba_visual()
         if visual and screen.is_composited():
             self.set_visual(visual)
-
         self.set_app_paintable(True)
 
-        self.menu = None
+        self.menu = None  # We'll create it outside the class
+        
         outer_box = Gtk.Box(spacing=0, orientation=Gtk.Orientation.VERTICAL)
         vbox = Gtk.VBox(spacing=0, border_width=0)
         hbox = Gtk.HBox(spacing=0, border_width=0)
         self.button = Gtk.Box()
         hbox.pack_start(self.button, False, False, 0)
-        if args.bottom:
+        if args.bottom:  # display menu at the bottom
             vbox.pack_end(hbox, False, False, 0)
-        else:
+        else:            # display on top
             vbox.pack_start(hbox, False, False, 0)
         outer_box.pack_start(vbox, True, True, 0)
         self.add(outer_box)
 
-    def filter_items(self, menu, event):
+    def search_items(self, menu, event):
         if event.type == Gdk.EventType.KEY_RELEASE:
             update = False
             if event.string and event.string.isalnum() or event.string == ' ':
                 update = True
-                # remove menu items, except for filter box
+                # remove menu items (submenus & user defined), except for filter box (item #0)
                 items = win.menu.get_children()
                 if len(items) > 1:
                     for item in items[1:]:
@@ -235,7 +234,7 @@ def main():
     menu_items_list = win.menu.get_children()
 
     win.menu.propagate_key_event = False
-    win.menu.connect("key-release-event", win.filter_items)
+    win.menu.connect("key-release-event", win.search_items)
     # Let's reserve some width for long entries found with the search box
     if args.w:
         win.menu.set_property("width_request", args.w)
@@ -469,8 +468,8 @@ def sub_menu(entries_list, name, localized_name):
     submenu.entries_list = entries_list
 
     submenu.set_property("reserve_toggle_size", False)
-    # On sway 1.2, if popped-up menu length exceeds the screen height, no buttons to scroll appear, and the mouse
-    # scroller does not work, too. We need a workaround!
+    # On sway 1.2, if popped-up menu length exceeds the screen height, no buttons to scroll appear,
+    # and the mouse scroller does not work, too. We need a workaround!
     if not swaymsg or len(entries_list) < args.t:
         # We are not on sway or submenu is short enough
         for entry in entries_list:
@@ -486,7 +485,7 @@ def sub_menu(entries_list, name, localized_name):
             submenu.append(subitem)
     
         item.add(outer_hbox)
-        submenu.connect("key-release-event", win.filter_items)
+        submenu.connect("key-release-event", win.search_items)
         item.set_submenu(submenu)
     else:
         # This will be tricky as hell. We only add 30 items here. The rest must be added on menu popped-up.
@@ -504,7 +503,7 @@ def sub_menu(entries_list, name, localized_name):
             submenu.append(subitem)
 
         item.add(outer_hbox)
-        submenu.connect("key-release-event", win.filter_items)
+        submenu.connect("key-release-event", win.search_items)
         submenu.connect("popped-up", cheat_sway, submenu.entries_list)
         submenu.connect("hide", cheat_sway_on_exit)
         item.set_submenu(submenu)
@@ -524,12 +523,24 @@ def cheat_sway(menu, flipped_rect, final_rect, flipped_x, flipped_y, entries_lis
             entry = entries_list[i]
             subitem = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
             subitem.connect('activate', launch, entry.exec)
-            all_items_list.append(subitem)
+
+            found = False
+            for it in all_items_list:
+                if it.name == subitem.name:
+                    found = True
+            if not found:
+                all_items_list.append(subitem)
 
             subitem_copy = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
             subitem_copy.connect('activate', launch, entry.exec)
             subitem_copy.show()
-            all_copies_list.append(subitem_copy)
+
+            found = False
+            for it in all_copies_list:
+                if it.name == subitem.name:
+                    found = True
+            if not found:
+                all_copies_list.append(subitem_copy)
 
             menu.append(subitem)
     menu.show_all()
