@@ -190,7 +190,7 @@ def main():
     except IOError:
         sys.exit(0)
 
-    parser = argparse.ArgumentParser(description="A simple sway menu")
+    parser = argparse.ArgumentParser(description="A simple menu for sway and i3")
     parser.add_argument("-b", "--bottom", action="store_true", help="display at the bottom")
     parser.add_argument("-a", "--append", action="store_true", help="append menu from {}".format(appendix_file))
     parser.add_argument("-l", type=str, help="force language (str, like \"en\" for English)")
