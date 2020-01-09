@@ -3,7 +3,7 @@ This project is an attempt to create a simple system menu, that behaves decently
 It uses `pygobject` to create a gtk3-based system menu. It's possible to append user-defined (json) entries at the bottom.
 The menu also implements the Search feature.
 
-The script searches `.desktop` files, so ma be used a replacement to wofi/rofi --drun, but not for --dmenu mode.
+The script searches `.desktop` files, so may be used as a replacement to wofi/rofi --drun, but not for --dmenu mode.
 
 Well, I didn't even think that sway needed a menu, being actually happy with [wofi](https://hg.sr.ht/~scoopta/wofi) and 
 [dmenu-wayland](https://github.com/nyyManni/dmenu-wayland). I started coding just to find out what the freedesktop 
