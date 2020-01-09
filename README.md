@@ -53,5 +53,5 @@ equals 50 milliseconds, and on my machine it works well down to 30, but slower m
 E.g. use `-d 100` argument.
 
 ## TODO
-- Resolve the missing submenus overflow arrows issue on sway;
+- On next sway / GTK release check if the overflowed menus issue on sway is fixed; remove heavyweight workaround if so;
 - consider adding "latest" cache to prepend the menu with several lately / frequently used entries (?).
