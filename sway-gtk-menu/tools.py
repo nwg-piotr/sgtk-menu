@@ -2,7 +2,7 @@
 # _*_ coding: utf-8 _*_
 
 """
-This code is heavily influenced by Johan Malm's
+Most of this code is heavily influenced by Johan Malm's
 https://github.com/johanmalm/jgmenu/blob/master/contrib/pmenu/jgmenu-pmenu.py
 
 Copyright (C) 2016-2017 Ovidiu M <mrovi9000@gmail.com>
@@ -148,7 +148,7 @@ def additional_to_main(category):
 
 
 def save_default_appendix(path):
-    # icons: /usr/share/icons/theme_name/32x32/actions/
+    # Example icon names: /usr/share/icons/theme_name/32x32/actions/
     content = [{"name": "Lock",
                 "exec": "swaylock -f -c 000000",
                 "icon": "lock"},
