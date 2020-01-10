@@ -2,7 +2,7 @@
 # _*_ coding: utf-8 _*_
 
 """
-Most of this code is heavily influenced by Johan Malm's
+Most part of this code is heavily influenced by Johan Malm's
 https://github.com/johanmalm/jgmenu/blob/master/contrib/pmenu/jgmenu-pmenu.py
 
 Copyright (C) 2016-2017 Ovidiu M <mrovi9000@gmail.com>
@@ -27,12 +27,16 @@ def get_locale_string(forced_lang=None):
 
 
 def localized_category_names(lang='en'):
+    """
+    :param lang: detected or forced locale
+    :return: dictionary: category name => translated category name
+    """
     defined_names = {}
     for d in settings_dirs():
         d = d + "/desktop-directories/"
-        for (dirpath, dirnames, filenames) in os.walk(d):
-            for filename in filenames:
-                name, localized_name = read_entry(os.path.join(dirpath, filename), lang)
+        for (dir_path, dir_names, file_names) in os.walk(d):
+            for filename in file_names:
+                name, localized_name = translate_name(os.path.join(dir_path, filename), lang)
                 if name and localized_name and name not in defined_names:
                     defined_names[name] = localized_name
                     if additional_to_main(name) not in defined_names:
@@ -44,7 +48,7 @@ def localized_category_names(lang='en'):
     return defined_names
 
 
-def read_entry(path, lang):
+def translate_name(path, lang):
     name, localized_name = None, None
     try:
         with open(path) as d:
@@ -81,9 +85,9 @@ def settings_dirs():
 
 
 def config_dirs():
-    paths = [os.path.join(os.path.expanduser('~/.config'), 'sway-gtk-menu')]
+    paths = [os.path.join(os.path.expanduser('~/.config'), 'sgtk-menu')]
     if "XDG_CONFIG_HOME" in os.environ:
-        paths.append(os.path.join(os.environ("XDG_CONFIG_HOME"), 'sway-gtk-menu'))
+        paths.append(os.path.join(os.environ("XDG_CONFIG_HOME"), 'sgtk-menu'))
     return paths
 
 
@@ -148,27 +152,34 @@ def additional_to_main(category):
 
 
 def save_default_appendix(path):
-    # Example icon names: /usr/share/icons/theme_name/32x32/actions/
     content = [{"name": "Lock",
                 "exec": "swaylock -f -c 000000",
                 "icon": "lock"},
                {"name": "Logout",
-                "exec": "swaynagmode -t red -m ' Exit sway?' -b ' Logout ' 'swaymsg exit'",
+                "exec": "swaynag -t red -m ' Exit sway session?' -b ' Logout ' 'swaymsg exit'",
                 "icon": "exit"},
                {"name": "Reboot",
-                "exec": "swaynagmode -t red -m ' Restart the machine?' -b ' Reboot ' 'systemctl reboot'",
+                "exec": "swaynag -t red -m ' Reboot the machine?' -b ' Reboot ' 'systemctl reboot'",
                 "icon": "reload"},
                {"name": "Shutdown",
-                "exec": "swaynagmode -t red -m ' Shutdown the machine?' -b ' Shutdown ' 'systemctl -i poweroff'",
+                "exec": "swaynag -t red -m ' Shutdown the machine?' -b ' Shutdown ' 'systemctl -i poweroff'",
                 "icon": "window-close"}]
 
-    with open(path, 'w') as f:
-        json.dump(content, f, indent=2)
+    save_json(content, path)
 
         
-def load_appendix(path):
+def load_json(path):
+    """
+    :return: dictionary
+    """
     try:
         with open(path, 'r') as f:
             return json.load(f)
-    except FileNotFoundError:
-        return None
+    except Exception as e:
+        print(e)
+        return {}
+
+
+def save_json(src_dict, path):
+    with open(path, 'w') as f:
+        json.dump(src_dict, f, indent=2)

@@ -2,7 +2,7 @@
 # _*_ coding: utf-8 _*_
 
 """
-This is an attempt to create a menu that behaves decently on sway window manager (and also works on i3).
+This is an attempt to develop a menu that behaves decently on sway window manager, and also works on i3.
 
 Author: Piotr Miller
 e-mail: nwg.piotr@gmail.com
@@ -25,7 +25,7 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 import cairo
 
 from tools import localized_category_names, additional_to_main, get_locale_string, config_dirs, save_default_appendix, \
-    load_appendix
+    load_json, save_json
 
 try:
     from i3ipc import Connection
@@ -35,16 +35,16 @@ try:
 except ModuleNotFoundError:
     i3ipc = False
 
-# Overlay window: force floating, disable border; we can't do so outside the config on i3.
+# Will apply to the overlay window; we can't do so outside the config file on i3.
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
 # The variable indicates if we succeeded / are on sway.
 swaymsg: bool = subprocess.run(
-    ['swaymsg', 'for_window', '[title=\"sway_gtk_menu\"]', 'floating', 'enable'],
+    ['swaymsg', 'for_window', '[title=\"sgtk-menu\"]', 'floating', 'enable'],
     stdout=subprocess.DEVNULL).returncode == 0
 
 # Lists to hold DesktopEntry objects of each category
 c_audio_video, c_development, c_game, c_graphics, c_network, c_office, c_science, c_settings, c_system, \
-c_utility, c_other = [], [], [], [], [], [], [], [], [], [], []
+c_utility, c_other, all_entries = [], [], [], [], [], [], [], [], [], [], [], []
 
 category_names = ['AudioVideo', 'Development', 'Game', 'Graphics', 'Network', 'Office', 'Science', 'Settings',
                   'System', 'Utility', 'Other']
@@ -75,127 +75,39 @@ if not os.path.exists(config_dir):
     os.makedirs(config_dir)
 appendix_file = os.path.join(config_dirs()[0], 'appendix')
 
-
-class MainWindow(Gtk.Window):
-    def __init__(self):
-        Gtk.Window.__init__(self)
-        self.set_title('sway_gtk_menu')
-        self.set_role('sway_gtk_menu')
-        self.connect("destroy", Gtk.main_quit)
-        self.connect('draw', self.draw)
-        self.search_box = Gtk.SearchEntry()
-        self.search_box.set_text('Type to search')
-        self.search_phrase = ''
-        self.screen_dimensions = (0, 0)
-
-        # Credits for transparency go to  KurtJacobson:
-        # https://gist.github.com/KurtJacobson/374c8cb83aee4851d39981b9c7e2c22c
-        screen = self.get_screen()
-        visual = screen.get_rgba_visual()
-        if visual and screen.is_composited():
-            self.set_visual(visual)
-        self.set_app_paintable(True)
-
-        self.menu = None  # We'll create it outside the class
-        
-        outer_box = Gtk.Box(spacing=0, orientation=Gtk.Orientation.VERTICAL)
-        vbox = Gtk.VBox(spacing=0, border_width=0)
-        hbox = Gtk.HBox(spacing=0, border_width=0)
-        self.button = Gtk.Box()
-        hbox.pack_start(self.button, False, False, 0)
-        if args.bottom:  # display menu at the bottom
-            vbox.pack_end(hbox, False, False, 0)
-        else:            # display on top
-            vbox.pack_start(hbox, False, False, 0)
-        outer_box.pack_start(vbox, True, True, 0)
-        self.add(outer_box)
-
-    def search_items(self, menu, event):
-        if event.type == Gdk.EventType.KEY_RELEASE:
-            update = False
-            if event.string and event.string.isalnum() or event.string == ' ':
-                update = True
-                # remove menu items (submenus & user defined), except for filter box (item #0)
-                items = win.menu.get_children()
-                if len(items) > 1:
-                    for item in items[1:]:
-                        win.menu.remove(item)
-
-                self.search_phrase += event.string
-                self.search_box.set_text(self.search_phrase)
-
-            elif event.keyval == 65288:  # backspace
-                update = True
-                self.search_phrase = self.search_phrase[:-1]
-                self.search_box.set_text(self.search_phrase)
-
-            if update:
-                if len(self.search_phrase) > 0:
-                    filtered_items_list = []
-                    for item in all_copies_list:
-                        win.menu.remove(item)
-                        # We'll search the entry name and the first element of its command
-                        if self.search_phrase.upper() in item.name.upper() or self.search_phrase.upper() in \
-                                item.exec.split()[0].upper():
-                            # avoid adding twice
-                            found = False
-                            for i in filtered_items_list:
-                                if i.name == item.name:
-                                    found = True
-                            if not found:
-                                filtered_items_list.append(item)
-
-                    for item in win.menu.get_children()[1:]:
-                        win.menu.remove(item)
-                    for item in filtered_items_list:
-                        win.menu.append(item)
-                    win.menu.show_all()
-                    win.search_item.set_sensitive(True)
-                    win.menu.reposition()
-                else:
-                    for item in win.menu.get_children():
-                        win.menu.remove(item)
-                    for item in menu_items_list:
-                        win.menu.append(item)
-                    win.search_item.set_sensitive(False)
-                    win.menu.reposition()
-            if len(self.search_phrase) == 0:
-                self.search_box.set_text('Type to search')
-
-        return True
-
-    def resize(self, w, h):
-        self.set_size_request(w, h)
-        self.screen_dimensions = w, h
-
-    def draw(self, widget, context):
-        context.set_source_rgba(0, 0, 0, args.o)
-        context.set_operator(cairo.OPERATOR_SOURCE)
-        context.paint()
-        context.set_operator(cairo.OPERATOR_OVER)
-
-    def die(self, *args):
-        Gtk.main_quit()
+if "XDG_CACHE_HOME" in os.environ:
+    cache_file = os.path.join(os.environ("XDG_CACHE_HOME"), 'sgtk-menu')
+else:
+    cache_file = os.path.join(os.path.expanduser('~/.cache'), 'sgtk-menu')
+    
+cache = None
+sorted_cache = None
 
 
 def main():
     # exit if already running, thanks to Slava V at https://stackoverflow.com/a/384493/4040598
-    pid_file = os.path.join(tempfile.gettempdir(), 'sway_gtk_menu.pid')
+    pid_file = os.path.join(tempfile.gettempdir(), 'sgtk-menu.pid')
     fp = open(pid_file, 'w')
     try:
         fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError:
         sys.exit(0)
 
-    parser = argparse.ArgumentParser(description="A simple menu for sway and i3")
-    parser.add_argument("-b", "--bottom", action="store_true", help="display at the bottom")
-    parser.add_argument("-a", "--append", action="store_true", help="append menu from {}".format(appendix_file))
-    parser.add_argument("-l", type=str, help="force language (str, like \"en\" for English)")
-    parser.add_argument("-s", type=int, default=20, help="menu icon size (int, min: 16, max: 48, default: 20)")
-    parser.add_argument("-w", type=int, help="menu width in px (int, default: screen width / 8)")
-    parser.add_argument("-d", type=int, default=50, help="menu delay in milliseconds (int, default: 50)")
-    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (float, min: 0.0, max: 1.0, default: 0.3)")
-    parser.add_argument("-t", type=int, default=36, help="sway submenu lines limit (int, default: 30)")
+    global appendix_file
+    parser = argparse.ArgumentParser(description="GTK menu for sway and i3")
+    parser.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom")
+    favourites = parser.add_mutually_exclusive_group()
+    favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used items")
+    favourites.add_argument('-fn', type=int, help="prepend <FN> most used items")
+    appenxid = parser.add_mutually_exclusive_group()
+    appenxid.add_argument("-a", "--append", action="store_true", help="append custom menu from {}".format(appendix_file))
+    appenxid.add_argument("-af", type=str, help="append custom menu from {}".format(os.path.join(config_dir, '<AF>')))
+    parser.add_argument("-l", type=str, help="force language (e.g. \"de\" for German)")
+    parser.add_argument("-s", type=int, default=20, help="menu icon size (min: 16, max: 48, default: 20)")
+    parser.add_argument("-w", type=int, help="menu width in px (integer, default: screen width / 8)")
+    parser.add_argument("-d", type=int, default=100, help="menu delay in milliseconds (default: 100)")
+    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3)")
+    parser.add_argument("-t", type=int, default=30, help="sway submenu lines limit (default: 30)")
     global args
     args = parser.parse_args()
     if args.s < 16:
@@ -203,12 +115,28 @@ def main():
     elif args.s > 48:
         args.s = 48
 
+    # Create default appendix file if not found
     if not os.path.isfile(appendix_file):
         save_default_appendix(appendix_file)
+
+    # Replace appendix file name with custom - if any
+    if args.af:
+        appendix_file = os.path.join(config_dirs()[0], args.af)
+        
+    # cache stores number of clicks on each item
+    global cache
+    cache = load_json(cache_file)
+
+    if not cache:
+        save_json(cache, cache_file)
+    global sorted_cache
+    sorted_cache = sorted(cache.items(), reverse=True, key=lambda x: x[1])
 
     global locale
     locale = get_locale_string(args.l)
     category_names_dictionary = localized_category_names(locale)
+
+    # replace additional category names with main ones
     for name in category_names:
         main_category_name = additional_to_main(name)
         try:
@@ -223,7 +151,11 @@ def main():
         screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
     )
 
+    # find all .desktop entries, create DesktopEntry class instances;
+    # DesktopEntry adds itself to the proper List in the class constructor
     list_entries()
+
+    # Overlay window
     global win
     win = MainWindow()
     w, h = display_dimensions()
@@ -246,22 +178,138 @@ def main():
     Gtk.main()
 
 
-def kill_border():
-    subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
+class MainWindow(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self)
+        self.set_title('sgtk-menu')
+        self.set_role('sgtk-menu')
+        self.connect("destroy", Gtk.main_quit)
+        self.connect('draw', self.draw)         # transparency
+
+        self.search_box = Gtk.SearchEntry()
+        self.search_box.set_text('Type to search')
+        self.screen_dimensions = (0, 0)         # parent screen dimensions (obtained outside)
+        self.search_phrase = ''
+
+        # Credits for transparency go to  KurtJacobson:
+        # https://gist.github.com/KurtJacobson/374c8cb83aee4851d39981b9c7e2c22c
+        screen = self.get_screen()
+        visual = screen.get_rgba_visual()
+        if visual and screen.is_composited():
+            self.set_visual(visual)
+        self.set_app_paintable(True)
+
+        self.menu = None  # We'll create it outside the class
+
+        outer_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        vbox = Gtk.VBox()
+        hbox = Gtk.HBox()
+
+        # the widget we'll popup menu at
+        self.anchor = Gtk.Box()
+        hbox.pack_start(self.anchor, False, False, 0)
+
+        if args.bottom:
+            # display menu at the bottom
+            vbox.pack_end(hbox, False, False, 0)
+        else:
+            # display on top
+            vbox.pack_start(hbox, False, False, 0)
+        outer_box.pack_start(vbox, True, True, 0)
+
+        self.add(outer_box)
+
+    def search_items(self, menu, event):
+        if event.type == Gdk.EventType.KEY_RELEASE:
+            update = False
+            # search box only accepts alphanumeric characters, space and backspace
+            if event.string and event.string.isalnum() or event.string == ' ':
+                update = True
+                # remove menu items, except for search box (item #0)
+                items = win.menu.get_children()
+                if len(items) > 1:
+                    for item in items[1:]:
+                        win.menu.remove(item)
+
+                self.search_phrase += event.string
+                self.search_box.set_text(self.search_phrase)
+
+            elif event.keyval == 65288:  # backspace
+                update = True
+                self.search_phrase = self.search_phrase[:-1]
+                self.search_box.set_text(self.search_phrase)
+
+            if update:
+                if len(self.search_phrase) > 0:
+                    filtered_items_list = []
+                    for item in all_copies_list:
+                        win.menu.remove(item)
+                        # We'll search the entry name and the first element of its command (to skip arguments)
+                        if self.search_phrase.upper() in item.name.upper() or self.search_phrase.upper() in \
+                                item.exec.split()[0].upper():
+                            # avoid adding twice
+                            found = False
+                            for i in filtered_items_list:
+                                if i.name == item.name:
+                                    found = True
+                            if not found:
+                                filtered_items_list.append(item)
+
+                    for item in win.menu.get_children()[1:]:
+                        win.menu.remove(item)
+
+                    for item in filtered_items_list:
+                        win.menu.append(item)
+
+                    win.menu.show_all()
+                    # as the search box is actually a menu item, it must be sensitive now,
+                    # in order not to be skipped while scrolling overflowed menu
+                    win.search_item.set_sensitive(True)
+                    win.menu.reposition()
+                else:
+                    # clear search results
+                    for item in win.menu.get_children():
+                        win.menu.remove(item)
+                    # restore original menu
+                    for item in menu_items_list:
+                        win.menu.append(item)
+                    # better to have it insensitive when possible
+                    win.search_item.set_sensitive(False)
+                    win.menu.reposition()
+            if len(self.search_phrase) == 0:
+                self.search_box.set_text('Type to search')
+
+        return True
+
+    def resize(self, w, h):
+        self.set_size_request(w, h)
+        self.screen_dimensions = w, h
+
+    # transparency
+    def draw(self, widget, context):
+        context.set_source_rgba(0, 0, 0, args.o)
+        context.set_operator(cairo.OPERATOR_SOURCE)
+        context.paint()
+        context.set_operator(cairo.OPERATOR_OVER)
+
+    def die(self, *args):
+        Gtk.main_quit()
 
 
 def open_menu():
     if not swaymsg:
+        # we couldn't do this on i3 at the script start
         subprocess.run(['i3-msg', 'floating', 'toggle'], stdout=subprocess.DEVNULL)
         subprocess.run(['i3-msg', 'border', 'pixel', '0'], stdout=subprocess.DEVNULL)
     else:
         subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
 
-    win.menu.popup_at_widget(win.button, Gdk.Gravity.CENTER, Gdk.Gravity.CENTER, None)
+    win.menu.popup_at_widget(win.anchor, Gdk.Gravity.CENTER, Gdk.Gravity.CENTER, None)
 
 
 def display_dimensions():
     if i3ipc:
+        # we can avoid deprecation warnings
         root = i3.get_tree()
         found = False
         f = root.find_focused()
@@ -270,6 +318,7 @@ def display_dimensions():
             found = f.type == 'output'
         return f.rect.width, f.rect.height
     else:
+        # this will rise deprecation warnings; wish I knew a better way to do it with GTK for multi-headed setups
         screen = win.get_screen()
         return screen.width(), screen.height()
 
@@ -310,12 +359,18 @@ def list_entries():
                                     _categories = line.split('=')[1].strip()
 
                         if _name and _exec and _categories:
-                            DesktopEntry(_name, _exec, _icon, _categories)
+                            # this will hold the data we need, and also automagically append itself to the proper list 
+                            entry = DesktopEntry(_name, _exec, _icon, _categories)
+                            # we need this list for the favourites menu
+                            all_entries.append(entry)
                 except Exception as e:
                     print(e)
 
 
 class DesktopEntry(object):
+    """
+    Should be self-explanatory
+    """
     def __init__(self, name, exec, icon=None, categories=None):
         self.name = name
         self.exec = exec
@@ -361,6 +416,7 @@ class DesktopEntry(object):
 
 
 def build_menu():
+    icon_theme = Gtk.IconTheme.get_default()
     menu = Gtk.Menu()
 
     win.search_item = Gtk.MenuItem()
@@ -368,6 +424,60 @@ def build_menu():
     win.search_item.set_sensitive(False)
     menu.add(win.search_item)
 
+    # Prepend favourite items (-f or -fn argument used)
+    favs_number = 0
+    if args.favourites:
+        favs_number = 5
+    elif args.fn:
+        favs_number = args.fn
+    if favs_number > 0:
+        global sorted_cache
+        if len(sorted_cache) < favs_number:
+            favs_number = len(sorted_cache)
+
+        to_prepend = []  # list of favourite items
+        for i in range(favs_number):
+            fav_exec = sorted_cache[i][0]
+            for item in all_entries:
+                if item.exec == fav_exec and item not in to_prepend:
+                    to_prepend.append(item)
+                    break  # stop searching, there may be duplicates on the list
+
+        # build menu items
+        for entry in to_prepend:
+            name = entry.name
+            exec = entry.exec
+            icon = entry.icon
+            hbox = Gtk.HBox()
+            label = Gtk.Label()
+            label.set_text(name)
+            image = None
+            if icon.startswith('/'):
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
+                image = Gtk.Image.new_from_pixbuf(pixbuf)
+            else:
+                try:
+                    if icon.endswith('.svg') or icon.endswith('.png'):
+                        icon = entry.icon.split('.')[0]
+                    pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
+                    image = Gtk.Image.new_from_pixbuf(pixbuf)
+                except Exception as e:
+                    print(e)
+            if image:
+                hbox.pack_start(image, False, False, 10)
+            if name:
+                hbox.pack_start(label, False, False, 0)
+            item = Gtk.MenuItem()
+            item.add(hbox)
+            item.connect('activate', launch, exec)
+            menu.append(item)
+            
+        if to_prepend:
+            separator = Gtk.SeparatorMenuItem()
+            separator.set_property("margin", 10)
+            menu.append(separator)
+
+    # actual system menu with submenus for each category
     if c_audio_video:
         append_submenu(c_audio_video, menu, 'AudioVideo')
     if c_development:
@@ -391,11 +501,12 @@ def build_menu():
     if c_other:
         append_submenu(c_other, menu, 'Other')
 
-    if args.append:
+    # user-defined menu from default or custom file (see args)
+    if args.append or args.af:
         item = Gtk.SeparatorMenuItem()
+        item.set_property("margin", 10)
         menu.append(item)
-        appendix = load_appendix(appendix_file)
-        icon_theme = Gtk.IconTheme.get_default()
+        appendix = load_json(appendix_file)
         for entry in appendix:
             name = entry["name"]
             exec = entry["exec"]
@@ -421,7 +532,7 @@ def build_menu():
                 hbox.pack_start(label, False, False, 0)
             item = Gtk.MenuItem()
             item.add(hbox)
-            item.connect('activate', launch, exec)
+            item.connect('activate', launch, exec, True)  # do not cache!
             menu.append(item)
 
     menu.connect("hide", win.die)
@@ -440,7 +551,7 @@ def append_submenu(items_list, menu, submenu_name):
 
 class SubMenu(Gtk.Menu):
     """
-    We need to subclass Gtk.Menu, to assign .desktop entries list to it.
+    We need to subclass Gtk.Menu, to assign its .desktop entries list to it.
     Needed to workaround the sway overflowing menus issue. See cheat_sway and cheat_sway_on_exit methods.
     """
     def __init__(self):
@@ -470,7 +581,7 @@ def sub_menu(entries_list, name, localized_name):
     submenu.set_property("reserve_toggle_size", False)
     # On sway 1.2, if popped-up menu length exceeds the screen height, no buttons to scroll appear,
     # and the mouse scroller does not work, too. We need a workaround!
-    if not swaymsg or len(entries_list) < args.t:
+    if not swaymsg or len(entries_list) < args.t:  # -t stands for sway submenu lines limit
         # We are not on sway or submenu is short enough
         for entry in entries_list:
             subitem = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
@@ -488,7 +599,7 @@ def sub_menu(entries_list, name, localized_name):
         submenu.connect("key-release-event", win.search_items)
         item.set_submenu(submenu)
     else:
-        # This will be tricky as hell. We only add 30 items here. The rest must be added on menu popped-up.
+        # This will be tricky as hell. We only add 30 items here. The rest must be added on menu popped-up (cheat_sway).
         for i in range(args.t):
             entry = entries_list[i]
             subitem = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
@@ -514,8 +625,8 @@ def sub_menu(entries_list, name, localized_name):
 def cheat_sway(menu, flipped_rect, final_rect, flipped_x, flipped_y, entries_list):
     """
     If we're on sway, all submenus items number have been limited to args.t during their creation, to workaround
-    sway 1.2 / GTK bug. This method is being called on submenu popped-up to add missing items. We'll have to remove
-    them on submenu exit event. But scrolling works on sway, hurray!
+    sway 1.2 / GTK bug. This method is being called on submenu popped-up, to add missing items. We'll have to remove
+    them on submenu exit event (cheat_sway_on_exit). But scrolling overflowed menus works on sway, hurray!
     """
     if len(menu.get_children()) < len(entries_list):
         icon_theme = Gtk.IconTheme.get_default()
@@ -553,6 +664,9 @@ def cheat_sway_on_exit(submenu):
 
 
 class DesktopMenuItem(Gtk.MenuItem):
+    """
+    We'll a Gtk.MenuItem here, w/ a hbox inside; the box contains an icon and a label.
+    """
     def __init__(self, icon_theme, name, _exec, icon_name=None):
         Gtk.MenuItem.__init__(self)
         self.name = name
@@ -580,8 +694,15 @@ class DesktopMenuItem(Gtk.MenuItem):
         self.add(hbox)
 
 
-def launch(item, command):
-    print(command)
+def launch(item, command, no_cache=False):
+    if not no_cache:
+        # save command and increased clicks counter to the cache file; we won't cache items from the user-defined menu
+        if command not in cache:
+            cache[command] = 1
+        else:
+            cache[command] += 1
+        save_json(cache, cache_file)
+    # run the command an quit
     subprocess.Popen('exec {}'.format(command), shell=True)
     Gtk.main_quit()
 
