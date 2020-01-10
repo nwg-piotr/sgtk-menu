@@ -1,15 +1,16 @@
-# sway-gtk-menu
-This project is an attempt to create a simple menu, that behaves decently on sway and i3 window manager. 
+# sgtk-menu
+This project is an attempt to create a simple menu, that behaves decently on sway, but also i3 window manager. 
 It uses `pygobject` to create a themeable, searchable gtk3-based system menu w/ some optional features.
 
 ## Features
 
 - `.desktop` entries-based system menu;
 - search box to find what you need quickly;
-- favourites (most frequently used entries) menu above (optional argument);
-- user-defined menu below (optional argument).
+- favourites (most frequently used entries) menu above (optional `[-f | -fn FN]` argument);
+- user-defined menu below (optional `[-a | -af AF]` argument).
 
-As the script uses `.desktop` files only, it may be used as a replacement to wofi/rofi `--drun`, but not for `--dmenu` mode.
+As the script searches `.desktop` files only, it may be used as a replacement to wofi/rofi `--drun`, but not for 
+`--dmenu` mode.
 
 ![screenshot](http://nwg.pl/Lychee/uploads/big/fbe90b3f5c8d192657a7e9ad98310d84.png)
 *The menu in Clearlooks GTK theme w/ Aqatix icons*
@@ -58,7 +59,7 @@ optional arguments:
 ## How it works?
 
 The problem to resolve was, that the Gtk.Menu class behaves differently / unexpectedly when open over Wayland and X11 windows. 
-To avoid it, the script first creates a (semi-)transparent, floating window, that covers all the screen.
+To work it around, the script opens the menu over a (semi-)transparent, floating window, that covers all the screen.
 
 ## Troubleshooting
 
