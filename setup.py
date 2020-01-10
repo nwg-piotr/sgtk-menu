@@ -7,9 +7,9 @@ def read(f_name):
 
 
 setup(
-    name='sway-gtk-menu',
+    name='sgtk-menu',
     version='0.0.1',
-    description='GTK+ menu for sway window manager',
+    description='GTK menu for sway and i3',
     packages=['sway-gtk-menu'],
     include_package_data=True,
     url='https://github.com/nwg-piotr/sway-gtk-menu',
