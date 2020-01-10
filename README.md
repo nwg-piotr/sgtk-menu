@@ -1,5 +1,5 @@
 # sgtk-menu
-This project is an attempt to create a simple menu, that behaves decently on sway, but also i3 window manager. 
+This project is an attempt to create a simple menu, that behaves decently on sway, but also on i3 window manager. 
 It uses `pygobject` to create a themeable, searchable gtk3-based system menu w/ some optional features.
 
 ## Features
@@ -30,7 +30,7 @@ that I had ever expected.
 ## Usage
 
 ```text
-$ /path/to/the/script/menu.py -h
+$ sgtk-menu -h
 usage: menu.py [-h] [-b] [-f | -fn FN] [-a | -af AF] [-l L] [-s S] [-w W] [-d D] [-o O] [-t T]
 
 GTK menu for sway and i3
