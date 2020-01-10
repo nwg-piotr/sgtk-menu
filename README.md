@@ -51,6 +51,7 @@ optional arguments:
 ```
 
 ## Dependencies
+- sway or i3
 - gtk3
 - python (python3)
 - python-gobject
