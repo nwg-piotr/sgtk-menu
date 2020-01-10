@@ -162,13 +162,20 @@ def save_default_appendix(path):
                 "exec": "swaynagmode -t red -m ' Shutdown the machine?' -b ' Shutdown ' 'systemctl -i poweroff'",
                 "icon": "window-close"}]
 
-    with open(path, 'w') as f:
-        json.dump(content, f, indent=2)
+    save_json(content, path)
 
         
-def load_appendix(path):
+def load_json(path):
+    """
+    :return: dictionary
+    """
     try:
         with open(path, 'r') as f:
             return json.load(f)
     except FileNotFoundError:
-        return None
+        return {}
+
+
+def save_json(src_dict, path):
+    with open(path, 'w') as f:
+        json.dump(src_dict, f, indent=2)

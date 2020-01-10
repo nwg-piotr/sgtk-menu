@@ -25,7 +25,7 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 import cairo
 
 from tools import localized_category_names, additional_to_main, get_locale_string, config_dirs, save_default_appendix, \
-    load_appendix
+    load_json, save_json
 
 try:
     from i3ipc import Connection
@@ -44,7 +44,7 @@ swaymsg: bool = subprocess.run(
 
 # Lists to hold DesktopEntry objects of each category
 c_audio_video, c_development, c_game, c_graphics, c_network, c_office, c_science, c_settings, c_system, \
-c_utility, c_other = [], [], [], [], [], [], [], [], [], [], []
+c_utility, c_other, all_entries = [], [], [], [], [], [], [], [], [], [], [], []
 
 category_names = ['AudioVideo', 'Development', 'Game', 'Graphics', 'Network', 'Office', 'Science', 'Settings',
                   'System', 'Utility', 'Other']
@@ -74,6 +74,14 @@ config_dir = config_dirs()[0]
 if not os.path.exists(config_dir):
     os.makedirs(config_dir)
 appendix_file = os.path.join(config_dirs()[0], 'appendix')
+
+if "XDG_CACHE_HOME" in os.environ:
+    cache_file = os.path.join(os.environ("XDG_CACHE_HOME"), 'sway-gtk-menu')
+else:
+    cache_file = os.path.join(os.path.expanduser('~/.cache'), 'sway-gtk-menu')
+    
+cache = None
+sorted_cache = None
 
 
 class MainWindow(Gtk.Window):
@@ -189,7 +197,10 @@ def main():
 
     parser = argparse.ArgumentParser(description="A simple menu for sway and i3")
     parser.add_argument("-b", "--bottom", action="store_true", help="display at the bottom")
-    parser.add_argument("-a", "--append", action="store_true", help="append menu from {}".format(appendix_file))
+    favourites = parser.add_mutually_exclusive_group()
+    favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used")
+    favourites.add_argument('-fn', type=int, help="prepend FN most used")
+    parser.add_argument("-a", "--append", action="store_true", help="append custom menu from {}".format(appendix_file))
     parser.add_argument("-l", type=str, help="force language (str, like \"en\" for English)")
     parser.add_argument("-s", type=int, default=20, help="menu icon size (int, min: 16, max: 48, default: 20)")
     parser.add_argument("-w", type=int, help="menu width in px (int, default: screen width / 8)")
@@ -205,6 +216,11 @@ def main():
 
     if not os.path.isfile(appendix_file):
         save_default_appendix(appendix_file)
+        
+    global cache
+    cache = load_json(cache_file)
+    global sorted_cache
+    sorted_cache = sorted(cache.items(), reverse=True, key=lambda x: x[1])
 
     global locale
     locale = get_locale_string(args.l)
@@ -310,7 +326,8 @@ def list_entries():
                                     _categories = line.split('=')[1].strip()
 
                         if _name and _exec and _categories:
-                            DesktopEntry(_name, _exec, _icon, _categories)
+                            entry = DesktopEntry(_name, _exec, _icon, _categories)
+                            all_entries.append(entry)
                 except Exception as e:
                     print(e)
 
@@ -361,12 +378,62 @@ class DesktopEntry(object):
 
 
 def build_menu():
+    icon_theme = Gtk.IconTheme.get_default()
     menu = Gtk.Menu()
 
     win.search_item = Gtk.MenuItem()
     win.search_item.add(win.search_box)
     win.search_item.set_sensitive(False)
     menu.add(win.search_item)
+
+    favs_number = 0
+    if args.favourites:
+        favs_number = 5
+    elif args.fn:
+        favs_number = args.fn
+    if favs_number > 0:
+        global sorted_cache
+        if len(sorted_cache) < favs_number:
+            favs_number = len(sorted_cache)
+
+        to_prepend = []
+        for i in range(favs_number):
+            fav_exec = sorted_cache[i][0]
+            for item in all_entries:
+                if item.exec == fav_exec and item not in to_prepend:
+                    to_prepend.append(item)
+                    break  # avoid adding duplicates
+        for entry in to_prepend:
+            name = entry.name
+            exec = entry.exec
+            icon = entry.icon
+            hbox = Gtk.HBox()
+            label = Gtk.Label()
+            label.set_text(name)
+            image = None
+            if icon.startswith('/'):
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
+                image = Gtk.Image.new_from_pixbuf(pixbuf)
+            else:
+                try:
+                    if icon.endswith('.svg') or icon.endswith('.png'):
+                        icon = entry.icon.split('.')[0]
+                    pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
+                    image = Gtk.Image.new_from_pixbuf(pixbuf)
+                except Exception as e:
+                    print(e)
+            if image:
+                hbox.pack_start(image, False, False, 10)
+            if name:
+                hbox.pack_start(label, False, False, 0)
+            item = Gtk.MenuItem()
+            item.add(hbox)
+            item.connect('activate', launch, exec)
+            menu.append(item)
+            
+        separator = Gtk.SeparatorMenuItem()
+        separator.set_property("margin", 10)
+        menu.append(separator)
 
     if c_audio_video:
         append_submenu(c_audio_video, menu, 'AudioVideo')
@@ -393,9 +460,9 @@ def build_menu():
 
     if args.append:
         item = Gtk.SeparatorMenuItem()
+        item.set_property("margin", 10)
         menu.append(item)
-        appendix = load_appendix(appendix_file)
-        icon_theme = Gtk.IconTheme.get_default()
+        appendix = load_json(appendix_file)
         for entry in appendix:
             name = entry["name"]
             exec = entry["exec"]
@@ -582,6 +649,12 @@ class DesktopMenuItem(Gtk.MenuItem):
 
 def launch(item, command):
     print(command)
+    exec = command.replace('"', '')
+    if exec not in cache:
+        cache[exec] = 1
+    else:
+        cache[exec] += 1
+    save_json(cache, cache_file)
     subprocess.Popen('exec {}'.format(command), shell=True)
     Gtk.main_quit()
 
