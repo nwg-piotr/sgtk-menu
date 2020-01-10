@@ -27,12 +27,16 @@ def get_locale_string(forced_lang=None):
 
 
 def localized_category_names(lang='en'):
+    """
+    :param lang: detected or forced locale
+    :return: dictionary: category name => translated category name
+    """
     defined_names = {}
     for d in settings_dirs():
         d = d + "/desktop-directories/"
-        for (dirpath, dirnames, filenames) in os.walk(d):
-            for filename in filenames:
-                name, localized_name = read_entry(os.path.join(dirpath, filename), lang)
+        for (dir_path, dir_names, file_names) in os.walk(d):
+            for filename in file_names:
+                name, localized_name = translate_name(os.path.join(dir_path, filename), lang)
                 if name and localized_name and name not in defined_names:
                     defined_names[name] = localized_name
                     if additional_to_main(name) not in defined_names:
@@ -44,7 +48,7 @@ def localized_category_names(lang='en'):
     return defined_names
 
 
-def read_entry(path, lang):
+def translate_name(path, lang):
     name, localized_name = None, None
     try:
         with open(path) as d:
@@ -148,12 +152,11 @@ def additional_to_main(category):
 
 
 def save_default_appendix(path):
-    # Example icon names: /usr/share/icons/theme_name/32x32/actions/
     content = [{"name": "Lock",
                 "exec": "swaylock -f -c 000000",
                 "icon": "lock"},
                {"name": "Logout",
-                "exec": "swaynag -t red -m ' Exit sway session?' -b ' Logout ' 'i3-msg exit'",
+                "exec": "swaynag -t red -m ' Exit sway session?' -b ' Logout ' 'swaymsg exit'",
                 "icon": "exit"},
                {"name": "Reboot",
                 "exec": "swaynag -t red -m ' Reboot the machine?' -b ' Reboot ' 'systemctl reboot'",
