@@ -81,9 +81,9 @@ def settings_dirs():
 
 
 def config_dirs():
-    paths = [os.path.join(os.path.expanduser('~/.config'), 'sway-gtk-menu')]
+    paths = [os.path.join(os.path.expanduser('~/.config'), 'sgtk-menu')]
     if "XDG_CONFIG_HOME" in os.environ:
-        paths.append(os.path.join(os.environ("XDG_CONFIG_HOME"), 'sway-gtk-menu'))
+        paths.append(os.path.join(os.environ("XDG_CONFIG_HOME"), 'sgtk-menu'))
     return paths
 
 

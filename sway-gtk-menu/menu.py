@@ -39,7 +39,7 @@ except ModuleNotFoundError:
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
 # The variable indicates if we succeeded / are on sway.
 swaymsg: bool = subprocess.run(
-    ['swaymsg', 'for_window', '[title=\"sway_gtk_menu\"]', 'floating', 'enable'],
+    ['swaymsg', 'for_window', '[title=\"sgtk-menu\"]', 'floating', 'enable'],
     stdout=subprocess.DEVNULL).returncode == 0
 
 # Lists to hold DesktopEntry objects of each category
@@ -76,9 +76,9 @@ if not os.path.exists(config_dir):
 appendix_file = os.path.join(config_dirs()[0], 'appendix')
 
 if "XDG_CACHE_HOME" in os.environ:
-    cache_file = os.path.join(os.environ("XDG_CACHE_HOME"), 'sway-gtk-menu')
+    cache_file = os.path.join(os.environ("XDG_CACHE_HOME"), 'sgtk-menu')
 else:
-    cache_file = os.path.join(os.path.expanduser('~/.cache'), 'sway-gtk-menu')
+    cache_file = os.path.join(os.path.expanduser('~/.cache'), 'sgtk-menu')
     
 cache = None
 sorted_cache = None
@@ -87,8 +87,8 @@ sorted_cache = None
 class MainWindow(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self)
-        self.set_title('sway_gtk_menu')
-        self.set_role('sway_gtk_menu')
+        self.set_title('sgtk-menu')
+        self.set_role('sgtk-menu')
         self.connect("destroy", Gtk.main_quit)
         self.connect('draw', self.draw)
         self.search_box = Gtk.SearchEntry()
@@ -188,7 +188,7 @@ class MainWindow(Gtk.Window):
 
 def main():
     # exit if already running, thanks to Slava V at https://stackoverflow.com/a/384493/4040598
-    pid_file = os.path.join(tempfile.gettempdir(), 'sway_gtk_menu.pid')
+    pid_file = os.path.join(tempfile.gettempdir(), 'sgtk-menu.pid')
     fp = open(pid_file, 'w')
     try:
         fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -443,9 +443,10 @@ def build_menu():
             item.connect('activate', launch, exec)
             menu.append(item)
             
-        separator = Gtk.SeparatorMenuItem()
-        separator.set_property("margin", 10)
-        menu.append(separator)
+        if to_prepend:
+            separator = Gtk.SeparatorMenuItem()
+            separator.set_property("margin", 10)
+            menu.append(separator)
 
     if c_audio_video:
         append_submenu(c_audio_video, menu, 'AudioVideo')
