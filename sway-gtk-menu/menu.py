@@ -79,6 +79,7 @@ if "XDG_CACHE_HOME" in os.environ:
     cache_file = os.path.join(os.environ("XDG_CACHE_HOME"), 'sway-gtk-menu')
 else:
     cache_file = os.path.join(os.path.expanduser('~/.cache'), 'sway-gtk-menu')
+print(cache_file)
     
 cache = None
 sorted_cache = None
@@ -195,12 +196,15 @@ def main():
     except IOError:
         sys.exit(0)
 
+    global appendix_file
     parser = argparse.ArgumentParser(description="A simple menu for sway and i3")
     parser.add_argument("-b", "--bottom", action="store_true", help="display at the bottom")
     favourites = parser.add_mutually_exclusive_group()
     favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used")
     favourites.add_argument('-fn', type=int, help="prepend FN most used")
-    parser.add_argument("-a", "--append", action="store_true", help="append custom menu from {}".format(appendix_file))
+    appenxid = parser.add_mutually_exclusive_group()
+    appenxid.add_argument("-a", "--append", action="store_true", help="append custom menu from {}".format(appendix_file))
+    appenxid.add_argument("-af", type=str, help="append from {}".format(os.path.join(config_dir, 'filename')))
     parser.add_argument("-l", type=str, help="force language (str, like \"en\" for English)")
     parser.add_argument("-s", type=int, default=20, help="menu icon size (int, min: 16, max: 48, default: 20)")
     parser.add_argument("-w", type=int, help="menu width in px (int, default: screen width / 8)")
@@ -215,7 +219,10 @@ def main():
         args.s = 48
 
     if not os.path.isfile(appendix_file):
-        save_default_appendix(appendix_file)
+        save_default_appendix(appendix_file)  # default appendix file, must exist
+
+    if args.af:
+        appendix_file = os.path.join(config_dirs()[0], args.af)  # custom appendix file
         
     global cache
     cache = load_json(cache_file)
@@ -461,7 +468,8 @@ def build_menu():
     if c_other:
         append_submenu(c_other, menu, 'Other')
 
-    if args.append:
+    # append user-defined menu from default or custom file
+    if args.append or args.af:
         item = Gtk.SeparatorMenuItem()
         item.set_property("margin", 10)
         menu.append(item)
@@ -491,7 +499,7 @@ def build_menu():
                 hbox.pack_start(label, False, False, 0)
             item = Gtk.MenuItem()
             item.add(hbox)
-            item.connect('activate', launch, exec)
+            item.connect('activate', launch, exec, True)  # do not cache!
             menu.append(item)
 
     menu.connect("hide", win.die)
@@ -650,15 +658,13 @@ class DesktopMenuItem(Gtk.MenuItem):
         self.add(hbox)
 
 
-def launch(item, command):
-    print(command)
-    exec = command
-    # exec = command.replace('"', '')
-    if exec not in cache:
-        cache[exec] = 1
-    else:
-        cache[exec] += 1
-    save_json(cache, cache_file)
+def launch(item, command, no_cache=False):
+    if not no_cache:
+        if command not in cache:
+            cache[command] = 1
+        else:
+            cache[command] += 1
+        save_json(cache, cache_file)
     subprocess.Popen('exec {}'.format(command), shell=True)
     Gtk.main_quit()
 
