@@ -2,7 +2,7 @@
 # _*_ coding: utf-8 _*_
 
 """
-Most of this code is heavily influenced by Johan Malm's
+Most part of this code is heavily influenced by Johan Malm's
 https://github.com/johanmalm/jgmenu/blob/master/contrib/pmenu/jgmenu-pmenu.py
 
 Copyright (C) 2016-2017 Ovidiu M <mrovi9000@gmail.com>

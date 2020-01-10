@@ -2,7 +2,7 @@
 # _*_ coding: utf-8 _*_
 
 """
-This is an attempt to create a menu that behaves decently on sway window manager (and also works on i3).
+This is an attempt to develop a menu that behaves decently on sway window manager, and also works on i3.
 
 Author: Piotr Miller
 e-mail: nwg.piotr@gmail.com
@@ -94,20 +94,20 @@ def main():
         sys.exit(0)
 
     global appendix_file
-    parser = argparse.ArgumentParser(description="A simple menu for sway and i3")
-    parser.add_argument("-b", "--bottom", action="store_true", help="display at the bottom")
+    parser = argparse.ArgumentParser(description="GTK menu for sway and i3")
+    parser.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom")
     favourites = parser.add_mutually_exclusive_group()
-    favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used")
-    favourites.add_argument('-fn', type=int, help="prepend FN most used")
+    favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used items")
+    favourites.add_argument('-fn', type=int, help="prepend <FN> most used items")
     appenxid = parser.add_mutually_exclusive_group()
     appenxid.add_argument("-a", "--append", action="store_true", help="append custom menu from {}".format(appendix_file))
-    appenxid.add_argument("-af", type=str, help="append from {}".format(os.path.join(config_dir, 'filename')))
-    parser.add_argument("-l", type=str, help="force language (str, like \"en\" for English)")
-    parser.add_argument("-s", type=int, default=20, help="menu icon size (int, min: 16, max: 48, default: 20)")
-    parser.add_argument("-w", type=int, help="menu width in px (int, default: screen width / 8)")
-    parser.add_argument("-d", type=int, default=100, help="menu delay in milliseconds (int, default: 100)")
-    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (float, min: 0.0, max: 1.0, default: 0.3)")
-    parser.add_argument("-t", type=int, default=36, help="sway submenu lines limit (int, default: 30)")
+    appenxid.add_argument("-af", type=str, help="append custom menu from {}".format(os.path.join(config_dir, '<AF>')))
+    parser.add_argument("-l", type=str, help="force language (e.g. \"de\" for German)")
+    parser.add_argument("-s", type=int, default=20, help="menu icon size (min: 16, max: 48, default: 20)")
+    parser.add_argument("-w", type=int, help="menu width in px (integer, default: screen width / 8)")
+    parser.add_argument("-d", type=int, default=100, help="menu delay in milliseconds (default: 100)")
+    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3)")
+    parser.add_argument("-t", type=int, default=30, help="sway submenu lines limit (default: 30)")
     global args
     args = parser.parse_args()
     if args.s < 16:
@@ -115,12 +115,15 @@ def main():
     elif args.s > 48:
         args.s = 48
 
+    # Create default appendix file if not found
     if not os.path.isfile(appendix_file):
-        save_default_appendix(appendix_file)  # default appendix file, must exist
+        save_default_appendix(appendix_file)
 
+    # Replace appendix file name with custom - if any
     if args.af:
-        appendix_file = os.path.join(config_dirs()[0], args.af)  # custom appendix file
+        appendix_file = os.path.join(config_dirs()[0], args.af)
         
+    # cache stores number of clicks on each item
     global cache
     cache = load_json(cache_file)
 
@@ -132,6 +135,8 @@ def main():
     global locale
     locale = get_locale_string(args.l)
     category_names_dictionary = localized_category_names(locale)
+
+    # replace additional category names with main ones
     for name in category_names:
         main_category_name = additional_to_main(name)
         try:
@@ -146,7 +151,11 @@ def main():
         screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
     )
 
+    # find all .desktop entries, create DesktopEntry class instances;
+    # DesktopEntry adds itself to the proper List in the class constructor
     list_entries()
+
+    # Overlay window
     global win
     win = MainWindow()
     w, h = display_dimensions()
