@@ -79,7 +79,6 @@ if "XDG_CACHE_HOME" in os.environ:
     cache_file = os.path.join(os.environ("XDG_CACHE_HOME"), 'sway-gtk-menu')
 else:
     cache_file = os.path.join(os.path.expanduser('~/.cache'), 'sway-gtk-menu')
-print(cache_file)
     
 cache = None
 sorted_cache = None
@@ -208,7 +207,7 @@ def main():
     parser.add_argument("-l", type=str, help="force language (str, like \"en\" for English)")
     parser.add_argument("-s", type=int, default=20, help="menu icon size (int, min: 16, max: 48, default: 20)")
     parser.add_argument("-w", type=int, help="menu width in px (int, default: screen width / 8)")
-    parser.add_argument("-d", type=int, default=50, help="menu delay in milliseconds (int, default: 50)")
+    parser.add_argument("-d", type=int, default=100, help="menu delay in milliseconds (int, default: 100)")
     parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (float, min: 0.0, max: 1.0, default: 0.3)")
     parser.add_argument("-t", type=int, default=36, help="sway submenu lines limit (int, default: 30)")
     global args
@@ -396,6 +395,7 @@ def build_menu():
     win.search_item.set_sensitive(False)
     menu.add(win.search_item)
 
+    # Prepend most frequently used items
     favs_number = 0
     if args.favourites:
         favs_number = 5
@@ -412,7 +412,9 @@ def build_menu():
             for item in all_entries:
                 if item.exec == fav_exec and item not in to_prepend:
                     to_prepend.append(item)
-                    break  # avoid adding duplicates
+                    break  # stop searching, there may be duplicates on the list
+
+        # build menu items
         for entry in to_prepend:
             name = entry.name
             exec = entry.exec
@@ -518,7 +520,7 @@ def append_submenu(items_list, menu, submenu_name):
 
 class SubMenu(Gtk.Menu):
     """
-    We need to subclass Gtk.Menu, to assign .desktop entries list to it.
+    We need to subclass Gtk.Menu, to assign its .desktop entries list to it.
     Needed to workaround the sway overflowing menus issue. See cheat_sway and cheat_sway_on_exit methods.
     """
     def __init__(self):
@@ -593,7 +595,7 @@ def cheat_sway(menu, flipped_rect, final_rect, flipped_x, flipped_y, entries_lis
     """
     If we're on sway, all submenus items number have been limited to args.t during their creation, to workaround
     sway 1.2 / GTK bug. This method is being called on submenu popped-up to add missing items. We'll have to remove
-    them on submenu exit event. But scrolling works on sway, hurray!
+    them on submenu exit event. But scrolling overflowed menus works on sway, hurray!
     """
     if len(menu.get_children()) < len(entries_list):
         icon_theme = Gtk.IconTheme.get_default()
