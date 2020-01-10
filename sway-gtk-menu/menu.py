@@ -219,6 +219,9 @@ def main():
         
     global cache
     cache = load_json(cache_file)
+
+    if not cache:
+        save_json(cache, cache_file)
     global sorted_cache
     sorted_cache = sorted(cache.items(), reverse=True, key=lambda x: x[1])
 
@@ -649,7 +652,8 @@ class DesktopMenuItem(Gtk.MenuItem):
 
 def launch(item, command):
     print(command)
-    exec = command.replace('"', '')
+    exec = command
+    # exec = command.replace('"', '')
     if exec not in cache:
         cache[exec] = 1
     else:
