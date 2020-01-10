@@ -84,108 +84,6 @@ cache = None
 sorted_cache = None
 
 
-class MainWindow(Gtk.Window):
-    def __init__(self):
-        Gtk.Window.__init__(self)
-        self.set_title('sgtk-menu')
-        self.set_role('sgtk-menu')
-        self.connect("destroy", Gtk.main_quit)
-        self.connect('draw', self.draw)
-        self.search_box = Gtk.SearchEntry()
-        self.search_box.set_text('Type to search')
-        self.search_phrase = ''
-        self.screen_dimensions = (0, 0)
-
-        # Credits for transparency go to  KurtJacobson:
-        # https://gist.github.com/KurtJacobson/374c8cb83aee4851d39981b9c7e2c22c
-        screen = self.get_screen()
-        visual = screen.get_rgba_visual()
-        if visual and screen.is_composited():
-            self.set_visual(visual)
-        self.set_app_paintable(True)
-
-        self.menu = None  # We'll create it outside the class
-        
-        outer_box = Gtk.Box(spacing=0, orientation=Gtk.Orientation.VERTICAL)
-        vbox = Gtk.VBox(spacing=0, border_width=0)
-        hbox = Gtk.HBox(spacing=0, border_width=0)
-        self.button = Gtk.Box()
-        hbox.pack_start(self.button, False, False, 0)
-        if args.bottom:  # display menu at the bottom
-            vbox.pack_end(hbox, False, False, 0)
-        else:            # display on top
-            vbox.pack_start(hbox, False, False, 0)
-        outer_box.pack_start(vbox, True, True, 0)
-        self.add(outer_box)
-
-    def search_items(self, menu, event):
-        if event.type == Gdk.EventType.KEY_RELEASE:
-            update = False
-            if event.string and event.string.isalnum() or event.string == ' ':
-                update = True
-                # remove menu items (submenus & user defined), except for filter box (item #0)
-                items = win.menu.get_children()
-                if len(items) > 1:
-                    for item in items[1:]:
-                        win.menu.remove(item)
-
-                self.search_phrase += event.string
-                self.search_box.set_text(self.search_phrase)
-
-            elif event.keyval == 65288:  # backspace
-                update = True
-                self.search_phrase = self.search_phrase[:-1]
-                self.search_box.set_text(self.search_phrase)
-
-            if update:
-                if len(self.search_phrase) > 0:
-                    filtered_items_list = []
-                    for item in all_copies_list:
-                        win.menu.remove(item)
-                        # We'll search the entry name and the first element of its command
-                        if self.search_phrase.upper() in item.name.upper() or self.search_phrase.upper() in \
-                                item.exec.split()[0].upper():
-                            # avoid adding twice
-                            found = False
-                            for i in filtered_items_list:
-                                if i.name == item.name:
-                                    found = True
-                            if not found:
-                                filtered_items_list.append(item)
-
-                    for item in win.menu.get_children()[1:]:
-                        win.menu.remove(item)
-                    for item in filtered_items_list:
-                        win.menu.append(item)
-                    win.menu.show_all()
-                    win.search_item.set_sensitive(True)
-                    win.menu.reposition()
-                else:
-                    for item in win.menu.get_children():
-                        win.menu.remove(item)
-                    for item in menu_items_list:
-                        win.menu.append(item)
-                    win.search_item.set_sensitive(False)
-                    win.menu.reposition()
-            if len(self.search_phrase) == 0:
-                self.search_box.set_text('Type to search')
-
-        return True
-
-    def resize(self, w, h):
-        self.set_size_request(w, h)
-        self.screen_dimensions = w, h
-
-    def draw(self, widget, context):
-        context.set_source_rgba(0, 0, 0, args.o)
-        context.set_operator(cairo.OPERATOR_SOURCE)
-        context.paint()
-        context.set_operator(cairo.OPERATOR_OVER)
-
-    def die(self, *args):
-        Gtk.main_quit()
-
-
 def main():
     # exit if already running, thanks to Slava V at https://stackoverflow.com/a/384493/4040598
     pid_file = os.path.join(tempfile.gettempdir(), 'sgtk-menu.pid')
@@ -269,6 +167,108 @@ def main():
 
     GLib.timeout_add(args.d, open_menu)
     Gtk.main()
+
+
+class MainWindow(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self)
+        self.set_title('sgtk-menu')
+        self.set_role('sgtk-menu')
+        self.connect("destroy", Gtk.main_quit)
+        self.connect('draw', self.draw)
+        self.search_box = Gtk.SearchEntry()
+        self.search_box.set_text('Type to search')
+        self.search_phrase = ''
+        self.screen_dimensions = (0, 0)
+
+        # Credits for transparency go to  KurtJacobson:
+        # https://gist.github.com/KurtJacobson/374c8cb83aee4851d39981b9c7e2c22c
+        screen = self.get_screen()
+        visual = screen.get_rgba_visual()
+        if visual and screen.is_composited():
+            self.set_visual(visual)
+        self.set_app_paintable(True)
+
+        self.menu = None  # We'll create it outside the class
+
+        outer_box = Gtk.Box(spacing=0, orientation=Gtk.Orientation.VERTICAL)
+        vbox = Gtk.VBox(spacing=0, border_width=0)
+        hbox = Gtk.HBox(spacing=0, border_width=0)
+        self.button = Gtk.Box()
+        hbox.pack_start(self.button, False, False, 0)
+        if args.bottom:  # display menu at the bottom
+            vbox.pack_end(hbox, False, False, 0)
+        else:  # display on top
+            vbox.pack_start(hbox, False, False, 0)
+        outer_box.pack_start(vbox, True, True, 0)
+        self.add(outer_box)
+
+    def search_items(self, menu, event):
+        if event.type == Gdk.EventType.KEY_RELEASE:
+            update = False
+            if event.string and event.string.isalnum() or event.string == ' ':
+                update = True
+                # remove menu items (submenus & user defined), except for filter box (item #0)
+                items = win.menu.get_children()
+                if len(items) > 1:
+                    for item in items[1:]:
+                        win.menu.remove(item)
+
+                self.search_phrase += event.string
+                self.search_box.set_text(self.search_phrase)
+
+            elif event.keyval == 65288:  # backspace
+                update = True
+                self.search_phrase = self.search_phrase[:-1]
+                self.search_box.set_text(self.search_phrase)
+
+            if update:
+                if len(self.search_phrase) > 0:
+                    filtered_items_list = []
+                    for item in all_copies_list:
+                        win.menu.remove(item)
+                        # We'll search the entry name and the first element of its command
+                        if self.search_phrase.upper() in item.name.upper() or self.search_phrase.upper() in \
+                                item.exec.split()[0].upper():
+                            # avoid adding twice
+                            found = False
+                            for i in filtered_items_list:
+                                if i.name == item.name:
+                                    found = True
+                            if not found:
+                                filtered_items_list.append(item)
+
+                    for item in win.menu.get_children()[1:]:
+                        win.menu.remove(item)
+                    for item in filtered_items_list:
+                        win.menu.append(item)
+                    win.menu.show_all()
+                    win.search_item.set_sensitive(True)
+                    win.menu.reposition()
+                else:
+                    for item in win.menu.get_children():
+                        win.menu.remove(item)
+                    for item in menu_items_list:
+                        win.menu.append(item)
+                    win.search_item.set_sensitive(False)
+                    win.menu.reposition()
+            if len(self.search_phrase) == 0:
+                self.search_box.set_text('Type to search')
+
+        return True
+
+    def resize(self, w, h):
+        self.set_size_request(w, h)
+        self.screen_dimensions = w, h
+
+    def draw(self, widget, context):
+        context.set_source_rgba(0, 0, 0, args.o)
+        context.set_operator(cairo.OPERATOR_SOURCE)
+        context.paint()
+        context.set_operator(cairo.OPERATOR_OVER)
+
+    def die(self, *args):
+        Gtk.main_quit()
 
 
 def kill_border():
@@ -551,7 +551,7 @@ def sub_menu(entries_list, name, localized_name):
     submenu.set_property("reserve_toggle_size", False)
     # On sway 1.2, if popped-up menu length exceeds the screen height, no buttons to scroll appear,
     # and the mouse scroller does not work, too. We need a workaround!
-    if not swaymsg or len(entries_list) < args.t:
+    if not swaymsg or len(entries_list) < args.t:  # -t stands for sway submenu lines limit
         # We are not on sway or submenu is short enough
         for entry in entries_list:
             subitem = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
@@ -569,7 +569,7 @@ def sub_menu(entries_list, name, localized_name):
         submenu.connect("key-release-event", win.search_items)
         item.set_submenu(submenu)
     else:
-        # This will be tricky as hell. We only add 30 items here. The rest must be added on menu popped-up.
+        # This will be tricky as hell. We only add 30 items here. The rest must be added on menu popped-up (cheat_sway).
         for i in range(args.t):
             entry = entries_list[i]
             subitem = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
@@ -595,8 +595,8 @@ def sub_menu(entries_list, name, localized_name):
 def cheat_sway(menu, flipped_rect, final_rect, flipped_x, flipped_y, entries_list):
     """
     If we're on sway, all submenus items number have been limited to args.t during their creation, to workaround
-    sway 1.2 / GTK bug. This method is being called on submenu popped-up to add missing items. We'll have to remove
-    them on submenu exit event. But scrolling overflowed menus works on sway, hurray!
+    sway 1.2 / GTK bug. This method is being called on submenu popped-up, to add missing items. We'll have to remove
+    them on submenu exit event (cheat_sway_on_exit). But scrolling overflowed menus works on sway, hurray!
     """
     if len(menu.get_children()) < len(entries_list):
         icon_theme = Gtk.IconTheme.get_default()
