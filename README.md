@@ -60,7 +60,7 @@ file. Use `sgtk-menu -f -af <custom_menu_file>` to append your custom menu. Copy
 
 ## Installation
 
-For now the only available package is [sgtk-menu]https://aur.archlinux.org/packages/sgtk-menu [AUR] for Arch linux.
+For now the only available package is [sgtk-menu](https://aur.archlinux.org/packages/sgtk-menu) [AUR] for Arch linux.
 However, you may simply clone the repository and launch the `menu.py` file, instead of `sgtk-menu` command.
 
 ## Dependencies
