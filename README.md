@@ -64,11 +64,11 @@ For now the only available package is [sgtk-menu](https://aur.archlinux.org/pack
 However, you may simply clone the repository and launch the `menu.py` file, instead of `sgtk-menu` command.
 
 ## Dependencies
-- sway or i3
-- gtk3
-- python (python3)
-- python-gobject
-- python-i3ipc (optionally, to avoid deprecation warning)
+- `sway` or `i3`
+- `gtk3`
+- `python` (python3)
+- `python-gobject`
+- `python-i3ipc` (optionally, to avoid deprecation warnings)
 
 ## How it works?
 
