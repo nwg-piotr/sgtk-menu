@@ -50,6 +50,14 @@ optional arguments:
   -t T              sway submenu lines limit (default: 30)
 ```
 
+Sample sway key binding:
+
+`bindsym mod1+F1 exec sgtk-menu -f -a`
+
+displays menu prepended with the default number of favourites, appended with the default `~/.config/sgtk-menu/appendix`
+file. Use `sgtk-menu -f -af <custom_menu_file>` to append your custom menu. Copy and edit the default `appendix` file 
+(in the same location).
+
 ## Dependencies
 - sway or i3
 - gtk3
