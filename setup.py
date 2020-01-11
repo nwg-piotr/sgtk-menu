@@ -12,7 +12,7 @@ setup(
     description='GTK menu for sway and i3',
     packages=['sgtk-menu'],
     include_package_data=True,
-    url='https://github.com/nwg-piotr/sway-gtk-menu',
+    url='https://github.com/nwg-piotr/sgtk-menu',
     license='GPL3',
     author='Piotr Miller',
     author_email='nwg.piotr@gmail.com',

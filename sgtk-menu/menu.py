@@ -7,7 +7,7 @@ This is an attempt to develop a menu that behaves decently on sway window manage
 Author: Piotr Miller
 e-mail: nwg.piotr@gmail.com
 Website: http://nwg.pl
-Project: https://github.com/nwg-piotr/sway-gtk-menu
+Project: https://github.com/nwg-piotr/sgtk-menu
 License: GPL3
 """
 
