@@ -69,6 +69,7 @@ args = None
 all_items_list = []     # list of all DesktopMenuItem objects assigned to a .desktop entry
 all_copies_list = []    # list of copies of above used while searching (not assigned to a submenu!)
 menu_items_list = []    # created / updated with menu.get_children()
+filtered_items_list = []  # used in the search method
 
 config_dir = config_dirs()[0]
 if not os.path.exists(config_dir):
@@ -220,17 +221,17 @@ class MainWindow(Gtk.Window):
         self.add(outer_box)
 
     def search_items(self, menu, event):
+        global filtered_items_list
         if event.type == Gdk.EventType.KEY_RELEASE:
             update = False
             # search box only accepts alphanumeric characters, space and backspace
             if event.string and event.string.isalnum() or event.string == ' ':
                 update = True
                 # remove menu items, except for search box (item #0)
-                items = win.menu.get_children()
+                items = self.menu.get_children()
                 if len(items) > 1:
                     for item in items[1:]:
-                        win.menu.remove(item)
-
+                        self.menu.remove(item)
                 self.search_phrase += event.string
                 self.search_box.set_text(self.search_phrase)
 
@@ -238,12 +239,17 @@ class MainWindow(Gtk.Window):
                 update = True
                 self.search_phrase = self.search_phrase[:-1]
                 self.search_box.set_text(self.search_phrase)
+                
+            # If our search result is a single item, we may want to activate it with the Enter key,
+            # but it does not work. Here is a workaround:
+            elif event.keyval == 65293 and len(filtered_items_list) == 1:
+                filtered_items_list[0].activate()
 
             if update:
                 if len(self.search_phrase) > 0:
                     filtered_items_list = []
                     for item in all_copies_list:
-                        win.menu.remove(item)
+                        self.menu.remove(item)
                         # We'll search the entry name and the first element of its command (to skip arguments)
                         if self.search_phrase.upper() in item.name.upper() or self.search_phrase.upper() in \
                                 item.exec.split()[0].upper():
@@ -255,34 +261,35 @@ class MainWindow(Gtk.Window):
                             if not found:
                                 filtered_items_list.append(item)
 
-                    for item in win.menu.get_children()[1:]:
-                        win.menu.remove(item)
+                    for item in self.menu.get_children()[1:]:
+                        self.menu.remove(item)
 
                     for item in filtered_items_list:
-                        win.menu.append(item)
+                        self.menu.append(item)
                         item.deselect()
                         
                     if len(filtered_items_list) == 1:
-                        filtered_items_list[0].select()
+                        item = filtered_items_list[0]
+                        item.select()   # But we still can't activate with Enter
 
-                    win.menu.show_all()
+                    self.menu.show_all()
                     # as the search box is actually a menu item, it must be sensitive now,
                     # in order not to be skipped while scrolling overflowed menu
-                    win.search_item.set_sensitive(True)
-                    win.menu.reposition()
+                    self.search_item.set_sensitive(True)
+                    self.menu.reposition()
                 else:
                     # clear search results
-                    for item in win.menu.get_children():
-                        win.menu.remove(item)
+                    for item in self.menu.get_children():
+                        self.menu.remove(item)
                     # restore original menu
                     for item in menu_items_list:
-                        win.menu.append(item)
+                        self.menu.append(item)
                     # better to have it insensitive when possible
-                    win.search_item.set_sensitive(False)
-                    win.menu.reposition()
+                    self.search_item.set_sensitive(False)
+                    self.menu.reposition()
             if len(self.search_phrase) == 0:
                 self.search_box.set_text('Type to search')
-
+        
         return True
 
     def resize(self, w, h):
