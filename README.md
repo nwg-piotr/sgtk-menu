@@ -54,6 +54,10 @@ Sample sway key binding:
 
 `bindsym mod1+F1 exec sgtk-menu -f -a`
 
+or sample i3 key binding:
+
+`bindsym Mod1+F1 exec --no-startup-id sgtk-menu -f -a`
+
 displays menu prepended with the default number of favourites, appended with the default `~/.config/sgtk-menu/appendix`
 file. Use `sgtk-menu -f -af <custom_menu_file>` to append your custom menu. Copy and edit the default `appendix` file 
 (in the same location).
@@ -64,6 +68,7 @@ For now the only available package is [sgtk-menu](https://aur.archlinux.org/pack
 However, you may simply clone the repository and launch the `menu.py` file, instead of `sgtk-menu` command.
 
 ## Dependencies
+
 - `sway` or `i3`
 - `gtk3`
 - `python` (python3)
@@ -77,9 +82,22 @@ To work it around, the script opens the menu over a (semi-)transparent, floating
 
 ## Troubleshooting
 
-In case __the menu does not position properly in the screen corner__, try increasing the delay length. The default value
-equals 100 milliseconds, and on my laptop it works well down to 30. However slower machines may require higher values.
-E.g. try using `-d 200` argument.
+### Menu does not position properly in the screen corner
+
+Try increasing the delay length. The default value is 100 milliseconds, and on my laptop it works well down to 30. 
+Slower machines, however, may require higher values. E.g. try using `-d 200` argument.
+
+### Overlay behind the menu is not (semi)transparent on i3
+
+You need [compton](https://github.com/chjj/compton) or equivalent X11 compositor.
+
+## Overlay first displays as a tiled window on i3
+
+Add this to your `~/.config/i3/config` file:
+
+```text
+for_window [title="sgtk-menu"] border none, floating enable
+```
 
 ## TODO
 - On next sway / GTK release, check if the overflowed menus issue on sway is fixed; remove 50 SLOC long workaround if so;

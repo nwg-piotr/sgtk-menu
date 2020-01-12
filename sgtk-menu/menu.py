@@ -299,8 +299,8 @@ class MainWindow(Gtk.Window):
 def open_menu():
     if not swaymsg:
         # we couldn't do this on i3 at the script start
-        subprocess.run(['i3-msg', 'floating', 'toggle'], stdout=subprocess.DEVNULL)
-        subprocess.run(['i3-msg', 'border', 'pixel', '0'], stdout=subprocess.DEVNULL)
+        subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
+        subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
     else:
         subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
 
