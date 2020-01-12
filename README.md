@@ -31,7 +31,8 @@ that I had ever expected.
 
 ```text
 $ sgtk-menu -h
-usage: menu.py [-h] [-b] [-f | -fn FN] [-a | -af AF] [-l L] [-s S] [-w W] [-d D] [-o O] [-t T]
+usage: menu.py [-h] [-b] [-f | -fn FN] [-a | -af AF] [-n] [-l L] [-s S] [-w W] [-d D] [-o O] [-t T]
+               [-y Y]
 
 GTK menu for sway and i3
 
@@ -42,12 +43,14 @@ optional arguments:
   -fn FN            prepend <FN> most used items
   -a, --append      append custom menu from /home/piotr/.config/sgtk-menu/appendix
   -af AF            append custom menu from /home/piotr/.config/sgtk-menu/<AF>
+  -n, --no-menu     skip menu, display appendix only
   -l L              force language (e.g. "de" for German)
   -s S              menu icon size (min: 16, max: 48, default: 20)
   -w W              menu width in px (integer, default: screen width / 8)
   -d D              menu delay in milliseconds (default: 100)
   -o O              overlay opacity (min: 0.0, max: 1.0, default: 0.3)
   -t T              sway submenu lines limit (default: 30)
+  -y Y              y offset from edge to display menu at
 ```
 
 Sample sway key binding:
