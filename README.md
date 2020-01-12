@@ -83,6 +83,11 @@ However, you may simply clone the repository and launch the `menu.py` file, inst
 The problem to resolve was, that the Gtk.Menu class behaves differently / unexpectedly when open over Wayland and X11 windows. 
 To work it around, the script opens the menu over a (semi-)transparent, floating window, that covers all the screen.
 
+## i3 support
+
+Even if there exist plenty of good X11 menus, with the most excellent [jgmenu](https://github.com/johanmalm/jgmenu) 
+on top, I'm doing my best to make sgtk-menu i3-compatible. See below to resolve issues, if any. 
+
 ## Troubleshooting
 
 ### Menu does not position properly in the screen corner
