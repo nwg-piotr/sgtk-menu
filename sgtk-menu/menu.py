@@ -223,6 +223,10 @@ class MainWindow(Gtk.Window):
         self.add(outer_box)
 
     def search_items(self, menu, event):
+        if args.no_menu:
+            # we don't search custom menus
+            return False
+
         global filtered_items_list
         if event.type == Gdk.EventType.KEY_RELEASE:
             update = False
