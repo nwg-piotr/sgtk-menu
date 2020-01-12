@@ -15,8 +15,6 @@ As the script searches `.desktop` files only, it may be used as a replacement to
 ![screenshot](http://nwg.pl/Lychee/uploads/big/fbe90b3f5c8d192657a7e9ad98310d84.png)
 *The menu in Clearlooks GTK theme w/ Aqatix icons*
 
-See [sample usage screenshots](http://nwg.pl/Lychee/#15788457744400).
-
 ## Background
 
 Well, I didn't even think that sway needed a menu, being happy with [wofi](https://hg.sr.ht/~scoopta/wofi) and 
