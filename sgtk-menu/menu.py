@@ -260,6 +260,10 @@ class MainWindow(Gtk.Window):
 
                     for item in filtered_items_list:
                         win.menu.append(item)
+                        item.deselect()
+                        
+                    if len(filtered_items_list) == 1:
+                        filtered_items_list[0].select()
 
                     win.menu.show_all()
                     # as the search box is actually a menu item, it must be sensitive now,
