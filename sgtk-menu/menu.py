@@ -39,7 +39,7 @@ except ModuleNotFoundError:
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
 # The variable indicates if we succeeded / are on sway.
 swaymsg: bool = subprocess.run(
-    ['swaymsg', 'for_window', '[title=\"sgtk-menu\"]', 'floating', 'enable'],
+    ['swaymsg', 'for_window', '[title=\"sgtk-menu-win\"]', 'floating', 'enable'],
     stdout=subprocess.DEVNULL).returncode == 0
 
 # Lists to hold DesktopEntry objects of each category
@@ -181,8 +181,8 @@ def main():
 class MainWindow(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self)
-        self.set_title('sgtk-menu')
-        self.set_role('sgtk-menu')
+        self.set_title('sgtk-menu-win')
+        self.set_role('sgtk-menu-win')
         self.connect("destroy", Gtk.main_quit)
         self.connect('draw', self.draw)         # transparency
 
