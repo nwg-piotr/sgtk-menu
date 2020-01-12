@@ -80,7 +80,7 @@ if "XDG_CACHE_HOME" in os.environ:
     cache_file = os.path.join(os.environ("XDG_CACHE_HOME"), 'sgtk-menu')
 else:
     cache_file = os.path.join(os.path.expanduser('~/.cache'), 'sgtk-menu')
-    
+
 cache = None
 sorted_cache = None
 
@@ -109,6 +109,7 @@ def main():
     parser.add_argument("-d", type=int, default=100, help="menu delay in milliseconds (default: 100)")
     parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3)")
     parser.add_argument("-t", type=int, default=30, help="sway submenu lines limit (default: 30)")
+    parser.add_argument("-y", type=int, default=0, help="y offset from edge to display menu at")
     global args
     args = parser.parse_args()
     if args.s < 16:
@@ -123,7 +124,7 @@ def main():
     # Replace appendix file name with custom - if any
     if args.af:
         appendix_file = os.path.join(config_dirs()[0], args.af)
-        
+
     # cache stores number of clicks on each item
     global cache
     cache = load_json(cache_file)
@@ -216,7 +217,7 @@ class MainWindow(Gtk.Window):
         else:
             # display on top
             vbox.pack_start(hbox, False, False, 0)
-        outer_box.pack_start(vbox, True, True, 0)
+        outer_box.pack_start(vbox, True, True, args.y)
 
         self.add(outer_box)
 
@@ -239,7 +240,7 @@ class MainWindow(Gtk.Window):
                 update = True
                 self.search_phrase = self.search_phrase[:-1]
                 self.search_box.set_text(self.search_phrase)
-                
+
             # If our search result is a single item, we may want to activate it with the Enter key,
             # but it does not work. Here is a workaround:
             elif event.keyval == 65293 and len(filtered_items_list) == 1:
@@ -267,7 +268,7 @@ class MainWindow(Gtk.Window):
                     for item in filtered_items_list:
                         self.menu.append(item)
                         item.deselect()
-                        
+
                     if len(filtered_items_list) == 1:
                         item = filtered_items_list[0]
                         item.select()   # But we still can't activate with Enter
@@ -289,7 +290,7 @@ class MainWindow(Gtk.Window):
                     self.menu.reposition()
             if len(self.search_phrase) == 0:
                 self.search_box.set_text('Type to search')
-        
+
         return True
 
     def resize(self, w, h):
@@ -315,7 +316,12 @@ def open_menu():
     else:
         subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
 
-    win.menu.popup_at_widget(win.anchor, Gdk.Gravity.CENTER, Gdk.Gravity.CENTER, None)
+    if args.bottom:
+        gravity = Gdk.Gravity.SOUTH
+    else:
+        gravity = Gdk.Gravity.NORTH
+
+    win.menu.popup_at_widget(win.anchor, gravity, gravity, None)
 
 
 def display_dimensions():
@@ -370,7 +376,7 @@ def list_entries():
                                     _categories = line.split('=')[1].strip()
 
                         if _name and _exec and _categories:
-                            # this will hold the data we need, and also automagically append itself to the proper list 
+                            # this will hold the data we need, and also automagically append itself to the proper list
                             entry = DesktopEntry(_name, _exec, _icon, _categories)
                             # we need this list for the favourites menu
                             all_entries.append(entry)
@@ -482,7 +488,7 @@ def build_menu():
             item.add(hbox)
             item.connect('activate', launch, exec)
             menu.append(item)
-            
+
         if to_prepend:
             separator = Gtk.SeparatorMenuItem()
             separator.set_property("margin", 10)
@@ -569,7 +575,7 @@ class SubMenu(Gtk.Menu):
         Gtk.Menu.__init__(self)
         self.entries_list = list
 
-        
+
 def sub_menu(entries_list, name, localized_name):
     icon_theme = Gtk.IconTheme.get_default()
     outer_hbox = Gtk.HBox()
@@ -598,14 +604,14 @@ def sub_menu(entries_list, name, localized_name):
             subitem = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
             subitem.connect('activate', launch, entry.exec)
             all_items_list.append(subitem)
-    
+
             subitem_copy = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
             subitem_copy.connect('activate', launch, entry.exec)
             subitem_copy.show()
             all_copies_list.append(subitem_copy)
-    
+
             submenu.append(subitem)
-    
+
         item.add(outer_hbox)
         submenu.connect("key-release-event", win.search_items)
         item.set_submenu(submenu)

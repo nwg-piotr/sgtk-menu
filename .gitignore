@@ -1,3 +1,4 @@
 /.idea
 /venv
 /sgtk_menu.egg-info/
+__pycache__
