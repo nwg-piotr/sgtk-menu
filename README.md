@@ -99,7 +99,7 @@ Slower machines, however, may require higher values. E.g. try using `-d 200` arg
 
 You need [compton](https://github.com/chjj/compton) or equivalent X11 compositor.
 
-## Overlay first displays as a tiled window on i3
+### Overlay first displays as a tiled window on i3
 
 Add this to your `~/.config/i3/config` file:
 
