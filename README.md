@@ -41,8 +41,8 @@ optional arguments:
   -b, --bottom      display menu at the bottom
   -f, --favourites  prepend 5 most used items
   -fn FN            prepend <FN> most used items
-  -a, --append      append custom menu from /home/piotr/.config/sgtk-menu/appendix
-  -af AF            append custom menu from /home/piotr/.config/sgtk-menu/<AF>
+  -a, --append      append custom menu from ~/.config/sgtk-menu/appendix
+  -af AF            append custom menu from ~/.config/sgtk-menu/<AF>
   -n, --no-menu     skip menu, display appendix only
   -l L              force language (e.g. "de" for German)
   -s S              menu icon size (min: 16, max: 48, default: 20)
