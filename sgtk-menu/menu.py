@@ -100,9 +100,10 @@ def main():
     favourites = parser.add_mutually_exclusive_group()
     favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used items")
     favourites.add_argument('-fn', type=int, help="prepend <FN> most used items")
-    appenxid = parser.add_mutually_exclusive_group()
-    appenxid.add_argument("-a", "--append", action="store_true", help="append custom menu from {}".format(appendix_file))
-    appenxid.add_argument("-af", type=str, help="append custom menu from {}".format(os.path.join(config_dir, '<AF>')))
+    appendix = parser.add_mutually_exclusive_group()
+    appendix.add_argument("-a", "--append", action="store_true", help="append custom menu from {}".format(appendix_file))
+    appendix.add_argument("-af", type=str, help="append custom menu from {}".format(os.path.join(config_dir, '<AF>')))
+    parser.add_argument("-n", "--no-menu", action="store_true", help="skip menu, display appendix only")
     parser.add_argument("-l", type=str, help="force language (e.g. \"de\" for German)")
     parser.add_argument("-s", type=int, default=20, help="menu icon size (min: 16, max: 48, default: 20)")
     parser.add_argument("-w", type=int, help="menu width in px (integer, default: screen width / 8)")
@@ -436,93 +437,95 @@ def build_menu():
     icon_theme = Gtk.IconTheme.get_default()
     menu = Gtk.Menu()
 
-    win.search_item = Gtk.MenuItem()
-    win.search_item.add(win.search_box)
-    win.search_item.set_sensitive(False)
-    menu.add(win.search_item)
+    if not args.no_menu:
+        win.search_item = Gtk.MenuItem()
+        win.search_item.add(win.search_box)
+        win.search_item.set_sensitive(False)
+        menu.add(win.search_item)
 
-    # Prepend favourite items (-f or -fn argument used)
-    favs_number = 0
-    if args.favourites:
-        favs_number = 5
-    elif args.fn:
-        favs_number = args.fn
-    if favs_number > 0:
-        global sorted_cache
-        if len(sorted_cache) < favs_number:
-            favs_number = len(sorted_cache)
+        # Prepend favourite items (-f or -fn argument used)
+        favs_number = 0
+        if args.favourites:
+            favs_number = 5
+        elif args.fn:
+            favs_number = args.fn
+        if favs_number > 0:
+            global sorted_cache
+            if len(sorted_cache) < favs_number:
+                favs_number = len(sorted_cache)
 
-        to_prepend = []  # list of favourite items
-        for i in range(favs_number):
-            fav_exec = sorted_cache[i][0]
-            for item in all_entries:
-                if item.exec == fav_exec and item not in to_prepend:
-                    to_prepend.append(item)
-                    break  # stop searching, there may be duplicates on the list
+            to_prepend = []  # list of favourite items
+            for i in range(favs_number):
+                fav_exec = sorted_cache[i][0]
+                for item in all_entries:
+                    if item.exec == fav_exec and item not in to_prepend:
+                        to_prepend.append(item)
+                        break  # stop searching, there may be duplicates on the list
 
-        # build menu items
-        for entry in to_prepend:
-            name = entry.name
-            exec = entry.exec
-            icon = entry.icon
-            hbox = Gtk.HBox()
-            label = Gtk.Label()
-            label.set_text(name)
-            image = None
-            if icon.startswith('/'):
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
-                image = Gtk.Image.new_from_pixbuf(pixbuf)
-            else:
-                try:
-                    if icon.endswith('.svg') or icon.endswith('.png'):
-                        icon = entry.icon.split('.')[0]
-                    pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
+            # build menu items
+            for entry in to_prepend:
+                name = entry.name
+                exec = entry.exec
+                icon = entry.icon
+                hbox = Gtk.HBox()
+                label = Gtk.Label()
+                label.set_text(name)
+                image = None
+                if icon.startswith('/'):
+                    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
                     image = Gtk.Image.new_from_pixbuf(pixbuf)
-                except Exception as e:
-                    print(e)
-            if image:
-                hbox.pack_start(image, False, False, 10)
-            if name:
-                hbox.pack_start(label, False, False, 0)
-            item = Gtk.MenuItem()
-            item.add(hbox)
-            item.connect('activate', launch, exec)
-            menu.append(item)
+                else:
+                    try:
+                        if icon.endswith('.svg') or icon.endswith('.png'):
+                            icon = entry.icon.split('.')[0]
+                        pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
+                        image = Gtk.Image.new_from_pixbuf(pixbuf)
+                    except Exception as e:
+                        print(e)
+                if image:
+                    hbox.pack_start(image, False, False, 10)
+                if name:
+                    hbox.pack_start(label, False, False, 0)
+                item = Gtk.MenuItem()
+                item.add(hbox)
+                item.connect('activate', launch, exec)
+                menu.append(item)
 
-        if to_prepend:
-            separator = Gtk.SeparatorMenuItem()
-            separator.set_property("margin", 10)
-            menu.append(separator)
+            if to_prepend:
+                separator = Gtk.SeparatorMenuItem()
+                separator.set_property("margin", 10)
+                menu.append(separator)
 
-    # actual system menu with submenus for each category
-    if c_audio_video:
-        append_submenu(c_audio_video, menu, 'AudioVideo')
-    if c_development:
-        append_submenu(c_development, menu, 'Development')
-    if c_game:
-        append_submenu(c_game, menu, 'Game')
-    if c_graphics:
-        append_submenu(c_graphics, menu, 'Graphics')
-    if c_network:
-        append_submenu(c_network, menu, 'Network')
-    if c_office:
-        append_submenu(c_office, menu, 'Office')
-    if c_science:
-        append_submenu(c_science, menu, 'Science')
-    if c_settings:
-        append_submenu(c_settings, menu, 'Settings')
-    if c_system:
-        append_submenu(c_system, menu, 'System')
-    if c_utility:
-        append_submenu(c_utility, menu, 'Utility')
-    if c_other:
-        append_submenu(c_other, menu, 'Other')
+        # actual system menu with submenus for each category
+        if c_audio_video:
+            append_submenu(c_audio_video, menu, 'AudioVideo')
+        if c_development:
+            append_submenu(c_development, menu, 'Development')
+        if c_game:
+            append_submenu(c_game, menu, 'Game')
+        if c_graphics:
+            append_submenu(c_graphics, menu, 'Graphics')
+        if c_network:
+            append_submenu(c_network, menu, 'Network')
+        if c_office:
+            append_submenu(c_office, menu, 'Office')
+        if c_science:
+            append_submenu(c_science, menu, 'Science')
+        if c_settings:
+            append_submenu(c_settings, menu, 'Settings')
+        if c_system:
+            append_submenu(c_system, menu, 'System')
+        if c_utility:
+            append_submenu(c_utility, menu, 'Utility')
+        if c_other:
+            append_submenu(c_other, menu, 'Other')
 
     # user-defined menu from default or custom file (see args)
-    if args.append or args.af:
-        item = Gtk.SeparatorMenuItem()
-        item.set_property("margin", 10)
-        menu.append(item)
+    if args.append or args.af or args.no_menu:
+        if not args.no_menu:    # nothing above to separate
+            item = Gtk.SeparatorMenuItem()
+            item.set_property("margin", 10)
+            menu.append(item)
         appendix = load_json(appendix_file)
         for entry in appendix:
             name = entry["name"]
