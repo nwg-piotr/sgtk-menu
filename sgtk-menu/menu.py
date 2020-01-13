@@ -510,7 +510,7 @@ def build_menu():
                 if name:
                     hbox.pack_start(label, False, False, 0)
                 item = Gtk.MenuItem()
-                item.set_property("name", "item-fav")
+                item.set_property("name", "item-favorites")
                 item.add(hbox)
                 item.connect('activate', launch, exec)
                 menu.append(item)
