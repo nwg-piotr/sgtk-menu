@@ -80,9 +80,12 @@ css_file = os.path.join(config_dirs()[0], 'style.css') if os.path.exists(
     os.path.join(config_dirs()[0], 'style.css')) else None
 
 if "XDG_CACHE_HOME" in os.environ:
-    cache_file = os.path.join(os.environ("XDG_CACHE_HOME"), 'sgtk-menu')
+    cache_dir = os.environ["XDG_CACHE_HOME"]
 else:
-    cache_file = os.path.join(os.path.expanduser('~/.cache'), 'sgtk-menu')
+    cache_dir = os.path.join(os.path.expanduser('~/.cache'))
+if not os.path.exists(cache_dir):
+    os.makedirs(cache_dir)
+cache_file = os.path.join(cache_dir, 'sgtk-menu')
 
 cache = None
 sorted_cache = None
