@@ -83,6 +83,20 @@ However, you may simply clone the repository and launch the `menu.py` file, inst
 The problem to resolve was, that the Gtk.Menu class behaves differently / unexpectedly when open over Wayland and X11 windows. 
 To work it around, the script opens the menu over a (semi-)transparent, floating window, that covers all the screen.
 
+## Styling
+
+You may use the `~/.config/sgtk-menu/style.css` file to override some theme settings, e.g.:
+
+```text
+#separator {
+    margin: 10px;
+}
+```
+
+Widgets are named as below:
+
+![css-styling](http://nwg.pl/Lychee/uploads/big/05ad90d0476f78fb13d0a1ffddafcda9.png)
+
 ## i3 support
 
 Even if there exist plenty of good X11 menus, with the most excellent [jgmenu](https://github.com/johanmalm/jgmenu) 
