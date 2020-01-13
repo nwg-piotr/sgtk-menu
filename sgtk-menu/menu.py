@@ -66,9 +66,9 @@ locale = ''
 
 win = None  # overlay window
 args = None
-all_items_list = []     # list of all DesktopMenuItem objects assigned to a .desktop entry
-all_copies_list = []    # list of copies of above used while searching (not assigned to a submenu!)
-menu_items_list = []    # created / updated with menu.get_children()
+all_items_list = []  # list of all DesktopMenuItem objects assigned to a .desktop entry
+all_copies_list = []  # list of copies of above used while searching (not assigned to a submenu!)
+menu_items_list = []  # created / updated with menu.get_children()
 filtered_items_list = []  # used in the search method
 
 config_dir = config_dirs()[0]
@@ -101,7 +101,8 @@ def main():
     favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used items")
     favourites.add_argument('-fn', type=int, help="prepend <FN> most used items")
     appendix = parser.add_mutually_exclusive_group()
-    appendix.add_argument("-a", "--append", action="store_true", help="append custom menu from {}".format(appendix_file))
+    appendix.add_argument("-a", "--append", action="store_true",
+                          help="append custom menu from {}".format(appendix_file))
     appendix.add_argument("-af", type=str, help="append custom menu from {}".format(os.path.join(config_dir, '<AF>')))
     parser.add_argument("-n", "--no-menu", action="store_true", help="skip menu, display appendix only")
     parser.add_argument("-l", type=str, help="force language (e.g. \"de\" for German)")
@@ -187,11 +188,11 @@ class MainWindow(Gtk.Window):
         self.set_title('~sgtk-menu')
         self.set_role('~sgtk-menu')
         self.connect("destroy", Gtk.main_quit)
-        self.connect('draw', self.draw)         # transparency
+        self.connect('draw', self.draw)  # transparency
 
         self.search_box = Gtk.SearchEntry()
         self.search_box.set_text('Type to search')
-        self.screen_dimensions = (0, 0)         # parent screen dimensions (obtained outside)
+        self.screen_dimensions = (0, 0)  # parent screen dimensions (obtained outside)
         self.search_phrase = ''
 
         # Credits for transparency go to  KurtJacobson:
@@ -276,7 +277,7 @@ class MainWindow(Gtk.Window):
 
                     if len(filtered_items_list) == 1:
                         item = filtered_items_list[0]
-                        item.select()   # But we still can't activate with Enter
+                        item.select()  # But we still can't activate with Enter
 
                     self.menu.show_all()
                     # as the search box is actually a menu item, it must be sensitive now,
@@ -393,6 +394,7 @@ class DesktopEntry(object):
     """
     Should be self-explanatory
     """
+
     def __init__(self, name, exec, icon=None, categories=None):
         self.name = name
         self.exec = exec
@@ -476,16 +478,19 @@ def build_menu():
                 label.set_text(name)
                 image = None
                 if icon.startswith('/'):
-                    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
-                    image = Gtk.Image.new_from_pixbuf(pixbuf)
+                    try:
+                        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
+                        image = Gtk.Image.new_from_pixbuf(pixbuf)
+                    except:
+                        pass
                 else:
                     try:
                         if icon.endswith('.svg') or icon.endswith('.png'):
                             icon = entry.icon.split('.')[0]
                         pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
                         image = Gtk.Image.new_from_pixbuf(pixbuf)
-                    except Exception as e:
-                        print(e)
+                    except:
+                        pass
                 if image:
                     hbox.pack_start(image, False, False, 10)
                 if name:
@@ -526,7 +531,7 @@ def build_menu():
 
     # user-defined menu from default or custom file (see args)
     if args.append or args.af or args.no_menu:
-        if not args.no_menu:    # nothing above to separate
+        if not args.no_menu:  # nothing above to separate
             item = Gtk.SeparatorMenuItem()
             item.set_property("margin", 10)
             menu.append(item)
@@ -540,16 +545,19 @@ def build_menu():
             label.set_text(name)
             image = None
             if icon.startswith('/'):
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
-                image = Gtk.Image.new_from_pixbuf(pixbuf)
+                try:
+                    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
+                    image = Gtk.Image.new_from_pixbuf(pixbuf)
+                except:
+                    pass
             else:
                 try:
                     if icon.endswith('.svg') or icon.endswith('.png'):
                         icon = entry.icon.split('.')[0]
                     pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
                     image = Gtk.Image.new_from_pixbuf(pixbuf)
-                except Exception as e:
-                    print(e)
+                except:
+                    pass
             if image:
                 hbox.pack_start(image, False, False, 10)
             if name:
@@ -578,6 +586,7 @@ class SubMenu(Gtk.Menu):
     We need to subclass Gtk.Menu, to assign its .desktop entries list to it.
     Needed to workaround the sway overflowing menus issue. See cheat_sway and cheat_sway_on_exit methods.
     """
+
     def __init__(self):
         Gtk.Menu.__init__(self)
         self.entries_list = list
@@ -691,6 +700,7 @@ class DesktopMenuItem(Gtk.MenuItem):
     """
     We'll a Gtk.MenuItem here, w/ a hbox inside; the box contains an icon and a label.
     """
+
     def __init__(self, icon_theme, name, _exec, icon_name=None):
         Gtk.MenuItem.__init__(self)
         self.name = name
