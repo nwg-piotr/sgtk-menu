@@ -61,15 +61,21 @@ category_icons = {"AudioVideo": "applications-multimedia",
                   "Utility": "applications-accessories",
                   "Other": "applications-other"}
 
-localized_names_dictionary = {}  # name => translated name
+# name => translated name
+localized_names_dictionary = {}
 locale = ''
 
-win = None  # overlay window
+# overlay window
+win = None
 args = None
-all_items_list = []  # list of all DesktopMenuItem objects assigned to a .desktop entry
-all_copies_list = []  # list of copies of above used while searching (not assigned to a submenu!)
-menu_items_list = []  # created / updated with menu.get_children()
-filtered_items_list = []  # used in the search method
+# list of all DesktopMenuItem objects assigned to a .desktop entry
+all_items_list = []
+# list of copies of above used while searching (not assigned to a submenu!)
+all_copies_list = []
+# created / updated with menu.get_children()
+menu_items_list = []
+# used in the search method
+filtered_items_list = []
 
 config_dir = config_dirs()[0]
 if not os.path.exists(config_dir):
@@ -192,7 +198,8 @@ class MainWindow(Gtk.Window):
 
         self.search_box = Gtk.SearchEntry()
         self.search_box.set_text('Type to search')
-        self.screen_dimensions = (0, 0)  # parent screen dimensions (obtained outside)
+        # parent screen dimensions (obtained outside)
+        self.screen_dimensions = (0, 0)
         self.search_phrase = ''
 
         # Credits for transparency go to  KurtJacobson:
@@ -203,7 +210,8 @@ class MainWindow(Gtk.Window):
             self.set_visual(visual)
         self.set_app_paintable(True)
 
-        self.menu = None  # We'll create it outside the class
+        # We'll create it outside the class
+        self.menu = None
 
         outer_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         vbox = Gtk.VBox()
@@ -242,7 +250,8 @@ class MainWindow(Gtk.Window):
                 self.search_phrase += event.string
                 self.search_box.set_text(self.search_phrase)
 
-            elif event.keyval == 65288:  # backspace
+            # backspace
+            elif event.keyval == 65288:
                 update = True
                 self.search_phrase = self.search_phrase[:-1]
                 self.search_box.set_text(self.search_phrase)
@@ -277,7 +286,8 @@ class MainWindow(Gtk.Window):
 
                     if len(filtered_items_list) == 1:
                         item = filtered_items_list[0]
-                        item.select()  # But we still can't activate with Enter
+                        # But we still can't activate with Enter!
+                        item.select()
 
                     self.menu.show_all()
                     # as the search box is actually a menu item, it must be sensitive now,
@@ -460,13 +470,15 @@ def build_menu():
             if len(sorted_cache) < favs_number:
                 favs_number = len(sorted_cache)
 
-            to_prepend = []  # list of favourite items
+            # list of favourite items
+            to_prepend = []
             for i in range(favs_number):
                 fav_exec = sorted_cache[i][0]
                 for item in all_entries:
                     if item.exec == fav_exec and item not in to_prepend:
                         to_prepend.append(item)
-                        break  # stop searching, there may be duplicates on the list
+                        # stop searching, there may be duplicates on the list
+                        break
 
             # build menu items
             for entry in to_prepend:
@@ -531,7 +543,8 @@ def build_menu():
 
     # user-defined menu from default or custom file (see args)
     if args.append or args.af or args.no_menu:
-        if not args.no_menu:  # nothing above to separate
+        # nothing above to separate
+        if not args.no_menu:
             item = Gtk.SeparatorMenuItem()
             item.set_property("margin", 10)
             menu.append(item)
@@ -564,7 +577,8 @@ def build_menu():
                 hbox.pack_start(label, False, False, 0)
             item = Gtk.MenuItem()
             item.add(hbox)
-            item.connect('activate', launch, exec, True)  # do not cache!
+            # do not cache!
+            item.connect('activate', launch, exec, True)
             menu.append(item)
 
     menu.connect("hide", win.die)
@@ -586,7 +600,6 @@ class SubMenu(Gtk.Menu):
     We need to subclass Gtk.Menu, to assign its .desktop entries list to it.
     Needed to workaround the sway overflowing menus issue. See cheat_sway and cheat_sway_on_exit methods.
     """
-
     def __init__(self):
         Gtk.Menu.__init__(self)
         self.entries_list = list
@@ -698,9 +711,8 @@ def cheat_sway_on_exit(submenu):
 
 class DesktopMenuItem(Gtk.MenuItem):
     """
-    We'll a Gtk.MenuItem here, w/ a hbox inside; the box contains an icon and a label.
+    We'll create a Gtk.MenuItem here, w/ a hbox inside; the box contains an icon and a label.
     """
-
     def __init__(self, icon_theme, name, _exec, icon_name=None):
         Gtk.MenuItem.__init__(self)
         self.name = name

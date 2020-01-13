@@ -167,7 +167,7 @@ def save_default_appendix(path):
 
     save_json(content, path)
 
-        
+
 def load_json(path):
     """
     :return: dictionary
