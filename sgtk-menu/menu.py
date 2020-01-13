@@ -699,8 +699,11 @@ class DesktopMenuItem(Gtk.MenuItem):
         image = None
         if icon_name:
             if icon_name.startswith('/'):
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon_name, args.s, args.s)
-                image = Gtk.Image.new_from_pixbuf(pixbuf)
+                try:
+                    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon_name, args.s, args.s)
+                    image = Gtk.Image.new_from_pixbuf(pixbuf)
+                except:
+                    pass
             else:
                 try:
                     if icon_name.endswith('.svg') or icon_name.endswith('.png'):
