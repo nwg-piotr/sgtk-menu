@@ -1,0 +1,28 @@
+#menu {
+    font-size: 12px;
+    padding: 10px
+}
+
+#submenu {
+    background: #6699cc
+}
+
+#item-fav {
+    font-family: Monospace;
+}
+
+#item-category {
+    font-size: 20px;
+}
+
+#item {
+    font-size: 12px;
+}
+
+#item-appendix {
+    font-size: 12px;
+}
+
+#separator {
+    margin: 10px;
+}

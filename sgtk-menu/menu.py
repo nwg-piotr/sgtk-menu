@@ -76,6 +76,9 @@ if not os.path.exists(config_dir):
     os.makedirs(config_dir)
 appendix_file = os.path.join(config_dirs()[0], 'appendix')
 
+css_file = os.path.join(config_dirs()[0], 'style.css') if os.path.exists(
+    os.path.join(config_dirs()[0], 'style.css')) else None
+
 if "XDG_CACHE_HOME" in os.environ:
     cache_file = os.path.join(os.environ("XDG_CACHE_HOME"), 'sgtk-menu')
 else:
@@ -126,6 +129,16 @@ def main():
     # Replace appendix file name with custom - if any
     if args.af:
         appendix_file = os.path.join(config_dirs()[0], args.af)
+        
+    if css_file:
+        screen = Gdk.Screen.get_default()
+        provider = Gtk.CssProvider()
+        try:
+            provider.load_from_path(css_file)
+            Gtk.StyleContext.add_provider_for_screen(
+                screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        except Exception as e:
+            print(e)
 
     # cache stores number of clicks on each item
     global cache
@@ -165,6 +178,7 @@ def main():
     w, h = display_dimensions()
     win.resize(w, h)
     win.menu = build_menu()
+    win.menu.set_property("name", "menu")
 
     global menu_items_list
     menu_items_list = win.menu.get_children()
@@ -496,13 +510,14 @@ def build_menu():
                 if name:
                     hbox.pack_start(label, False, False, 0)
                 item = Gtk.MenuItem()
+                item.set_property("name", "item-fav")
                 item.add(hbox)
                 item.connect('activate', launch, exec)
                 menu.append(item)
 
             if to_prepend:
                 separator = Gtk.SeparatorMenuItem()
-                separator.set_property("margin", 10)
+                separator.set_property("name", "separator")
                 menu.append(separator)
 
         # actual system menu with submenus for each category
@@ -532,9 +547,9 @@ def build_menu():
     # user-defined menu from default or custom file (see args)
     if args.append or args.af or args.no_menu:
         if not args.no_menu:  # nothing above to separate
-            item = Gtk.SeparatorMenuItem()
-            item.set_property("margin", 10)
-            menu.append(item)
+            separator = Gtk.SeparatorMenuItem()
+            separator.set_property("name", "separator")
+            menu.append(separator)
         appendix = load_json(appendix_file)
         for entry in appendix:
             name = entry["name"]
@@ -563,6 +578,7 @@ def build_menu():
             if name:
                 hbox.pack_start(label, False, False, 0)
             item = Gtk.MenuItem()
+            item.set_property("name", "item-appendix")
             item.add(hbox)
             item.connect('activate', launch, exec, True)  # do not cache!
             menu.append(item)
@@ -603,12 +619,14 @@ def sub_menu(entries_list, name, localized_name):
     if image:
         outer_hbox.pack_start(image, False, False, 10)
     item = Gtk.MenuItem()
+    item.set_property("name", "item-category")
     item.entries_list = entries_list
     main_label = Gtk.Label()
     main_label.set_text(localized_name)
     outer_hbox.pack_start(main_label, False, False, 0)
 
     submenu = SubMenu()
+    submenu.set_property("name", "submenu")
     submenu.entries_list = entries_list
 
     submenu.set_property("reserve_toggle_size", False)
@@ -704,6 +722,7 @@ class DesktopMenuItem(Gtk.MenuItem):
     def __init__(self, icon_theme, name, _exec, icon_name=None):
         Gtk.MenuItem.__init__(self)
         self.name = name
+        self.set_property("name", "item")
         self.exec = _exec
         hbox = Gtk.HBox()
         image = None
