@@ -156,13 +156,13 @@ def save_default_appendix(path):
                 "exec": "swaylock -f -c 000000",
                 "icon": "lock"},
                {"name": "Logout",
-                "exec": "swaynag -t red -m ' Exit sway session?' -b ' Logout ' 'swaymsg exit'",
+                "exec": "swaynag -m ' Exit sway session?' -b ' Logout ' 'swaymsg exit'",
                 "icon": "exit"},
                {"name": "Reboot",
-                "exec": "swaynag -t red -m ' Reboot the machine?' -b ' Reboot ' 'systemctl reboot'",
+                "exec": "swaynag -m ' Reboot the machine?' -b ' Reboot ' 'systemctl reboot'",
                 "icon": "reload"},
                {"name": "Shutdown",
-                "exec": "swaynag -t red -m ' Shutdown the machine?' -b ' Shutdown ' 'systemctl -i poweroff'",
+                "exec": "swaynag -m ' Shutdown the machine?' -b ' Shutdown ' 'systemctl -i poweroff'",
                 "icon": "window-close"}]
 
     save_json(content, path)
