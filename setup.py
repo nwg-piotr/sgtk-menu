@@ -8,7 +8,7 @@ def read(f_name):
 
 setup(
     name='sgtk-menu',
-    version='0.2.1',
+    version='0.2.2',
     description='GTK menu for sway and i3',
     packages=['sgtk-menu'],
     include_package_data=True,
