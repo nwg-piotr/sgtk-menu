@@ -104,7 +104,7 @@ You need [compton](https://github.com/chjj/compton) or equivalent X11 compositor
 Add this to your `~/.config/i3/config` file:
 
 ```text
-for_window [title="sgtk-menu"] border none, floating enable
+for_window [title="~sgtk-menu"] border none, floating enable
 ```
 
 ## TODO
