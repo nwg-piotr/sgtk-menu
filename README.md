@@ -88,6 +88,11 @@ To work it around, the script opens the menu over a (semi-)transparent, floating
 You may use the `~/.config/sgtk-menu/style.css` file to override some theme settings, e.g.:
 
 ```text
+#menu {
+    font: 14px Sans;
+    font-weight: 400;
+}
+
 #separator {
     margin: 10px;
 }
