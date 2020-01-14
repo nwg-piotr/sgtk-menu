@@ -101,7 +101,7 @@ You may use the `~/.config/sgtk-menu/style.css` file to override some theme sett
 
 Widgets are named as below:
 
-![css-styling](http://nwg.pl/Lychee/uploads/big/ee4ea1e11ea25999abb8db694804e6e8.png)
+![css-styling](http://nwg.pl/Lychee/uploads/big/d457879ba064dcf3e9bd780f82694bbf.png)
 
 ## i3 support
 
