@@ -71,6 +71,9 @@ all_copies_list = []  # list of copies of above used while searching (not assign
 menu_items_list = []  # created / updated with menu.get_children()
 filtered_items_list = []  # used in the search method
 
+# If we need to cheat_sway, we only add first args.t entries to all_copies list, but we need them all for searching!
+missing_copies_list = []
+
 config_dir = config_dirs()[0]
 if not os.path.exists(config_dir):
     os.makedirs(config_dir)
@@ -284,6 +287,21 @@ class MainWindow(Gtk.Window):
                                     found = True
                             if not found:
                                 filtered_items_list.append(item)
+                                
+                    # If we needed to cheat_sway, the values missing from all_copies_list are now here
+                    if missing_copies_list:
+                        for item in missing_copies_list:
+                            self.menu.remove(item)
+                            # We'll search the entry name and the first element of its command (to skip arguments)
+                            if self.search_phrase.upper() in item.name.upper() or self.search_phrase.upper() in \
+                                    item.exec.split()[0].upper():
+                                # avoid adding twice
+                                found = False
+                                for i in filtered_items_list:
+                                    if i.name == item.name:
+                                        found = True
+                                if not found:
+                                    filtered_items_list.append(item)
 
                     for item in self.menu.get_children()[1:]:
                         self.menu.remove(item)
@@ -653,7 +671,8 @@ def sub_menu(entries_list, name, localized_name):
         submenu.connect("key-release-event", win.search_items)
         item.set_submenu(submenu)
     else:
-        # This will be tricky as hell. We only add 30 items here. The rest must be added on menu popped-up (cheat_sway).
+        # This will be tricky as hell. We only add args.t items here.
+        # The rest must be added on menu popped-up (cheat_sway).
         for i in range(args.t):
             entry = entries_list[i]
             subitem = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
@@ -666,6 +685,14 @@ def sub_menu(entries_list, name, localized_name):
             all_copies_list.append(subitem_copy)
 
             submenu.append(subitem)
+
+        # If we're cheating sway, entries above args.t will be missing from all_copies_list.
+        # Let's store them here for searching purposes.
+        for entry in entries_list[args.t:]:
+            subitem_copy = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
+            subitem_copy.connect('activate', launch, entry.exec)
+            subitem_copy.show()
+            missing_copies_list.append(subitem_copy)
 
         item.add(outer_hbox)
         submenu.connect("key-release-event", win.search_items)
