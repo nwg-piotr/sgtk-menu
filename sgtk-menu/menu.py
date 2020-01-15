@@ -105,14 +105,19 @@ def main():
 
     global appendix_file
     parser = argparse.ArgumentParser(description="GTK menu for sway and i3")
-    parser.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom")
+    placement = parser.add_mutually_exclusive_group()
+    placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom")
+    placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen")
+    
     favourites = parser.add_mutually_exclusive_group()
     favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used items")
     favourites.add_argument('-fn', type=int, help="prepend <FN> most used items")
+
     appendix = parser.add_mutually_exclusive_group()
     appendix.add_argument("-a", "--append", action="store_true",
                           help="append custom menu from {}".format(appendix_file))
     appendix.add_argument("-af", type=str, help="append custom menu from {}".format(os.path.join(config_dir, '<AF>')))
+
     parser.add_argument("-n", "--no-menu", action="store_true", help="skip menu, display appendix only")
     parser.add_argument("-l", type=str, help="force language (e.g. \"de\" for German)")
     parser.add_argument("-s", type=int, default=20, help="menu icon size (min: 16, max: 48, default: 20)")
@@ -231,14 +236,20 @@ class MainWindow(Gtk.Window):
 
         # the widget we'll popup menu at
         self.anchor = Gtk.Box()
-        hbox.pack_start(self.anchor, False, False, 0)
+        if args.center:
+            hbox.pack_start(self.anchor, True, True, 0)
+        else:
+            hbox.pack_start(self.anchor, False, False, 0)
 
         if args.bottom:
             # display menu at the bottom
             vbox.pack_end(hbox, False, False, 0)
         else:
-            # display on top
-            vbox.pack_start(hbox, False, False, 0)
+            if args.center:
+                vbox.pack_start(hbox, True, True, 0)
+            else:
+                # display on top
+                vbox.pack_start(hbox, False, False, 0)
         outer_box.pack_start(vbox, True, True, args.y)
 
         self.add(outer_box)
@@ -360,7 +371,7 @@ def open_menu():
     if args.bottom:
         gravity = Gdk.Gravity.SOUTH
     else:
-        gravity = Gdk.Gravity.NORTH
+        gravity = Gdk.Gravity.CENTER
 
     win.menu.popup_at_widget(win.anchor, gravity, gravity, None)
 
