@@ -76,12 +76,32 @@ However, you may simply clone the repository and launch the `menu.py` file, inst
 - `gtk3`
 - `python` (python3)
 - `python-gobject`
+- `python-cairo` | `python-cairocffi `
 - `python-i3ipc` (optionally, to avoid deprecation warnings)
 
 ## How it works?
 
 The problem to resolve was, that the Gtk.Menu class behaves differently / unexpectedly when open over Wayland and X11 windows. 
 To work it around, the script opens the menu over a (semi-)transparent, floating window, that covers all the screen.
+
+## Styling
+
+You may use the `~/.config/sgtk-menu/style.css` file to override some theme settings, e.g.:
+
+```text
+#menu {
+    font: 14px Sans;
+    font-weight: 400;
+}
+
+#separator {
+    margin: 10px;
+}
+```
+
+Widgets are named as below:
+
+![css-styling](http://nwg.pl/Lychee/uploads/big/d457879ba064dcf3e9bd780f82694bbf.png)
 
 ## i3 support
 
