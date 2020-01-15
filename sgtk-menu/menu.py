@@ -246,6 +246,7 @@ class MainWindow(Gtk.Window):
             vbox.pack_end(hbox, False, False, 0)
         else:
             if args.center:
+                # center on the screen
                 vbox.pack_start(hbox, True, True, 0)
             else:
                 # display on top
