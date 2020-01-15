@@ -12,7 +12,7 @@ It uses `pygobject` to create a themeable, searchable gtk3-based system menu w/ 
 As the script searches `.desktop` files only, it may be used as a replacement to wofi/rofi `--drun`, but not for 
 `--dmenu` mode.
 
-![screenshot](http://nwg.pl/Lychee/uploads/big/a330ebae4efb364b26a898a2a4ee12ed.png)
+![screenshot](http://nwg.pl/Lychee/uploads/big/c396d7eea8fc5c9c931f63b75940fb26.png)
 *The menu in Arc-Dark GTK theme w/ Aqatix icons*
 
 ## Background
