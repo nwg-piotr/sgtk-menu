@@ -117,7 +117,7 @@ def main():
     placement = parser.add_mutually_exclusive_group()
     placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom")
     placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen")
-    placement.add_argument("-m", "--mouse", action="store_true", help="display at cursor (floating WMs only")
+    placement.add_argument("-m", "--mouse", action="store_true", help="display at mouse pointer (floating WMs only)")
 
     favourites = parser.add_mutually_exclusive_group()
     favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used items")
