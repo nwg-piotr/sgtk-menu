@@ -27,20 +27,29 @@ import cairo
 from tools import localized_category_names, additional_to_main, get_locale_string, config_dirs, save_default_appendix, \
     load_json, save_json
 
+other_wm = False
 try:
     from i3ipc import Connection
 
-    i3 = Connection()
-    i3ipc = True
+    try:
+        i3 = Connection()
+        i3ipc = True
+    except:
+        i3ipc = False
+        # We're neither on sway nor i3
+        other_wm = True
 except ModuleNotFoundError:
     i3ipc = False
 
 # Will apply to the overlay window; we can't do so outside the config file on i3.
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
 # The variable indicates if we succeeded / are on sway.
-swaymsg: bool = subprocess.run(
-    ['swaymsg', 'for_window', '[title=\"~sgtk-menu\"]', 'floating', 'enable'],
-    stdout=subprocess.DEVNULL).returncode == 0
+if not other_wm:
+    swaymsg: bool = subprocess.run(
+        ['swaymsg', 'for_window', '[title=\"~sgtk-menu\"]', 'floating', 'enable'],
+        stdout=subprocess.DEVNULL).returncode == 0
+else:
+    swaymsg = False
 
 # Lists to hold DesktopEntry objects of each category
 c_audio_video, c_development, c_game, c_graphics, c_network, c_office, c_science, c_settings, c_system, \
@@ -108,7 +117,8 @@ def main():
     placement = parser.add_mutually_exclusive_group()
     placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom")
     placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen")
-    
+    placement.add_argument("-m", "--mouse", action="store_true", help="display at cursor (floating WMs only")
+
     favourites = parser.add_mutually_exclusive_group()
     favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used items")
     favourites.add_argument('-fn', type=int, help="prepend <FN> most used items")
@@ -133,6 +143,10 @@ def main():
     elif args.s > 48:
         args.s = 48
 
+    # We do not need any delay in other WMs
+    if other_wm:
+        args.d = 0
+
     # Create default appendix file if not found
     if not os.path.isfile(appendix_file):
         save_default_appendix(appendix_file)
@@ -140,7 +154,7 @@ def main():
     # Replace appendix file name with custom - if any
     if args.af:
         appendix_file = os.path.join(config_dirs()[0], args.af)
-        
+
     if css_file:
         screen = Gdk.Screen.get_default()
         provider = Gtk.CssProvider()
@@ -187,7 +201,21 @@ def main():
     global win
     win = MainWindow()
     w, h = display_dimensions()
-    win.resize(w, h)
+    if not other_wm:
+        win.resize(w, h)
+    else:
+        win.resize(1, 1)
+
+    if other_wm:
+        if args.mouse:
+            win.set_position(Gtk.WindowPosition.MOUSE)
+        elif args.bottom:
+            win.move(0, h)
+        elif args.center:
+            win.set_position(Gtk.WindowPosition.CENTER)
+        else:
+            win.move(0, 0)
+
     win.menu = build_menu()
     win.menu.set_property("name", "menu")
 
@@ -213,6 +241,7 @@ class MainWindow(Gtk.Window):
         self.set_title('~sgtk-menu')
         self.set_role('~sgtk-menu')
         self.connect("destroy", Gtk.main_quit)
+
         self.connect('draw', self.draw)  # transparency
 
         self.search_box = Gtk.SearchEntry()
@@ -299,7 +328,7 @@ class MainWindow(Gtk.Window):
                                     found = True
                             if not found:
                                 filtered_items_list.append(item)
-                                
+
                     # If we needed to cheat_sway, the values missing from all_copies_list are now here
                     if missing_copies_list:
                         for item in missing_copies_list:
@@ -363,11 +392,13 @@ class MainWindow(Gtk.Window):
 
 def open_menu():
     if not swaymsg:
-        # we couldn't do this on i3 at the script start
-        subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
-        subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
+        if not other_wm:
+            # we couldn't do this on i3 at the script start
+            subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
+            subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
     else:
-        subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
+        if not other_wm:
+            subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
 
     if args.bottom:
         gravity = Gdk.Gravity.SOUTH
