@@ -38,6 +38,15 @@ try:
 except:
     pass
 
+pynput = False
+try:
+    from pynput.mouse import Controller
+
+    mouse_pointer = Controller()
+    pynput = True
+except:
+    pass
+
 i3_msg = False
 try:
     i3_msg = subprocess.run(
@@ -49,6 +58,7 @@ other_wm = not swaymsg and not i3_msg
 
 if not other_wm:
     from i3ipc import Connection
+
     i3 = Connection()
 
 # Lists to hold DesktopEntry objects of each category
@@ -72,6 +82,8 @@ category_icons = {"AudioVideo": "applications-multimedia",
 
 localized_names_dictionary = {}  # name => translated name
 locale = ''
+
+geometry = (0, 0, 0, 0)
 
 win = None  # overlay window
 args = None
@@ -117,7 +129,8 @@ def main():
     placement = parser.add_mutually_exclusive_group()
     placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom")
     placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen")
-    placement.add_argument("-m", "--mouse", action="store_true", help="display at mouse pointer (floating WMs only)")
+    placement.add_argument("-m", "--mouse", action="store_true",
+                           help="display at mouse pointer (floating WMs only, requires optional python-pynput package)")
 
     favourites = parser.add_mutually_exclusive_group()
     favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used items")
@@ -200,7 +213,13 @@ def main():
     # Overlay window
     global win
     win = MainWindow()
-    x, y, w, h = display_geometry()
+    win.resize(1, 1)
+    win.show_all()
+    global geometry
+    # This won't return values until the window actually shows up. Let's try as many times as needed.
+    while geometry[0] == 0 and geometry[1] == 0 and geometry[2] == 0 and geometry[3] == 0:
+        geometry = display_geometry()
+    x, y, w, h = geometry
 
     if not other_wm:
         win.resize(w, h)
@@ -212,10 +231,13 @@ def main():
         win.set_resizable(False)
         win.set_titlebar(None)
         win.set_icon(None)
-        win.set_opacity(0.0)
-        win.set_skip_taskbar_hint(True)
         if args.mouse:
-            win.set_position(Gtk.WindowPosition.MOUSE)
+            if pynput:
+                x, y = mouse_pointer.position
+                win.move(x, y)
+            else:
+                win.set_position(Gtk.WindowPosition.CENTER)
+                print("\nYou need the python-pynput package!\n")
         elif args.center:
             win.set_position(Gtk.WindowPosition.CENTER)
         elif args.bottom:
@@ -223,6 +245,7 @@ def main():
         else:
             win.move(x, 0)
 
+    win.set_skip_taskbar_hint(True)
     win.menu = build_menu()
     win.menu.set_property("name", "menu")
 
@@ -248,7 +271,6 @@ class MainWindow(Gtk.Window):
         self.set_title('~sgtk-menu')
         self.set_role('~sgtk-menu')
         self.connect("destroy", Gtk.main_quit)
-
         self.connect('draw', self.draw)  # transparency
 
         self.search_box = Gtk.SearchEntry()
@@ -428,9 +450,12 @@ def display_geometry():
     else:
         # this will rise deprecation warnings; wish I knew a better way to do it with GTK for multi-headed setups
         screen = win.get_screen()
-        display_number = screen.get_monitor_at_window(screen.get_active_window())
-        rectangle = screen.get_monitor_geometry(display_number)
-        return rectangle.x, rectangle.y, rectangle.width, rectangle.height
+        try:
+            display_number = screen.get_monitor_at_window(screen.get_active_window())
+            rectangle = screen.get_monitor_geometry(display_number)
+            return rectangle.x, rectangle.y, rectangle.width, rectangle.height
+        except:
+            return 0, 0, 0, 0
 
 
 def list_entries():
