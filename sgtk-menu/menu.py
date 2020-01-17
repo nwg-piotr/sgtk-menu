@@ -213,6 +213,7 @@ def main():
         win.set_titlebar(None)
         win.set_icon(None)
         win.set_opacity(0.0)
+        win.set_skip_taskbar_hint(True)
         if args.mouse:
             win.set_position(Gtk.WindowPosition.MOUSE)
         elif args.center:

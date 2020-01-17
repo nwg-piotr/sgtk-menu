@@ -8,7 +8,7 @@ def read(f_name):
 
 setup(
     name='sgtk-menu',
-    version='0.4.0',
+    version='0.5.0',
     description='GTK menu for sway and i3',
     packages=['sgtk-menu'],
     include_package_data=True,
@@ -17,5 +17,5 @@ setup(
     author='Piotr Miller',
     author_email='nwg.piotr@gmail.com',
     python_requires='>=3.4.0',
-    install_requires=['pygobject']
+    install_requires=['pygobject', 'pycairo', 'i3ipc']
 )
