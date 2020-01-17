@@ -31,18 +31,20 @@ that I had ever expected.
 
 ```text
 $ sgtk-menu -h
-usage: menu.py [-h] [-b] [-f | -fn FN] [-a | -af AF] [-n] [-l L] [-s S] [-w W] [-d D] [-o O] [-t T]
-               [-y Y]
+usage: sgtk-menu [-h] [-b | -c | -m] [-f | -fn FN] [-a | -af AF] [-n] [-l L] [-s S] [-w W] [-d D] [-o O]
+               [-t T] [-y Y]
 
 GTK menu for sway and i3
 
 optional arguments:
   -h, --help        show this help message and exit
   -b, --bottom      display menu at the bottom
+  -c, --center      center menu on the screen
+  -m, --mouse       display at mouse pointer (floating WMs only)
   -f, --favourites  prepend 5 most used items
   -fn FN            prepend <FN> most used items
-  -a, --append      append custom menu from ~/.config/sgtk-menu/appendix
-  -af AF            append custom menu from ~/.config/sgtk-menu/<AF>
+  -a, --append      append custom menu from /home/piotr/.config/sgtk-menu/appendix
+  -af AF            append custom menu from /home/piotr/.config/sgtk-menu/<AF>
   -n, --no-menu     skip menu, display appendix only
   -l L              force language (e.g. "de" for German)
   -s S              menu icon size (min: 16, max: 48, default: 20)
