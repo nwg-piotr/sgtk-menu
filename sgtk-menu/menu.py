@@ -27,29 +27,29 @@ import cairo
 from tools import localized_category_names, additional_to_main, get_locale_string, config_dirs, save_default_appendix, \
     load_json, save_json
 
-other_wm = False
-try:
-    from i3ipc import Connection
-
-    try:
-        i3 = Connection()
-        i3ipc = True
-    except:
-        i3ipc = False
-        # We're neither on sway nor i3
-        other_wm = True
-except ModuleNotFoundError:
-    i3ipc = False
-
 # Will apply to the overlay window; we can't do so outside the config file on i3.
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
 # The variable indicates if we succeeded / are on sway.
-if not other_wm:
-    swaymsg: bool = subprocess.run(
+swaymsg = False
+try:
+    swaymsg = subprocess.run(
         ['swaymsg', 'for_window', '[title=\"~sgtk-menu\"]', 'floating', 'enable'],
         stdout=subprocess.DEVNULL).returncode == 0
-else:
-    swaymsg = False
+except:
+    pass
+
+i3_msg = False
+try:
+    i3_msg = subprocess.run(
+        ['i3-msg', '-t', 'get_outputs'],
+        stdout=subprocess.DEVNULL).returncode == 0
+except:
+    pass
+other_wm = not swaymsg and not i3_msg
+
+if not other_wm:
+    from i3ipc import Connection
+    i3 = Connection()
 
 # Lists to hold DesktopEntry objects of each category
 c_audio_video, c_development, c_game, c_graphics, c_network, c_office, c_science, c_settings, c_system, \
@@ -200,21 +200,27 @@ def main():
     # Overlay window
     global win
     win = MainWindow()
-    w, h = display_dimensions()
+    x, y, w, h = display_geometry()
+
     if not other_wm:
         win.resize(w, h)
     else:
         win.resize(1, 1)
 
     if other_wm:
+        win.set_gravity(Gdk.Gravity.STATIC)
+        win.set_resizable(False)
+        win.set_titlebar(None)
+        win.set_icon(None)
+        win.set_opacity(0.0)
         if args.mouse:
             win.set_position(Gtk.WindowPosition.MOUSE)
-        elif args.bottom:
-            win.move(0, h)
         elif args.center:
             win.set_position(Gtk.WindowPosition.CENTER)
+        elif args.bottom:
+            win.move(x, h)
         else:
-            win.move(0, 0)
+            win.move(x, 0)
 
     win.menu = build_menu()
     win.menu.set_property("name", "menu")
@@ -408,20 +414,22 @@ def open_menu():
     win.menu.popup_at_widget(win.anchor, gravity, gravity, None)
 
 
-def display_dimensions():
-    if i3ipc:
-        # we can avoid deprecation warnings
+def display_geometry():
+    if not other_wm:
+        # sway or i3: we can avoid deprecation warnings
         root = i3.get_tree()
         found = False
         f = root.find_focused()
         while not found:
             f = f.parent
             found = f.type == 'output'
-        return f.rect.width, f.rect.height
+        return f.rect.x, f.rect.y, f.rect.width, f.rect.height
     else:
         # this will rise deprecation warnings; wish I knew a better way to do it with GTK for multi-headed setups
         screen = win.get_screen()
-        return screen.width(), screen.height()
+        display_number = screen.get_monitor_at_window(screen.get_active_window())
+        rectangle = screen.get_monitor_geometry(display_number)
+        return rectangle.x, rectangle.y, rectangle.width, rectangle.height
 
 
 def list_entries():
