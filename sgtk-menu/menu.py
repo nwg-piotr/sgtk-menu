@@ -41,7 +41,6 @@ except:
 pynput = False
 try:
     from pynput.mouse import Controller
-
     mouse_pointer = Controller()
     pynput = True
 except:
@@ -213,12 +212,20 @@ def main():
     # Overlay window
     global win
     win = MainWindow()
-    win.resize(1, 1)
-    win.show_all()
+    if other_wm:
+        # We need this to obtain the screen geometry when i3ipc module unavailable
+        win.resize(1, 1)
+        win.show_all()
     global geometry
-    # This won't return values until the window actually shows up. Let's try as many times as needed.
+    # If we're not on sway neither i3, this won't return values until the window actually shows up.
+    # Let's try as many times as needed. The retries int protects from an infinite loop.
+    retries = 0
     while geometry[0] == 0 and geometry[1] == 0 and geometry[2] == 0 and geometry[3] == 0:
         geometry = display_geometry()
+        retries += 1
+        if retries > 500:
+            print("\nFailed to get the current screen geometry, exiting...\n")
+            sys.exit(1)
     x, y, w, h = geometry
 
     if not other_wm:
@@ -438,8 +445,13 @@ def open_menu():
 
 
 def display_geometry():
+    """
+    Obtain geometry of currently focused display
+    :return: (x, y, width, height)
+    """
     if not other_wm:
-        # sway or i3: we can avoid deprecation warnings
+        # On sway or i3 we use i3ipc, to avoid less reliable, Gdk-based way.
+        # We should get results at 1st try.
         root = i3.get_tree()
         found = False
         f = root.find_focused()
@@ -448,7 +460,9 @@ def display_geometry():
             found = f.type == 'output'
         return f.rect.x, f.rect.y, f.rect.width, f.rect.height
     else:
-        # this will rise deprecation warnings; wish I knew a better way to do it with GTK for multi-headed setups
+        # This is less reliable and also rises deprecation warnings;
+        # wish I knew a better way to do it with GTK for multi-headed setups.
+        # If window just opened, screen.get_active_window() may return None, so we need to retry.
         screen = win.get_screen()
         try:
             display_number = screen.get_monitor_at_window(screen.get_active_window())
