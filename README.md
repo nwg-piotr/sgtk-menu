@@ -77,7 +77,7 @@ However, you may simply clone the repository and launch the `menu.py` file, inst
 - `python` (python3)
 - `python-gobject`
 - `python-cairo` | `python-cairocffi `
-- `python-i3ipc` (optionally, to avoid deprecation warnings)
+- `python-i3ipc`
 
 ## How it works?
 
