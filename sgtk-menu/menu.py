@@ -38,6 +38,14 @@ try:
 except:
     pass
 
+pynput = False
+try:
+    from pynput.mouse import Controller
+    mouse_pointer = Controller()
+    pynput = True
+except:
+    pass
+
 i3_msg = False
 try:
     i3_msg = subprocess.run(
@@ -49,6 +57,7 @@ other_wm = not swaymsg and not i3_msg
 
 if not other_wm:
     from i3ipc import Connection
+
     i3 = Connection()
 
 # Lists to hold DesktopEntry objects of each category
@@ -72,6 +81,8 @@ category_icons = {"AudioVideo": "applications-multimedia",
 
 localized_names_dictionary = {}  # name => translated name
 locale = ''
+
+geometry = (0, 0, 0, 0)
 
 win = None  # overlay window
 args = None
@@ -113,11 +124,10 @@ def main():
         sys.exit(0)
 
     global appendix_file
-    parser = argparse.ArgumentParser(description="GTK menu for sway and i3")
+    parser = argparse.ArgumentParser(description="GTK menu for sway, i3 and some floating WMs")
     placement = parser.add_mutually_exclusive_group()
-    placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom")
-    placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen")
-    placement.add_argument("-m", "--mouse", action="store_true", help="display at mouse pointer (floating WMs only)")
+    placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom (sway & i3 only)")
+    placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen (sway & i3 only)")
 
     favourites = parser.add_mutually_exclusive_group()
     favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used items")
@@ -131,11 +141,11 @@ def main():
     parser.add_argument("-n", "--no-menu", action="store_true", help="skip menu, display appendix only")
     parser.add_argument("-l", type=str, help="force language (e.g. \"de\" for German)")
     parser.add_argument("-s", type=int, default=20, help="menu icon size (min: 16, max: 48, default: 20)")
-    parser.add_argument("-w", type=int, help="menu width in px (integer, default: screen width / 8)")
-    parser.add_argument("-d", type=int, default=100, help="menu delay in milliseconds (default: 100)")
-    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3)")
+    parser.add_argument("-w", type=int, help="menu width in px (integer, default: screen width / 8")
+    parser.add_argument("-d", type=int, default=100, help="menu delay in milliseconds (default: 100; sway & i3 only)")
+    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3; sway & i3 only)")
     parser.add_argument("-t", type=int, default=30, help="sway submenu lines limit (default: 30)")
-    parser.add_argument("-y", type=int, default=0, help="y offset from edge to display menu at")
+    parser.add_argument("-y", type=int, default=0, help="y offset from edge to display menu at (sway & i3 only)")
     global args
     args = parser.parse_args()
     if args.s < 16:
@@ -200,29 +210,37 @@ def main():
     # Overlay window
     global win
     win = MainWindow()
-    x, y, w, h = display_geometry()
+    if other_wm:
+        # We need this to obtain the screen geometry when i3ipc module unavailable
+        win.resize(1, 1)
+        win.show_all()
+    global geometry
+    # If we're not on sway neither i3, this won't return values until the window actually shows up.
+    # Let's try as many times as needed. The retries int protects from an infinite loop.
+    retries = 0
+    while geometry[0] == 0 and geometry[1] == 0 and geometry[2] == 0 and geometry[3] == 0:
+        geometry = display_geometry()
+        retries += 1
+        if retries > 500:
+            print("\nFailed to get the current screen geometry, exiting...\n")
+            sys.exit(1)
+    x, y, w, h = geometry
 
     if not other_wm:
         win.resize(w, h)
     else:
         win.resize(1, 1)
-
-    if other_wm:
-        win.set_gravity(Gdk.Gravity.STATIC)
+        win.set_gravity(Gdk.Gravity.CENTER)
         win.set_resizable(False)
-        win.set_titlebar(None)
-        win.set_icon(None)
-        win.set_opacity(0.0)
-        win.set_skip_taskbar_hint(True)
-        if args.mouse:
-            win.set_position(Gtk.WindowPosition.MOUSE)
-        elif args.center:
-            win.set_position(Gtk.WindowPosition.CENTER)
-        elif args.bottom:
-            win.move(x, h)
+        win.set_decorated(False)
+        if pynput:
+            x, y = mouse_pointer.position
+            win.move(x, y)
         else:
-            win.move(x, 0)
+            win.move(0, 0)
+            print("\nYou need the python-pynput package!\n")
 
+    win.set_skip_taskbar_hint(True)
     win.menu = build_menu()
     win.menu.set_property("name", "menu")
 
@@ -248,7 +266,6 @@ class MainWindow(Gtk.Window):
         self.set_title('~sgtk-menu')
         self.set_role('~sgtk-menu')
         self.connect("destroy", Gtk.main_quit)
-
         self.connect('draw', self.draw)  # transparency
 
         self.search_box = Gtk.SearchEntry()
@@ -416,8 +433,13 @@ def open_menu():
 
 
 def display_geometry():
+    """
+    Obtain geometry of currently focused display
+    :return: (x, y, width, height)
+    """
     if not other_wm:
-        # sway or i3: we can avoid deprecation warnings
+        # On sway or i3 we use i3ipc, to avoid less reliable, Gdk-based way.
+        # We should get results at 1st try.
         root = i3.get_tree()
         found = False
         f = root.find_focused()
@@ -426,11 +448,16 @@ def display_geometry():
             found = f.type == 'output'
         return f.rect.x, f.rect.y, f.rect.width, f.rect.height
     else:
-        # this will rise deprecation warnings; wish I knew a better way to do it with GTK for multi-headed setups
+        # This is less reliable and also rises deprecation warnings;
+        # wish I knew a better way to do it with GTK for multi-headed setups.
+        # If window just opened, screen.get_active_window() may return None, so we need to retry.
         screen = win.get_screen()
-        display_number = screen.get_monitor_at_window(screen.get_active_window())
-        rectangle = screen.get_monitor_geometry(display_number)
-        return rectangle.x, rectangle.y, rectangle.width, rectangle.height
+        try:
+            display_number = screen.get_monitor_at_window(screen.get_active_window())
+            rectangle = screen.get_monitor_geometry(display_number)
+            return rectangle.x, rectangle.y, rectangle.width, rectangle.height
+        except:
+            return 0, 0, 0, 0
 
 
 def list_entries():

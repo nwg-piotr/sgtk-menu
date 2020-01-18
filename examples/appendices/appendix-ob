@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Reload",
+    "exec": "openbox --restart",
+    "icon": "openbox"
+  },
+  {
+    "name": "Logout",
+    "exec": "openbox --exit",
+    "icon": "exit"
+  },
+  {
+    "name": "Reboot",
+    "exec": "systemctl reboot",
+    "icon": "reload"
+  },
+  {
+    "name": "Shutdown",
+    "exec": "systemctl -i poweroff",
+    "icon": "window-close"
+  }
+]
