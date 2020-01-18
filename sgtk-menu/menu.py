@@ -126,10 +126,8 @@ def main():
     global appendix_file
     parser = argparse.ArgumentParser(description="GTK menu for sway and i3")
     placement = parser.add_mutually_exclusive_group()
-    placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom")
-    placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen")
-    placement.add_argument("-m", "--mouse", action="store_true",
-                           help="display at mouse pointer (floating WMs only, requires optional python-pynput package)")
+    placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom (sway & i3 only)")
+    placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen (sway & i3 only)")
 
     favourites = parser.add_mutually_exclusive_group()
     favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used items")
@@ -232,25 +230,15 @@ def main():
         win.resize(w, h)
     else:
         win.resize(1, 1)
-
-    if other_wm:
-        win.set_gravity(Gdk.Gravity.STATIC)
+        win.set_gravity(Gdk.Gravity.CENTER)
         win.set_resizable(False)
-        win.set_titlebar(None)
-        win.set_icon(None)
-        if args.mouse:
-            if pynput:
-                x, y = mouse_pointer.position
-                win.move(x, y)
-            else:
-                win.set_position(Gtk.WindowPosition.CENTER)
-                print("\nYou need the python-pynput package!\n")
-        elif args.center:
-            win.set_position(Gtk.WindowPosition.CENTER)
-        elif args.bottom:
-            win.move(x, h)
+        win.set_decorated(False)
+        if pynput:
+            x, y = mouse_pointer.position
+            win.move(x, y)
         else:
-            win.move(x, 0)
+            win.move(0, 0)
+            print("\nYou need the python-pynput package!\n")
 
     win.set_skip_taskbar_hint(True)
     win.menu = build_menu()
