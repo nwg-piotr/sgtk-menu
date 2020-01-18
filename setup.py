@@ -9,7 +9,7 @@ def read(f_name):
 setup(
     name='sgtk-menu',
     version='0.5.1',
-    description='GTK menu for sway and i3',
+    description='GTK menu for sway, i3 and some other WMs',
     packages=['sgtk-menu'],
     include_package_data=True,
     url='https://github.com/nwg-piotr/sgtk-menu',
