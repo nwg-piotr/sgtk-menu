@@ -57,7 +57,6 @@ other_wm = not swaymsg and not i3_msg
 
 if not other_wm:
     from i3ipc import Connection
-
     i3 = Connection()
 
 # Lists to hold DesktopEntry objects of each category
