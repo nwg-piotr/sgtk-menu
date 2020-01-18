@@ -124,7 +124,7 @@ def main():
         sys.exit(0)
 
     global appendix_file
-    parser = argparse.ArgumentParser(description="GTK menu for sway and i3")
+    parser = argparse.ArgumentParser(description="GTK menu for sway, i3 and some floating WMs")
     placement = parser.add_mutually_exclusive_group()
     placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom (sway & i3 only)")
     placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen (sway & i3 only)")
@@ -141,11 +141,11 @@ def main():
     parser.add_argument("-n", "--no-menu", action="store_true", help="skip menu, display appendix only")
     parser.add_argument("-l", type=str, help="force language (e.g. \"de\" for German)")
     parser.add_argument("-s", type=int, default=20, help="menu icon size (min: 16, max: 48, default: 20)")
-    parser.add_argument("-w", type=int, help="menu width in px (integer, default: screen width / 8)")
-    parser.add_argument("-d", type=int, default=100, help="menu delay in milliseconds (default: 100)")
-    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3)")
+    parser.add_argument("-w", type=int, help="menu width in px (integer, default: screen width / 8")
+    parser.add_argument("-d", type=int, default=100, help="menu delay in milliseconds (default: 100; sway & i3 only)")
+    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3; sway & i3 only)")
     parser.add_argument("-t", type=int, default=30, help="sway submenu lines limit (default: 30)")
-    parser.add_argument("-y", type=int, default=0, help="y offset from edge to display menu at")
+    parser.add_argument("-y", type=int, default=0, help="y offset from edge to display menu at (sway & i3 only)")
     global args
     args = parser.parse_args()
     if args.s < 16:
