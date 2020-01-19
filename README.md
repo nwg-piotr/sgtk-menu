@@ -1,7 +1,8 @@
 # sgtk-menu
-This project is an attempt to create a simple menu, that behaves decently on sway, but also on i3 window manager. 
-The menu may also be used in some floating WMs, but I only use Openbox, and don't test it elsewhere.
-It uses `pygobject` to create a themeable, searchable gtk3-based system menu w/ some optional features.
+This project is an attempt to create a simple menu, that behaves decently on **sway**, but also on **i3** window manager. 
+The menu may also be used in some **floating WMs**, but I only use Openbox, and don't test it elsewhere.
+
+**sgtk-menu uses `pygobject` to create a themeable, searchable, gtk3-based system menu w/ some optional features**.
 
 ## Features
 
@@ -10,7 +11,7 @@ It uses `pygobject` to create a themeable, searchable gtk3-based system menu w/ 
 - favourites (most frequently used entries) menu above (optional `[-f | -fn FN]` argument);
 - user-defined menu below (optional `[-a | -af AF]` argument).
 
-As the script searches `.desktop` files only, it may be used as a replacement to wofi/rofi `--drun`, but not for 
+As the script searches `.desktop` files only, it may be used as a replacement to wofi/rofi `--drun`, but not to 
 `--dmenu` mode.
 
 ![screenshot](http://nwg.pl/Lychee/uploads/big/c396d7eea8fc5c9c931f63b75940fb26.png)
@@ -58,7 +59,7 @@ optional arguments:
 ### Positioning
 
 On **sway and i3** the default menu position it top left corner. Use `-b` or `-c` to place it at the bottom or in the 
-center of the screen. Use `[-y <Y>]` argument to add an offset from the edge.
+center of the screen. Use `[-y <Y>]` argument to add a vertical offset from the edge.
 
 On **floating WMs** the `-b` and `-c` arguments will be ignored. The menu position will always follow the mouse pointer,
 provided that you installed the `python-pynput` package. Also the `-d | delay` argument takes no effect in floating WMs.
@@ -89,8 +90,10 @@ See [screenshots](https://github.com/nwg-piotr/sgtk-menu/tree/master/screenshots
 
 ## Installation
 
+[![Packaging status](https://repology.org/badge/vertical-allrepos/sgtk-menu.svg)](https://repology.org/project/sgtk-menu/versions)
+
 For now the only available package is [sgtk-menu](https://aur.archlinux.org/packages/sgtk-menu) [AUR] for Arch linux.
-However, you may simply clone the repository and launch the `menu.py` file, instead of `sgtk-menu` command.
+However, you may simply clone the repository and launch the `sgtk-menu.py` file, instead of `sgtk-menu` command.
 
 ## Dependencies
 
@@ -100,8 +103,9 @@ However, you may simply clone the repository and launch the `menu.py` file, inst
 - `python-gobject`
 - `python-cairo` | `python-cairocffi `
 - `python-i3ipc`
+- `python-pynfo`: *optional for positioning in floating WMs*
 
-## How it works?
+## How it works on sway & i3?
 
 The problem to resolve was, that the Gtk.Menu class behaves differently / unexpectedly when open over Wayland and X11 windows. 
 To work it around, the script opens the menu over a (semi-)transparent, floating window, that covers all the screen.
@@ -112,8 +116,24 @@ You may use the `~/.config/sgtk-menu/style.css` file to override some theme sett
 
 ```text
 #menu {
-    font: 14px Sans;
-    font-weight: 400;
+    font-family: monospace;
+    background: #ede9e0
+}
+
+#submenu {
+    background: #ede9e0
+}
+
+#item-category:hover {
+    background: #6a3513
+}
+
+#item-favorites:hover {
+    background: #6a3513
+}
+
+#item:hover {
+    background: #6a3513
 }
 
 #separator {
