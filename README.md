@@ -111,9 +111,18 @@ However, you may simply clone the repository and launch the `sgtk-menu.py` file,
 The problem to resolve was, that the Gtk.Menu class behaves differently / unexpectedly when open over Wayland and X11 windows. 
 To work it around, the script opens the menu over a (semi-)transparent, floating window, that covers all the screen.
 
-## Styling
+## Configuration
 
-You may use the `~/.config/sgtk-menu/style.css` file (or another file, forced with the `-css <filename>` argument) to 
+All custom menus and .css style sheets must be placed in `/your/confid/dir/sgtk-menu/` (usually `~/.config/sgtk-menu/`). 
+Whatever you specify with arguments, are file names, not paths.
+
+### Appendix
+
+Appendix is a custom menu defined in json in the `appendix` file, or another, forced with the `-af <filename>` argument.
+
+### Styling
+
+You may use the `~/.config/sgtk-menu/style.css` file, or another one, forced with the `-css <filename>` argument) to 
 override some theme settings, e.g.:
 
 ```text
@@ -147,10 +156,11 @@ Widgets are named as below:
 
 ![css-styling](http://nwg.pl/Lychee/uploads/big/3e2faa61abc70c89e277b7a54aa8e392.png)
 
-## i3 support
+## i3 support, floating WMs support
 
 Even if there exist plenty of good X11 menus, with the most excellent [jgmenu](https://github.com/johanmalm/jgmenu) 
-on top, I'm doing my best to make sgtk-menu i3-compatible. See below to resolve issues, if any. 
+on top, I'm doing my best to make sgtk-menu i3-compatible. It's also possible to use sgtk-menu in some floating window 
+managers, e.g. to replace the Openbox / Fluxbox menu. See below to resolve issues, if any. 
 
 ## Troubleshooting
 
