@@ -425,8 +425,10 @@ def open_menu():
 
     if args.bottom:
         gravity = Gdk.Gravity.SOUTH
-    else:
+    elif args.center:
         gravity = Gdk.Gravity.CENTER
+    else:
+        gravity = Gdk.Gravity.NORTH
 
     win.menu.popup_at_widget(win.anchor, gravity, gravity, None)
 
