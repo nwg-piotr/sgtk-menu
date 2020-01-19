@@ -54,6 +54,8 @@ optional arguments:
   -o O              overlay opacity (min: 0.0, max: 1.0, default: 0.3; sway & i3 only)
   -t T              sway submenu lines limit (default: 30)
   -y Y              y offset from edge to display menu at (sway & i3 only)
+  -css CSS          use alternative /home/piotr/.config/sgtk-menu/<CSS> style sheet instead of
+                    style.css
 ```
 
 ### Positioning
