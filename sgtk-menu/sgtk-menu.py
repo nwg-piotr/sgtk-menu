@@ -274,6 +274,7 @@ class MainWindow(Gtk.Window):
         self.connect('draw', self.draw)  # transparency
 
         self.search_box = Gtk.SearchEntry()
+        self.search_box.set_property("name", "searchbox")
         self.search_box.set_text('Type to search')
         self.screen_dimensions = (0, 0)  # parent screen dimensions (obtained outside)
         self.search_phrase = ''
