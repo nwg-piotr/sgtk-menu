@@ -1,5 +1,6 @@
 # sgtk-menu
 This project is an attempt to create a simple menu, that behaves decently on sway, but also on i3 window manager. 
+The menu may also be used in some floating WMs, but I only use Openbox, and don't test it elsewhere.
 It uses `pygobject` to create a themeable, searchable gtk3-based system menu w/ some optional features.
 
 ## Features
@@ -31,28 +32,27 @@ that I had ever expected.
 
 ```text
 $ sgtk-menu -h
-usage: sgtk-menu [-h] [-b | -c | -m] [-f | -fn FN] [-a | -af AF] [-n] [-l L] [-s S] [-w W] [-d D] [-o O]
-               [-t T] [-y Y]
+usage: sgtk-menu [-h] [-b | -c] [-f | -fn FN] [-a | -af AF] [-n] [-l L] [-s S] [-w W] [-d D] [-o O]
+                    [-t T] [-y Y]
 
-GTK menu for sway and i3
+GTK menu for sway, i3 and some floating WMs
 
 optional arguments:
   -h, --help        show this help message and exit
-  -b, --bottom      display menu at the bottom
-  -c, --center      center menu on the screen
-  -m, --mouse       display at mouse pointer (floating WMs only)
+  -b, --bottom      display menu at the bottom (sway & i3 only)
+  -c, --center      center menu on the screen (sway & i3 only)
   -f, --favourites  prepend 5 most used items
   -fn FN            prepend <FN> most used items
-  -a, --append      append custom menu from /home/piotr/.config/sgtk-menu/appendix
-  -af AF            append custom menu from /home/piotr/.config/sgtk-menu/<AF>
+  -a, --append      append custom menu from ~/.config/sgtk-menu/appendix
+  -af AF            append custom menu from ~/.config/sgtk-menu/<AF>
   -n, --no-menu     skip menu, display appendix only
   -l L              force language (e.g. "de" for German)
   -s S              menu icon size (min: 16, max: 48, default: 20)
   -w W              menu width in px (integer, default: screen width / 8)
-  -d D              menu delay in milliseconds (default: 100)
-  -o O              overlay opacity (min: 0.0, max: 1.0, default: 0.3)
+  -d D              menu delay in milliseconds (default: 100; sway & i3 only)
+  -o O              overlay opacity (min: 0.0, max: 1.0, default: 0.3; sway & i3 only)
   -t T              sway submenu lines limit (default: 30)
-  -y Y              y offset from edge to display menu at
+  -y Y              y offset from edge to display menu at (sway & i3 only)
 ```
 
 Sample sway key binding:
@@ -66,6 +66,18 @@ or sample i3 key binding:
 displays menu prepended with the default number of favourites, appended with the default `~/.config/sgtk-menu/appendix`
 file. Use `sgtk-menu -f -af <custom_menu_file>` to append your custom menu. Copy and edit the default `appendix` file 
 (in the same location).
+
+To use sgtk-menu as a replacement to Openbox menu, you need to edit the mouse right click binding, e.g. like this:
+
+```xml
+<mousebind action="Press" button="Right">
+  <action name="Execute">
+    <command>sgtk-menu -af appendix-ob -fn 5</command>
+  </action>
+</mousebind>
+```
+
+See [screenshots](https://github.com/nwg-piotr/sgtk-menu/tree/master/screenshots) for more examples.
 
 ## Installation
 
@@ -112,22 +124,26 @@ on top, I'm doing my best to make sgtk-menu i3-compatible. See below to resolve 
 
 ## Troubleshooting
 
-### Menu does not position properly in the screen corner
+### [sway, i3] Menu does not position properly in the screen corner
 
 Try increasing the delay length. The default value is 100 milliseconds, and on my laptop it works well down to 30. 
 Slower machines, however, may require higher values. E.g. try using `-d 200` argument.
 
-### Overlay behind the menu is not (semi)transparent on i3
+### [i3] Overlay behind the menu is not (semi)transparent
 
 You need [compton](https://github.com/chjj/compton) or equivalent X11 compositor.
 
-### Overlay first displays as a tiled window on i3
+### [i3] Overlay first displays as a tiled window
 
 Add this to your `~/.config/i3/config` file:
 
 ```text
 for_window [title="~sgtk-menu"] border none, floating enable
 ```
+
+### [Openbox] The menu always appears in the top left corner
+
+You need the `pynput` python module. Install optional `python-pynput` package or use `PIP`.
 
 ## TODO
 - On next sway / GTK release, check if the overflowed menus issue on sway is fixed; remove 50 SLOC long workaround if so;
