@@ -20,7 +20,7 @@ As the script searches `.desktop` files only, it may be used as a replacement to
 ## Background
 
 Well, I didn't even think that sway needed a menu, being happy with [wofi](https://hg.sr.ht/~scoopta/wofi) and 
-[dmenu-wayland](https://github.com/nyyManni/dmenu-wayland). I started coding just to find out what the freedesktop 
+[dmenu-wayland](https://github.com/nyyManni/dmenu-wayland). I started coding just to find out what the 
 [Desktop Menu Specification](https://specifications.freedesktop.org/menu-spec/latest) looks like, and also to learn some 
 more [pygobject](https://pygobject.readthedocs.io/en/latest). [The best menu I know](https://github.com/johanmalm/jgmenu), 
 however, does not (yet?) behave well on sway. So, I thought to share the code, which has already taken me more time 
@@ -64,11 +64,11 @@ center of the screen. Use `[-y <Y>]` argument to add a vertical offset from the 
 On **floating WMs** the `-b` and `-c` arguments will be ignored. The menu position will always follow the mouse pointer,
 provided that you installed the `python-pynput` package. Also the `-d | delay` argument takes no effect in floating WMs.
 
-Sample sway key binding:
+Sample **sway key binding**:
 
 `bindsym mod1+F1 exec sgtk-menu -f -a`
 
-or sample i3 key binding:
+or sample **i3 key binding**:
 
 `bindsym Mod1+F1 exec --no-startup-id sgtk-menu -f -a`
 
@@ -76,7 +76,7 @@ displays menu prepended with the default number of favourites, appended with the
 file. Use `sgtk-menu -f -af <custom_menu_file>` to append your custom menu. Copy and edit the default `appendix` file 
 (in the same location).
 
-To use sgtk-menu as a replacement to Openbox menu, you need to edit the mouse right click binding, e.g. like this:
+To use sgtk-menu as a **replacement to Openbox menu**, you need to edit the mouse right click binding, e.g. like this:
 
 ```xml
 <mousebind action="Press" button="Right">
@@ -97,7 +97,6 @@ However, you may simply clone the repository and launch the `sgtk-menu.py` file,
 
 ## Dependencies
 
-- `sway` or `i3`
 - `gtk3`
 - `python` (python3)
 - `python-gobject`
@@ -154,7 +153,7 @@ on top, I'm doing my best to make sgtk-menu i3-compatible. See below to resolve 
 
 ### [sway] Submenu not scrollable
 
-This is a bug either in sway 1.2, or GTK: if the menu height exceeds the screen height, it becomes unresponsive.
+This is a bug either in sway 1.2, or GTK: if the menu height exceeds the screen height, it becomes partially unresponsive.
 The script uses a ~~tricky as hell~~ workaround, but you must specify how many entries fit in your screen vertically.
 By default it's 30. If it's too much to your screen, try the `-t <T>` argument w/ a value < 30.
 
