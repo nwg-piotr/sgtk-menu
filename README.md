@@ -55,6 +55,14 @@ optional arguments:
   -y Y              y offset from edge to display menu at (sway & i3 only)
 ```
 
+### Positioning
+
+On **sway and i3** the default menu position it top left corner. Use `-b` or `-c` to place it at the bottom or in the 
+center of the screen. Use `[-y <Y>]` argument to add an offset from the edge.
+
+On **floating WMs** the `-b` and `-c` arguments will be ignored. The menu position will always follow the mouse pointer,
+provided that you installed the `python-pynput` package. Also the `-d | delay` argument takes no effect in floating WMs.
+
 Sample sway key binding:
 
 `bindsym mod1+F1 exec sgtk-menu -f -a`
