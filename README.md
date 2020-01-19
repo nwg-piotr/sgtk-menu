@@ -118,7 +118,8 @@ Whatever you specify with arguments, are file names, not paths.
 
 ### Appendix
 
-Appendix is a custom menu defined in json in the `appendix` file, or another, forced with the `-af <filename>` argument.
+Appendix is a custom menu in json format, in the `/your/confid/dir/appendix` file, or another, forced with the 
+`-af <filename>` argument.
 
 ### Styling
 
