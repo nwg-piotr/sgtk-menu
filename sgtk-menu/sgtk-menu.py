@@ -41,6 +41,7 @@ except:
 pynput = False
 try:
     from pynput.mouse import Controller
+
     mouse_pointer = Controller()
     pynput = True
 except:
@@ -57,6 +58,7 @@ other_wm = not swaymsg and not i3_msg
 
 if not other_wm:
     from i3ipc import Connection
+
     i3 = Connection()
 
 # Lists to hold DesktopEntry objects of each category
@@ -97,9 +99,6 @@ config_dir = config_dirs()[0]
 if not os.path.exists(config_dir):
     os.makedirs(config_dir)
 appendix_file = os.path.join(config_dirs()[0], 'appendix')
-
-css_file = os.path.join(config_dirs()[0], 'style.css') if os.path.exists(
-    os.path.join(config_dirs()[0], 'style.css')) else None
 
 if "XDG_CACHE_HOME" in os.environ:
     cache_dir = os.environ["XDG_CACHE_HOME"]
@@ -146,8 +145,14 @@ def main():
                                                             "sway & i3 only)")
     parser.add_argument("-t", type=int, default=30, help="sway submenu lines limit (default: 30)")
     parser.add_argument("-y", type=int, default=0, help="y offset from edge to display menu at (sway & i3 only)")
+    parser.add_argument("-css", type=str, default="style.css",
+                        help="use alternative {} style sheet instead of style.css"
+                        .format(os.path.join(config_dir, '<CSS>')))
     global args
     args = parser.parse_args()
+    css_file = os.path.join(config_dirs()[0], args.css) if os.path.exists(
+        os.path.join(config_dirs()[0], 'style.css')) else None
+
     if args.s < 16:
         args.s = 16
     elif args.s > 48:
