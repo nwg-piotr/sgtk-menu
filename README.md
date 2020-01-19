@@ -132,6 +132,12 @@ on top, I'm doing my best to make sgtk-menu i3-compatible. See below to resolve 
 
 ## Troubleshooting
 
+### [sway] Submenu not scrollable
+
+This is a bug either in sway 1.2, or GTK: if the menu height exceeds the screen height, it becomes unresponsive.
+The script uses a ~~tricky as hell~~ workaround, but you must specify how many entries fit in your screen vertically.
+By default it's 30. If it's too much to your screen, try the `-t <T>` argument w/ a value < 30.
+
 ### [sway, i3] Menu does not position properly in the screen corner
 
 Try increasing the delay length. The default value is 100 milliseconds, and on my laptop it works well down to 30. 
