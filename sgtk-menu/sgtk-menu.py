@@ -140,9 +140,10 @@ def main():
     parser.add_argument("-n", "--no-menu", action="store_true", help="skip menu, display appendix only")
     parser.add_argument("-l", type=str, help="force language (e.g. \"de\" for German)")
     parser.add_argument("-s", type=int, default=20, help="menu icon size (min: 16, max: 48, default: 20)")
-    parser.add_argument("-w", type=int, help="menu width in px (integer, default: screen width / 8")
+    parser.add_argument("-w", type=int, help="menu width in px (integer, default: screen width / 8)")
     parser.add_argument("-d", type=int, default=100, help="menu delay in milliseconds (default: 100; sway & i3 only)")
-    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3; sway & i3 only)")
+    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3; "
+                                                            "sway & i3 only)")
     parser.add_argument("-t", type=int, default=30, help="sway submenu lines limit (default: 30)")
     parser.add_argument("-y", type=int, default=0, help="y offset from edge to display menu at (sway & i3 only)")
     global args
