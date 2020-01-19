@@ -113,7 +113,7 @@ To work it around, the script opens the menu over a (semi-)transparent, floating
 
 ## Styling
 
-You may use the `~/.config/sgtk-menu/style.css` file (or another file, forced with the `-css <filename>` argument to 
+You may use the `~/.config/sgtk-menu/style.css` file (or another file, forced with the `-css <filename>` argument) to 
 override some theme settings, e.g.:
 
 ```text
