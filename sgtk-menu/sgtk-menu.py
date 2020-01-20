@@ -41,6 +41,7 @@ except:
 pynput = False
 try:
     from pynput.mouse import Controller
+
     mouse_pointer = Controller()
     pynput = True
 except:
@@ -99,9 +100,6 @@ if not os.path.exists(config_dir):
     os.makedirs(config_dir)
 appendix_file = os.path.join(config_dirs()[0], 'appendix')
 
-css_file = os.path.join(config_dirs()[0], 'style.css') if os.path.exists(
-    os.path.join(config_dirs()[0], 'style.css')) else None
-
 if "XDG_CACHE_HOME" in os.environ:
     cache_dir = os.environ["XDG_CACHE_HOME"]
 else:
@@ -121,7 +119,8 @@ def main():
     try:
         fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError:
-        sys.exit(0)
+        subprocess.run("pkill -f sgtk-menu", shell=True)
+        sys.exit(2)
 
     global appendix_file
     parser = argparse.ArgumentParser(description="GTK menu for sway, i3 and some floating WMs")
@@ -141,13 +140,20 @@ def main():
     parser.add_argument("-n", "--no-menu", action="store_true", help="skip menu, display appendix only")
     parser.add_argument("-l", type=str, help="force language (e.g. \"de\" for German)")
     parser.add_argument("-s", type=int, default=20, help="menu icon size (min: 16, max: 48, default: 20)")
-    parser.add_argument("-w", type=int, help="menu width in px (integer, default: screen width / 8")
+    parser.add_argument("-w", type=int, help="menu width in px (integer, default: screen width / 8)")
     parser.add_argument("-d", type=int, default=100, help="menu delay in milliseconds (default: 100; sway & i3 only)")
-    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3; sway & i3 only)")
+    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3; "
+                                                            "sway & i3 only)")
     parser.add_argument("-t", type=int, default=30, help="sway submenu lines limit (default: 30)")
     parser.add_argument("-y", type=int, default=0, help="y offset from edge to display menu at (sway & i3 only)")
+    parser.add_argument("-css", type=str, default="style.css",
+                        help="use alternative {} style sheet instead of style.css"
+                        .format(os.path.join(config_dir, '<CSS>')))
     global args
     args = parser.parse_args()
+    css_file = os.path.join(config_dirs()[0], args.css) if os.path.exists(
+        os.path.join(config_dirs()[0], 'style.css')) else None
+
     if args.s < 16:
         args.s = 16
     elif args.s > 48:
@@ -223,7 +229,7 @@ def main():
         retries += 1
         if retries > 500:
             print("\nFailed to get the current screen geometry, exiting...\n")
-            sys.exit(1)
+            sys.exit(2)
     x, y, w, h = geometry
 
     if not other_wm:
@@ -231,8 +237,6 @@ def main():
     else:
         win.resize(1, 1)
         win.set_gravity(Gdk.Gravity.CENTER)
-        win.set_resizable(False)
-        win.set_decorated(False)
         if pynput:
             x, y = mouse_pointer.position
             win.move(x, y)
@@ -268,7 +272,13 @@ class MainWindow(Gtk.Window):
         self.connect("destroy", Gtk.main_quit)
         self.connect('draw', self.draw)  # transparency
 
+        if other_wm:
+            self.set_sensitive(False)
+            self.set_resizable(False)
+            self.set_decorated(False)
+
         self.search_box = Gtk.SearchEntry()
+        self.search_box.set_property("name", "searchbox")
         self.search_box.set_text('Type to search')
         self.screen_dimensions = (0, 0)  # parent screen dimensions (obtained outside)
         self.search_phrase = ''
@@ -426,10 +436,19 @@ def open_menu():
 
     if args.bottom:
         gravity = Gdk.Gravity.SOUTH
-    else:
+    elif args.center:
         gravity = Gdk.Gravity.CENTER
+    else:
+        gravity = Gdk.Gravity.NORTH
 
-    win.menu.popup_at_widget(win.anchor, gravity, gravity, None)
+    if not other_wm:
+        win.menu.popup_at_widget(win.anchor, gravity, gravity, None)
+    else:
+        win.menu.popup_at_widget(win.anchor, Gdk.Gravity.CENTER, Gdk.Gravity.CENTER, None)
+        if not win.menu.get_visible():
+            # In Openbox, if the MainWindow (which is invisible!) gets accidentally clicked and dragged,
+            # the menu doesn't pop up, but the process is still alive. Let's kill the bastard, if so.
+            Gtk.main_quit()
 
 
 def display_geometry():

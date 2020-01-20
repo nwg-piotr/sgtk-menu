@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
 cd /usr/lib/python3.8/site-packages/sgtk-menu
-exec /usr/bin/python3 menu.py "$@"
+exec /usr/bin/python3 sgtk-menu.py "$@"

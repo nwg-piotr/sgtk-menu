@@ -19,3 +19,15 @@
 `sgtk-menu -n -c -o 0.7`
 
 ![screen5](http://nwg.pl/Lychee/uploads/big/43d581cb405fe74196458044092fe72b.png)
+
+As a replacement to Openbox menu:
+
+```xml
+<mousebind action="Press" button="Right">
+  <action name="Execute">
+    <command>sgtk-menu -af appendix-ob -fn 5</command>
+  </action>
+</mousebind>
+```
+
+![screen6](http://nwg.pl/Lychee/uploads/big/2550116862b24aa43de179283487702a.png)
