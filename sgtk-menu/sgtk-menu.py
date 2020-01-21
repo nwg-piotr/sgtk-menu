@@ -169,7 +169,7 @@ def main():
 
     # Replace appendix file name with custom - if any
     if args.af:
-        appendix_file = os.path.join(config_dirs()[0], args.af)
+        build_from_file = os.path.join(config_dirs()[0], args.af)
 
     if css_file:
         screen = Gdk.Screen.get_default()

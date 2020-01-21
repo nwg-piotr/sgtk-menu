@@ -1,7 +1,7 @@
 [
   {
     "name": "Lock",
-    "exec": "i3lock -f -c 000000",
+    "exec": "i3lock -c 000000",
     "icon": "lock"
   },
   {
