@@ -24,8 +24,7 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 import cairo
 
-from tools import localized_category_names, additional_to_main, get_locale_string, config_dirs, save_default_appendix, \
-    load_json, save_json
+from tools import config_dirs, load_json, create_default_configs
 
 # Will apply to the overlay window; we can't do so outside the config file on i3.
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
@@ -109,9 +108,8 @@ def main():
     if other_wm:
         args.d = 0
 
-    # Create default appendix file if not found
-    if not os.path.isfile(build_from_file):
-        save_default_appendix(build_from_file)
+    # Create default config files if not found
+    create_default_configs(config_dir)
 
     # Replace appendix file name with custom - if any
     if args.bf:

@@ -1,28 +1,10 @@
-#menu {
-    font-size: 12px;
-    padding: 10px
-}
-
-#submenu {
-    background: #6699cc
-}
-
-#item-favorites {
-    font-family: Monospace;
-}
-
-#item-category {
-    font-size: 20px;
-}
-
-#item {
-    font-size: 12px;
-}
-
-#item-appendix {
-    font-size: 12px;
-}
-
 #separator {
     margin: 10px;
+}
+
+#button:hover {
+    border-top: 1px solid #aaa;
+    border-left: 1px solid #aaa;
+    border-right: 1px solid #111;
+    border-bottom: 1px solid #111
 }
