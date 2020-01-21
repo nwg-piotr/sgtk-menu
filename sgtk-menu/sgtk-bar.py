@@ -87,26 +87,20 @@ def main():
 
     parser = argparse.ArgumentParser(description="GTK menu for sway, i3 and some floating WMs")
     placement = parser.add_mutually_exclusive_group()
-    placement.add_argument("-b", "--bottom", action="store_true", help="display bar at the bottom (sway & i3 only)")
-    placement.add_argument("-t", "--top", action="store_true", help="display bar at the top (sway & i3 only)")
+
+    parser.add_argument("-bf", type=str, help="build from file (default: {})".format(appendix_file))
     parser.add_argument("-bw", type=int, default=90, help="minimum button width (default: 90)")
     parser.add_argument("-bh", type=int, default=90, help="minimum button height (default: 90)")
+    placement.add_argument("-b", "--bottom", action="store_true", help="display bar at the bottom (sway & i3 only)")
+    placement.add_argument("-t", "--top", action="store_true", help="display bar at the top (sway & i3 only)")
+    parser.add_argument("-y", type=int, default=0, help="vertical offset from edge (sway & i3 only)")
+    parser.add_argument("-v", "--vertical", action="store_true", help="arrange buttons vertically")
     parser.add_argument("-p", type=int, default=20, help="button padding (default: 20)")
     parser.add_argument("-s", type=int, default=32, help="icon size (min: 16, max: 48, default: 32)")
-    
-    parser.add_argument("-v", "--vertically", action="store_true", help="arrange buttons vertically")
-
-    appendix = parser.add_mutually_exclusive_group()
-    appendix.add_argument("-a", "--append", action="store_true",
-                          help="append custom menu from {}".format(appendix_file))
-    appendix.add_argument("-af", type=str, help="append custom menu from {}".format(os.path.join(config_dir, '<AF>')))
-
-    parser.add_argument("-l", type=str, help="force language (e.g. \"de\" for German)")
-
     parser.add_argument("-d", type=int, default=100, help="bar delay in milliseconds (default: 100; sway & i3 only)")
     parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3; "
                                                             "sway & i3 only)")
-    parser.add_argument("-y", type=int, default=0, help="y offset from edge to display menu at (sway & i3 only)")
+
     parser.add_argument("-css", type=str, default="style.css",
                         help="use alternative {} style sheet instead of style.css"
                         .format(os.path.join(config_dir, '<CSS>')))
@@ -129,8 +123,8 @@ def main():
         save_default_appendix(appendix_file)
 
     # Replace appendix file name with custom - if any
-    if args.af:
-        appendix_file = os.path.join(config_dirs()[0], args.af)
+    if args.bf:
+        appendix_file = os.path.join(config_dirs()[0], args.bf)
 
     if css_file:
         screen = Gdk.Screen.get_default()
@@ -141,10 +135,6 @@ def main():
                 screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         except Exception as e:
             print(e)
-
-    global locale
-    locale = get_locale_string(args.l)
-    category_names_dictionary = localized_category_names(locale)
 
     screen = Gdk.Screen.get_default()
     provider = Gtk.CssProvider()
@@ -231,7 +221,7 @@ class MainWindow(Gtk.Window):
             self.set_visual(visual)
         self.set_app_paintable(True)
 
-        if args.vertically:
+        if args.vertical:
             self.anchor = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         else:
             self.anchor = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
@@ -322,7 +312,7 @@ def display_geometry():
 
 def build_bar():
     icon_theme = Gtk.IconTheme.get_default()
-    orientation = Gtk.Orientation.VERTICAL if args.vertically else Gtk.Orientation.HORIZONTAL
+    orientation = Gtk.Orientation.VERTICAL if args.vertical else Gtk.Orientation.HORIZONTAL
     box = Gtk.Box(orientation=orientation)
 
     appendix = load_json(appendix_file)
