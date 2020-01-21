@@ -38,15 +38,6 @@ try:
 except:
     pass
 
-pynput = False
-try:
-    from pynput.mouse import Controller
-
-    mouse_pointer = Controller()
-    pynput = True
-except:
-    pass
-
 i3_msg = False
 try:
     i3_msg = subprocess.run(
@@ -91,15 +82,15 @@ def main():
     parser.add_argument("-bf", type=str, help="build from file (default: {})".format(appendix_file))
     parser.add_argument("-bw", type=int, default=90, help="minimum button width (default: 90)")
     parser.add_argument("-bh", type=int, default=90, help="minimum button height (default: 90)")
-    placement.add_argument("-b", "--bottom", action="store_true", help="display bar at the bottom (sway & i3 only)")
-    placement.add_argument("-t", "--top", action="store_true", help="display bar at the top (sway & i3 only)")
-    parser.add_argument("-y", type=int, default=0, help="vertical offset from edge (sway & i3 only)")
+    placement.add_argument("-b", "--bottom", action="store_true", help="display bar at the bottom")
+    placement.add_argument("-t", "--top", action="store_true", help="display bar at the top")
+    parser.add_argument("-x", type=int, default=0, help="horizontal offset from edge")
+    parser.add_argument("-y", type=int, default=0, help="vertical offset from edge")
     parser.add_argument("-v", "--vertical", action="store_true", help="arrange buttons vertically")
     parser.add_argument("-p", type=int, default=20, help="button padding (default: 20)")
     parser.add_argument("-s", type=int, default=32, help="icon size (min: 16, max: 48, default: 32)")
     parser.add_argument("-d", type=int, default=100, help="bar delay in milliseconds (default: 100; sway & i3 only)")
-    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3; "
-                                                            "sway & i3 only)")
+    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3)")
 
     parser.add_argument("-css", type=str, default="style.css",
                         help="use alternative {} style sheet instead of style.css"
@@ -150,10 +141,6 @@ def main():
     # Overlay window
     global win
     win = MainWindow()
-    if other_wm:
-        # We need this to obtain the screen geometry when i3ipc module unavailable
-        win.resize(1, 1)
-        win.show_all()
     global geometry
     # If we're not on sway neither i3, this won't return values until the window actually shows up.
     # Let's try as many times as needed. The retries int protects from an infinite loop.
@@ -166,22 +153,10 @@ def main():
             sys.exit(2)
     x, y, w, h = geometry
 
-    if not other_wm:
-        win.resize(w, h)
-    else:
-        win.resize(1, 1)
-        win.set_gravity(Gdk.Gravity.CENTER)
-        if pynput:
-            x, y = mouse_pointer.position
-            win.move(x, y)
-        else:
-            win.move(0, 0)
-            print("\nYou need the python-pynput package!\n")
+    win.resize(w, h)
+    win.set_gravity(Gdk.Gravity.CENTER)
 
     win.set_skip_taskbar_hint(True)
-
-    win.button_bar = build_bar()
-    win.button_bar.show_all()
 
     win.button_bar.set_property("name", "menu")
 
@@ -207,12 +182,6 @@ class MainWindow(Gtk.Window):
             self.set_resizable(False)
             self.set_decorated(False)
 
-        self.search_box = Gtk.SearchEntry()
-        self.search_box.set_property("name", "searchbox")
-        self.search_box.set_text('Type to search')
-        self.screen_dimensions = (0, 0)  # parent screen dimensions (obtained outside)
-        self.search_phrase = ''
-
         # Credits for transparency go to  KurtJacobson:
         # https://gist.github.com/KurtJacobson/374c8cb83aee4851d39981b9c7e2c22c
         screen = self.get_screen()
@@ -233,9 +202,9 @@ class MainWindow(Gtk.Window):
         hbox = Gtk.HBox()
 
         if not args.top and not args.bottom:
-            hbox.pack_start(self.anchor, True, False, 0)
+            hbox.pack_start(self.anchor, True, False, args.x)
         else:
-            hbox.pack_start(self.anchor, False, False, 0)
+            hbox.pack_start(self.anchor, False, False, args.x)
 
         if args.bottom:
             # display menu at the bottom
