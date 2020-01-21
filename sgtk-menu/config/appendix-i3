@@ -1,10 +1,5 @@
 [
   {
-    "name": "Reload",
-    "exec": "i3-msg reload && i3-msg restart",
-    "icon": "reload"
-  },
-  {
     "name": "Exit",
     "exec": "sgtk-bar -bf exit-i3",
     "icon": "exit"
