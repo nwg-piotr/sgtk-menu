@@ -1,1 +1,1 @@
-recursive-include sgtk-menu/json *
+recursive-include sgtk-menu/config *

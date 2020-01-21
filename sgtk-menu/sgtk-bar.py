@@ -76,7 +76,7 @@ def main():
 
     global build_from_file
 
-    parser = argparse.ArgumentParser(description="GTK menu for sway, i3 and some floating WMs")
+    parser = argparse.ArgumentParser(description="Button bar for sgtk-menu")
     placement = parser.add_mutually_exclusive_group()
 
     parser.add_argument("-bf", type=str, help="build from file (default: {})".format(build_from_file))
@@ -158,7 +158,7 @@ def main():
 
     win.set_skip_taskbar_hint(True)
 
-    win.button_bar.set_property("name", "menu")
+    win.button_bar.set_property("name", "button")
 
     global menu_items_list
     menu_items_list = win.button_bar.get_children()
@@ -307,6 +307,7 @@ def build_bar():
 
         button = Gtk.Button()
         button.set_property("name", "button")
+        button.set_always_show_image(True)
         button.set_image(image)
         button.set_image_position(Gtk.PositionType.TOP)
         button.set_label(name)
