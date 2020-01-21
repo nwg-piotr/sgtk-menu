@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Reconfigure",
+    "exec": "openbox --reconfigure",
+    "icon": "openbox"
+  },
+  {
+    "name": "Exit",
+    "exec": "sgtk-bar -bf exit-ob",
+    "icon": "exit"
+  }
+]

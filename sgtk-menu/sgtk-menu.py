@@ -98,7 +98,7 @@ missing_copies_list = []
 config_dir = config_dirs()[0]
 if not os.path.exists(config_dir):
     os.makedirs(config_dir)
-appendix_file = os.path.join(config_dirs()[0], 'appendix')
+build_from_file = os.path.join(config_dirs()[0], 'appendix')
 
 if "XDG_CACHE_HOME" in os.environ:
     cache_dir = os.environ["XDG_CACHE_HOME"]
@@ -122,7 +122,7 @@ def main():
         subprocess.run("pkill -f sgtk-menu", shell=True)
         sys.exit(2)
 
-    global appendix_file
+    global build_from_file
     parser = argparse.ArgumentParser(description="GTK menu for sway, i3 and some floating WMs")
     placement = parser.add_mutually_exclusive_group()
     placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom (sway & i3 only)")
@@ -669,7 +669,7 @@ def build_menu():
             separator = Gtk.SeparatorMenuItem()
             separator.set_property("name", "separator")
             menu.append(separator)
-        appendix = load_json(appendix_file)
+        appendix = load_json(build_from_file)
         for entry in appendix:
             name = entry["name"]
             exec = entry["exec"]

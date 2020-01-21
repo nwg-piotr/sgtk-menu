@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Lock",
+    "exec": "i3lock -c 000000",
+    "icon": "lock"
+  },
+  {
+    "name": "Logout",
+    "exec": "i3-nagbar -t red -m ' Exit i3 session?' -b ' Logout ' 'i3-msg exit'",
+    "icon": "exit"
+  },
+  {
+    "name": "Reboot",
+    "exec": "i3-nagbar -t red -m ' Reboot the machine?' -b ' Reboot ' 'systemctl reboot'",
+    "icon": "reload"
+  },
+  {
+    "name": "Shutdown",
+    "exec": "i3-nagbar -t red -m ' Shutdown the machine?' -b ' Shutdown ' 'systemctl -i poweroff'",
+    "icon": "window-close"
+  }
+]

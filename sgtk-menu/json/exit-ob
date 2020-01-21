@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Lock",
+    "exec": "i3lock -c 000000",
+    "icon": "lock"
+  },
+  {
+    "name": "Logout",
+    "exec": "openbox --exit'",
+    "icon": "exit"
+  },
+  {
+    "name": "Reboot",
+    "exec": "systemctl reboot",
+    "icon": "reload"
+  },
+  {
+    "name": "Shutdown",
+    "exec": "systemctl -i poweroff",
+    "icon": "window-close"
+  }
+]

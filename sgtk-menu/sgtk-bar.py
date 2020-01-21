@@ -61,7 +61,7 @@ args = None
 config_dir = config_dirs()[0]
 if not os.path.exists(config_dir):
     os.makedirs(config_dir)
-appendix_file = os.path.join(config_dirs()[0], 'appendix')
+build_from_file = os.path.join(config_dirs()[0], 'exit')
 
 
 def main():
@@ -74,12 +74,12 @@ def main():
         subprocess.run("pkill -f sgtk-bar", shell=True)
         sys.exit(2)
 
-    global appendix_file
+    global build_from_file
 
     parser = argparse.ArgumentParser(description="GTK menu for sway, i3 and some floating WMs")
     placement = parser.add_mutually_exclusive_group()
 
-    parser.add_argument("-bf", type=str, help="build from file (default: {})".format(appendix_file))
+    parser.add_argument("-bf", type=str, help="build from file (default: {})".format(build_from_file))
     parser.add_argument("-bw", type=int, default=90, help="minimum button width (default: 90)")
     parser.add_argument("-bh", type=int, default=90, help="minimum button height (default: 90)")
     placement.add_argument("-b", "--bottom", action="store_true", help="display bar at the bottom")
@@ -110,12 +110,12 @@ def main():
         args.d = 0
 
     # Create default appendix file if not found
-    if not os.path.isfile(appendix_file):
-        save_default_appendix(appendix_file)
+    if not os.path.isfile(build_from_file):
+        save_default_appendix(build_from_file)
 
     # Replace appendix file name with custom - if any
     if args.bf:
-        appendix_file = os.path.join(config_dirs()[0], args.bf)
+        build_from_file = os.path.join(config_dirs()[0], args.bf)
 
     if css_file:
         screen = Gdk.Screen.get_default()
@@ -284,7 +284,7 @@ def build_bar():
     orientation = Gtk.Orientation.VERTICAL if args.vertical else Gtk.Orientation.HORIZONTAL
     box = Gtk.Box(orientation=orientation)
 
-    appendix = load_json(appendix_file)
+    appendix = load_json(build_from_file)
     for entry in appendix:
         name = entry["name"]
         exec = entry["exec"]
