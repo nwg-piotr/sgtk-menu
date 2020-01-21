@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Reload",
+    "exec": "swaymsg reload",
+    "icon": "reload"
+  },
+  {
+    "name": "Exit",
+    "exec": "sgtk-bar -bf exit",
+    "icon": "exit"
+  }
+]

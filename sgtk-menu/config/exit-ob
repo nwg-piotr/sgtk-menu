@@ -1,12 +1,12 @@
 [
   {
-    "name": "Reload",
-    "exec": "openbox --restart",
-    "icon": "openbox"
+    "name": "Lock",
+    "exec": "i3lock -c 000000",
+    "icon": "lock"
   },
   {
     "name": "Logout",
-    "exec": "openbox --exit",
+    "exec": "openbox --exit'",
     "icon": "exit"
   },
   {

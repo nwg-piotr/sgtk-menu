@@ -10,6 +10,7 @@ Copyright (C) 2017-2019 Johan Malm <jgm323@gmail.com>
 Copyright (C) 2020 Piotr Miller <nwg.piotr@gmail.com>
 """
 import os
+import shutil
 import locale
 import json
 
@@ -150,22 +151,15 @@ def additional_to_main(category):
     else:
         return None
 
-
-def save_default_appendix(path):
-    content = [{"name": "Lock",
-                "exec": "swaylock -f -c 000000",
-                "icon": "lock"},
-               {"name": "Logout",
-                "exec": "swaynag -m ' Exit sway session?' -b ' Logout ' 'swaymsg exit'",
-                "icon": "exit"},
-               {"name": "Reboot",
-                "exec": "swaynag -m ' Reboot the machine?' -b ' Reboot ' 'systemctl reboot'",
-                "icon": "reload"},
-               {"name": "Shutdown",
-                "exec": "swaynag -m ' Shutdown the machine?' -b ' Shutdown ' 'systemctl -i poweroff'",
-                "icon": "window-close"}]
-
-    save_json(content, path)
+    
+def create_default_configs(config_dir):
+    # Create default config files if not found
+    scr_files = os.listdir('config')
+    for file_name in scr_files:
+        src_file = os.path.join('config', file_name)
+        dst_file = os.path.join(config_dir, file_name)
+        if not os.path.isfile(dst_file):
+            shutil.copy(src_file, dst_file)
 
 
 def load_json(path):

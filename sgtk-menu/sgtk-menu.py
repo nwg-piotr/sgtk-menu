@@ -12,6 +12,7 @@ License: GPL3
 """
 
 import os
+import shutil
 import tempfile
 import fcntl
 import sys
@@ -24,8 +25,8 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 import cairo
 
-from tools import localized_category_names, additional_to_main, get_locale_string, config_dirs, save_default_appendix, \
-    load_json, save_json
+from tools import localized_category_names, additional_to_main, get_locale_string, config_dirs, load_json, save_json, \
+    create_default_configs
 
 # Will apply to the overlay window; we can't do so outside the config file on i3.
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
@@ -98,7 +99,7 @@ missing_copies_list = []
 config_dir = config_dirs()[0]
 if not os.path.exists(config_dir):
     os.makedirs(config_dir)
-appendix_file = os.path.join(config_dirs()[0], 'appendix')
+build_from_file = os.path.join(config_dirs()[0], 'appendix')
 
 if "XDG_CACHE_HOME" in os.environ:
     cache_dir = os.environ["XDG_CACHE_HOME"]
@@ -122,7 +123,7 @@ def main():
         subprocess.run("pkill -f sgtk-menu", shell=True)
         sys.exit(2)
 
-    global appendix_file
+    global build_from_file
     parser = argparse.ArgumentParser(description="GTK menu for sway, i3 and some floating WMs")
     placement = parser.add_mutually_exclusive_group()
     placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom (sway & i3 only)")
@@ -134,7 +135,7 @@ def main():
 
     appendix = parser.add_mutually_exclusive_group()
     appendix.add_argument("-a", "--append", action="store_true",
-                          help="append custom menu from {}".format(appendix_file))
+                          help="append custom menu from {}".format(build_from_file))
     appendix.add_argument("-af", type=str, help="append custom menu from {}".format(os.path.join(config_dir, '<AF>')))
 
     parser.add_argument("-n", "--no-menu", action="store_true", help="skip menu, display appendix only")
@@ -163,9 +164,8 @@ def main():
     if other_wm:
         args.d = 0
 
-    # Create default appendix file if not found
-    if not os.path.isfile(appendix_file):
-        save_default_appendix(appendix_file)
+    # Create default config files if not found
+    create_default_configs(config_dir)
 
     # Replace appendix file name with custom - if any
     if args.af:
@@ -669,7 +669,7 @@ def build_menu():
             separator = Gtk.SeparatorMenuItem()
             separator.set_property("name", "separator")
             menu.append(separator)
-        appendix = load_json(appendix_file)
+        appendix = load_json(build_from_file)
         for entry in appendix:
             name = entry["name"]
             exec = entry["exec"]
