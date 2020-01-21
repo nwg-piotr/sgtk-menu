@@ -1,0 +1,4 @@
+#!/bin/sh
+
+cd /usr/lib/python3.8/site-packages/sgtk-menu
+exec /usr/bin/python3 sgtk-bar.py "$@"
