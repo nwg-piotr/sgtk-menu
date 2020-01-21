@@ -158,9 +158,7 @@ def main():
 
     win.button_bar.set_property("name", "button")
 
-    global menu_items_list
-    menu_items_list = win.button_bar.get_children()
-
+    win.show()
     GLib.timeout_add(args.d, show_bar)
     Gtk.main()
 
