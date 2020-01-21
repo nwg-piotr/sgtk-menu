@@ -6,17 +6,17 @@
   },
   {
     "name": "Logout",
-    "exec": "swaynag -t red -m ' Exit sway session?' -b ' Logout ' 'i3-msg exit'",
+    "exec": "swaymsg exit",
     "icon": "exit"
   },
   {
     "name": "Reboot",
-    "exec": "swaynag -t red -m ' Reboot the machine?' -b ' Reboot ' 'systemctl reboot'",
+    "exec": "systemctl reboot",
     "icon": "reload"
   },
   {
     "name": "Shutdown",
-    "exec": "swaynag -t red -m ' Shutdown the machine?' -b ' Shutdown ' 'systemctl -i poweroff'",
+    "exec": "systemctl -i poweroff",
     "icon": "window-close"
   }
 ]
