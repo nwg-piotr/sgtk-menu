@@ -132,10 +132,6 @@ def main():
         screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
     )
 
-    # find all .desktop entries, create DesktopEntry class instances;
-    # DesktopEntry adds itself to the proper List in the class constructor
-    # list_entries()
-
     # Overlay window
     global win
     win = MainWindow()
@@ -174,7 +170,6 @@ class MainWindow(Gtk.Window):
         self.connect("button-press-event", Gtk.main_quit)
 
         if other_wm:
-            self.set_sensitive(False)
             self.set_resizable(False)
             self.set_decorated(False)
 
@@ -218,7 +213,6 @@ class MainWindow(Gtk.Window):
 
     def resize(self, w, h):
         self.set_size_request(w, h)
-        self.screen_dimensions = w, h
 
     # transparency
     def draw(self, widget, context):
@@ -317,6 +311,7 @@ def build_bar():
 
 def launch(item, command):
     # run the command an quit
+    print(command)
     subprocess.Popen('exec {}'.format(command), shell=True)
     Gtk.main_quit()
 
