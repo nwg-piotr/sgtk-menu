@@ -9,13 +9,20 @@ The menu may also be used in some **floating WMs**, but I only use Openbox, and 
 - `.desktop` entries-based system menu;
 - search box to find what you need quickly;
 - favourites (most frequently used entries) menu above (optional `[-f | -fn FN]` argument);
-- user-defined menu below (optional `[-a | -af AF]` argument).
+- user-defined menu below (optional `[-a | -af AF]` argument);
+- user-defined horizontal or vertical button bar.
 
-As the script searches `.desktop` files only, it may be used as a replacement to wofi/rofi `--drun`, but not to 
+As the system menu bases on `.desktop` files only, it may be used as a replacement to wofi/rofi `--drun`, but not to 
 `--dmenu` mode.
+
+### System menu w/ favourites and custom appendix
 
 ![screenshot](http://nwg.pl/Lychee/uploads/big/c396d7eea8fc5c9c931f63b75940fb26.png)
 *The menu in Arc-Dark GTK theme w/ Aqatix icons*
+
+### Horizontal button bar as the Exit menu
+
+![screenshot](http://nwg.pl/Lychee/uploads/big/e2d600d32e4bc0c8458fbe85c8428853.png)
 
 ## Background
 
