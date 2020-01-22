@@ -33,16 +33,15 @@ for usage examples.
 Well, I didn't even think that sway needed a menu, being happy with [wofi](https://hg.sr.ht/~scoopta/wofi) and 
 [dmenu-wayland](https://github.com/nyyManni/dmenu-wayland). I started coding just to find out what the 
 [Desktop Menu Specification](https://specifications.freedesktop.org/menu-spec/latest) looks like, and also to learn some 
-more [pygobject](https://pygobject.readthedocs.io/en/latest). [The best menu I know](https://github.com/johanmalm/jgmenu), 
-however, does not (yet?) behave well on sway. So, I thought to share the code, which has already taken me more time 
-that I had ever expected.
+more [pygobject](https://pygobject.readthedocs.io/en/latest). The best menu I know, however, does not (yet?) behave well 
+on sway. So, I thought to share the code, which has already taken me more time that I had ever expected.
 
 [This code](https://github.com/johanmalm/jgmenu/blob/master/contrib/pmenu/jgmenu-pmenu.py) by 
 [Johan Malm](https://github.com/johanmalm) helped me understand how to make use of `.desktop` entries. Many thanks!
 
-## How it works on sway?
+## How it works on sway
 
-The problem to resolve was, that the Gtk.Menu class behaves differently / unexpectedly when open over Wayland and X11 windows. 
+The problem to resolve is, that the Gtk.Menu class behaves differently / unexpectedly when open over Wayland and X11 windows. 
 To work it around, the script opens the menu over a (semi-)transparent, floating window, that covers all the screen.
 
 ## i3 support, floating WMs support
