@@ -10,7 +10,7 @@ The menu may also be used in some **floating WMs**, but I only use **Openbox**, 
 - search box to find what you need quickly;
 - favourites (most frequently used entries) menu above (optional `[-f | -fn FN]` argument);
 - user-defined menu below (optional `[-a | -af AF]` argument);
-- user-defined horizontal or vertical button bar.
+- user-defined horizontal or vertical button bar (`sgtk-bar` command).
 
 As the system menu bases on `.desktop` files only, it may be used as a replacement to wofi/rofi `--drun`, but not to 
 `--dmenu` mode.
