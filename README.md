@@ -1,6 +1,6 @@
 # sgtk-menu
 This project is an attempt to create a simple menu, that behaves decently on **sway**, but also on **i3** window manager. 
-The menu may also be used in some **floating WMs**, but I only use Openbox, and don't test it elsewhere.
+The menu may also be used in some **floating WMs**, but I only use **Openbox**, and don't test it elsewhere.
 
 **sgtk-menu uses `pygobject` to create a themeable, searchable, gtk3-based system menu w/ some optional features**.
 
@@ -49,7 +49,8 @@ To work it around, the script opens the menu over a (semi-)transparent, floating
 
 Even if there exist plenty of good X11 menus, with the most excellent [jgmenu](https://github.com/johanmalm/jgmenu) 
 on top, I'm doing my best to make sgtk-menu i3-compatible. It's also possible to use sgtk-menu in some floating window 
-managers, e.g. to replace the Openbox / Fluxbox menu. See below to resolve issues, if any. 
+managers, e.g. to replace the Openbox / Fluxbox menu. 
+See [wiki/Launching](https://github.com/nwg-piotr/sgtk-menu/wiki/Installation#launching) for details. 
 
 ## TODO
 - On next sway / GTK release, check if the overflowed menus issue on sway is fixed; remove 50 SLOC long workaround if so.
