@@ -64,14 +64,14 @@ build_from_file = os.path.join(config_dirs()[0], 'exit')
 
 
 def main():
-    # exit if already running, thanks to Slava V at https://stackoverflow.com/a/384493/4040598
+    """# exit if already running, thanks to Slava V at https://stackoverflow.com/a/384493/4040598
     pid_file = os.path.join(tempfile.gettempdir(), 'sgtk-bar.pid')
     fp = open(pid_file, 'w')
     try:
         fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError:
         subprocess.run("pkill -f sgtk-bar", shell=True)
-        sys.exit(2)
+        sys.exit(2)"""
 
     global build_from_file
 
