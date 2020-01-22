@@ -6,7 +6,7 @@
   },
   {
     "name": "Logout",
-    "exec": "openbox --exit'",
+    "exec": "openbox --exit",
     "icon": "exit"
   },
   {
