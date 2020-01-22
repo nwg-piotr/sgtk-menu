@@ -51,6 +51,15 @@ if not other_wm:
 
     i3 = Connection()
 
+pynput = False
+try:
+    from pynput.mouse import Controller
+
+    mouse_pointer = Controller()
+    pynput = True
+except:
+    pass
+
 geometry = (0, 0, 0, 0)
 
 win = None  # overlay window
@@ -135,7 +144,8 @@ def main():
     # Overlay window
     global win
     win = MainWindow()
-    win.show()
+    win.show_all()
+    win.present_with_time(Gdk.CURRENT_TIME)
     global geometry
     # If we're not on sway neither i3, this won't return values until the window actually shows up.
     # Let's try as many times as needed. The retries int protects from an infinite loop.
@@ -146,10 +156,13 @@ def main():
         if retries > 500:
             print("\nFailed to get the current screen geometry, exiting...\n")
             sys.exit(2)
-    win.set_skip_taskbar_hint(True)
     x, y, w, h = geometry
 
+    if other_wm:
+        win.move(x, y)
     win.resize(w, h)
+
+    win.set_skip_taskbar_hint(True)
     win.set_gravity(Gdk.Gravity.CENTER)
 
     win.button_bar.set_property("name", "button")
@@ -263,7 +276,12 @@ def display_geometry():
         # If window just opened, screen.get_active_window() may return None, so we need to retry.
         screen = win.get_screen()
         try:
-            display_number = screen.get_monitor_at_window(screen.get_active_window())
+            if pynput:
+                x, y = mouse_pointer.position
+                display_number = screen.get_monitor_at_point(x, y)
+            else:
+                # If pynput missing, the bar will always appear on the screen w/ active window
+                display_number = screen.get_monitor_at_window(screen.get_active_window())
             rectangle = screen.get_monitor_geometry(display_number)
             return rectangle.x, rectangle.y, rectangle.width, rectangle.height
         except:

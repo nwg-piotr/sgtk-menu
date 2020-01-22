@@ -12,7 +12,6 @@ License: GPL3
 """
 
 import os
-import shutil
 import tempfile
 import fcntl
 import sys
