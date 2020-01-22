@@ -158,8 +158,7 @@ def main():
             sys.exit(2)
     x, y, w, h = geometry
 
-    if other_wm:
-        win.move(x, y)
+    win.move(x, y)
     win.resize(w, h)
 
     win.set_skip_taskbar_hint(True)
