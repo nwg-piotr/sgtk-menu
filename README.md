@@ -66,24 +66,28 @@ center of the screen. Use `[-y <Y>]` argument to add a vertical offset from the 
 On **floating WMs** the `-b` and `-c` arguments will be ignored. The menu position will always follow the mouse pointer,
 provided that you installed the `python-pynput` package. Also the `-d | delay` argument takes no effect in floating WMs.
 
+On first run sample template files for sway, i3 and Openbox will be created, if not found in the `~/.config/sgtk-menu` folder.
+Default names are `appendix` for the `sgtk-menu` command and `exit` for the `sgtk-bar` command, and their content
+is intended for sway. Their counterparts for i3 and Openbox are `appendix-i3`, `exit-i3` and `appendix-ob`, `exit-ob`.
+
 Sample **sway key binding**:
 
 `bindsym mod1+F1 exec sgtk-menu -f -a`
 
-or sample **i3 key binding**:
+Sample **i3 key binding**:
 
-`bindsym Mod1+F1 exec --no-startup-id sgtk-menu -f -a`
+`bindsym Mod1+F1 exec --no-startup-id sgtk-menu -f -af appendix-i3`
 
-displays menu prepended with the default number of favourites, appended with the default `~/.config/sgtk-menu/appendix`
-file. Use `sgtk-menu -f -af <custom_menu_file>` to append your custom menu. Copy and edit the default `appendix` file 
-(in the same location).
+The command menu prepended with the default number of favourites, appended with the proper custom menu template. 
+Sample appendices include "Exit" entry, which runs the `sgtk-bar -bf exit-<WMname>` command suitable for the window manager. 
+Edit their content to your needs. **Default templates will be re-created if you delete them**.
 
 To use sgtk-menu as a **replacement to Openbox menu**, you need to edit the mouse right click binding, e.g. like this:
 
 ```xml
 <mousebind action="Press" button="Right">
   <action name="Execute">
-    <command>sgtk-menu -af appendix-ob -fn 5</command>
+    <command>sgtk-menu -f -af appendix-ob</command>
   </action>
 </mousebind>
 ```
