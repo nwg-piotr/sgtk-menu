@@ -6,17 +6,17 @@
   },
   {
     "name": "Logout",
-    "exec": "i3-nagbar -t red -m ' Exit i3 session?' -b ' Logout ' 'i3-msg exit'",
+    "exec": "i3-msg exit",
     "icon": "exit"
   },
   {
     "name": "Reboot",
-    "exec": "i3-nagbar -t red -m ' Reboot the machine?' -b ' Reboot ' 'systemctl reboot'",
+    "exec": "systemctl reboot",
     "icon": "reload"
   },
   {
     "name": "Shutdown",
-    "exec": "i3-nagbar -t red -m ' Shutdown the machine?' -b ' Shutdown ' 'systemctl -i poweroff'",
+    "exec": "systemctl -i poweroff",
     "icon": "window-close"
   }
 ]

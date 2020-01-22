@@ -51,6 +51,15 @@ if not other_wm:
 
     i3 = Connection()
 
+pynput = False
+try:
+    from pynput.mouse import Controller
+
+    mouse_pointer = Controller()
+    pynput = True
+except:
+    pass
+
 geometry = (0, 0, 0, 0)
 
 win = None  # overlay window
@@ -132,13 +141,11 @@ def main():
         screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
     )
 
-    # find all .desktop entries, create DesktopEntry class instances;
-    # DesktopEntry adds itself to the proper List in the class constructor
-    # list_entries()
-
     # Overlay window
     global win
     win = MainWindow()
+    win.show_all()
+    win.present_with_time(Gdk.CURRENT_TIME)
     global geometry
     # If we're not on sway neither i3, this won't return values until the window actually shows up.
     # Let's try as many times as needed. The retries int protects from an infinite loop.
@@ -151,15 +158,13 @@ def main():
             sys.exit(2)
     x, y, w, h = geometry
 
+    win.move(x, y)
     win.resize(w, h)
-    win.set_gravity(Gdk.Gravity.CENTER)
 
     win.set_skip_taskbar_hint(True)
+    win.set_gravity(Gdk.Gravity.CENTER)
 
     win.button_bar.set_property("name", "button")
-
-    global menu_items_list
-    menu_items_list = win.button_bar.get_children()
 
     GLib.timeout_add(args.d, show_bar)
     Gtk.main()
@@ -176,9 +181,9 @@ class MainWindow(Gtk.Window):
         self.connect("button-press-event", Gtk.main_quit)
 
         if other_wm:
-            self.set_sensitive(False)
             self.set_resizable(False)
             self.set_decorated(False)
+            self.set_modal(True)
 
         # Credits for transparency go to  KurtJacobson:
         # https://gist.github.com/KurtJacobson/374c8cb83aee4851d39981b9c7e2c22c
@@ -220,7 +225,6 @@ class MainWindow(Gtk.Window):
 
     def resize(self, w, h):
         self.set_size_request(w, h)
-        self.screen_dimensions = w, h
 
     # transparency
     def draw(self, widget, context):
@@ -231,6 +235,7 @@ class MainWindow(Gtk.Window):
 
     def key_pressed(self, window, event):
         if event.type == Gdk.EventType.KEY_RELEASE:
+            print(event.keyval)
             # Escape
             if event.keyval == 65307:
                 Gtk.main_quit()
@@ -270,7 +275,12 @@ def display_geometry():
         # If window just opened, screen.get_active_window() may return None, so we need to retry.
         screen = win.get_screen()
         try:
-            display_number = screen.get_monitor_at_window(screen.get_active_window())
+            if pynput:
+                x, y = mouse_pointer.position
+                display_number = screen.get_monitor_at_point(x, y)
+            else:
+                # If pynput missing, the bar will always appear on the screen w/ active window
+                display_number = screen.get_monitor_at_window(screen.get_active_window())
             rectangle = screen.get_monitor_geometry(display_number)
             return rectangle.x, rectangle.y, rectangle.width, rectangle.height
         except:

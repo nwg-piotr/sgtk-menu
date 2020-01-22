@@ -31,3 +31,9 @@ As a replacement to Openbox menu:
 ```
 
 ![screen6](http://nwg.pl/Lychee/uploads/big/2550116862b24aa43de179283487702a.png)
+
+Horizontal button bar on sway, bound to mod+x:
+
+`bindsym $mod+x exec sgtk-bar -o 0.7`
+
+![screen7](http://nwg.pl/Lychee/uploads/big/e2d600d32e4bc0c8458fbe85c8428853.png)
