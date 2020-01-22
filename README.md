@@ -15,6 +15,10 @@ The menu may also be used in some **floating WMs**, but I only use Openbox, and 
 As the system menu bases on `.desktop` files only, it may be used as a replacement to wofi/rofi `--drun`, but not to 
 `--dmenu` mode.
 
+Read [wiki](https://github.com/nwg-piotr/sgtk-menu/wiki) for more information. 
+See [screenshots](https://github.com/nwg-piotr/sgtk-menu/tree/master/screenshots) 
+for usage examples.
+
 ### System menu w/ favourites above and custom appendix below
 
 ![screenshot](http://nwg.pl/Lychee/uploads/big/ac538b60c3f32c36b689049cb0172863.png)
@@ -49,5 +53,3 @@ managers, e.g. to replace the Openbox / Fluxbox menu. See below to resolve issue
 
 ## TODO
 - On next sway / GTK release, check if the overflowed menus issue on sway is fixed; remove 50 SLOC long workaround if so.
-
-See [screenshots](https://github.com/nwg-piotr/sgtk-menu/tree/master/screenshots) for more examples.
