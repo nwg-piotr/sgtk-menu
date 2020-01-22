@@ -135,6 +135,7 @@ def main():
     # Overlay window
     global win
     win = MainWindow()
+    win.show()
     global geometry
     # If we're not on sway neither i3, this won't return values until the window actually shows up.
     # Let's try as many times as needed. The retries int protects from an infinite loop.
@@ -145,6 +146,7 @@ def main():
         if retries > 500:
             print("\nFailed to get the current screen geometry, exiting...\n")
             sys.exit(2)
+    win.set_skip_taskbar_hint(True)
     x, y, w, h = geometry
 
     win.resize(w, h)
@@ -152,8 +154,6 @@ def main():
 
     win.button_bar.set_property("name", "button")
 
-    win.show()
-    #win.set_skip_taskbar_hint(True)
     GLib.timeout_add(args.d, show_bar)
     Gtk.main()
 
