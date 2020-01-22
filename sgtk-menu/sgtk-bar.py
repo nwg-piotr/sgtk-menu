@@ -64,14 +64,14 @@ build_from_file = os.path.join(config_dirs()[0], 'exit')
 
 
 def main():
-    """# exit if already running, thanks to Slava V at https://stackoverflow.com/a/384493/4040598
+    # exit if already running, thanks to Slava V at https://stackoverflow.com/a/384493/4040598
     pid_file = os.path.join(tempfile.gettempdir(), 'sgtk-bar.pid')
     fp = open(pid_file, 'w')
     try:
         fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError:
         subprocess.run("pkill -f sgtk-bar", shell=True)
-        sys.exit(2)"""
+        sys.exit(2)
 
     global build_from_file
 
@@ -172,6 +172,7 @@ class MainWindow(Gtk.Window):
         if other_wm:
             self.set_resizable(False)
             self.set_decorated(False)
+            self.set_modal(True)
 
         # Credits for transparency go to  KurtJacobson:
         # https://gist.github.com/KurtJacobson/374c8cb83aee4851d39981b9c7e2c22c
@@ -223,6 +224,7 @@ class MainWindow(Gtk.Window):
 
     def key_pressed(self, window, event):
         if event.type == Gdk.EventType.KEY_RELEASE:
+            print(event.keyval)
             # Escape
             if event.keyval == 65307:
                 Gtk.main_quit()
@@ -311,7 +313,6 @@ def build_bar():
 
 def launch(item, command):
     # run the command an quit
-    print(command)
     subprocess.Popen('exec {}'.format(command), shell=True)
     Gtk.main_quit()
 
