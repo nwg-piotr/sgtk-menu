@@ -15,10 +15,10 @@ The menu may also be used in some **floating WMs**, but I only use Openbox, and 
 As the system menu bases on `.desktop` files only, it may be used as a replacement to wofi/rofi `--drun`, but not to 
 `--dmenu` mode.
 
-### System menu w/ favourites and custom appendix
+### System menu w/ favourites above and custom appendix below
 
-![screenshot](http://nwg.pl/Lychee/uploads/big/c396d7eea8fc5c9c931f63b75940fb26.png)
-*The menu in Arc-Dark GTK theme w/ Aqatix icons*
+![screenshot](http://nwg.pl/Lychee/uploads/big/ac538b60c3f32c36b689049cb0172863.png)
+*The menu in Adwaita-dark GTK theme w/ Aqatix icons*
 
 ### Horizontal button bar as the Exit menu
 
