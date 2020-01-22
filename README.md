@@ -40,7 +40,7 @@ that I had ever expected.
 [This code](https://github.com/johanmalm/jgmenu/blob/master/contrib/pmenu/jgmenu-pmenu.py) by 
 [Johan Malm](https://github.com/johanmalm) helped me understand how to make use of `.desktop` entries. Many thanks!
 
-## How it works on sway & i3?
+## How it works on sway?
 
 The problem to resolve was, that the Gtk.Menu class behaves differently / unexpectedly when open over Wayland and X11 windows. 
 To work it around, the script opens the menu over a (semi-)transparent, floating window, that covers all the screen.
