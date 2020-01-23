@@ -47,6 +47,39 @@ def check_wm():
     return "other"
 
 
+def display_geometry(win, i3, mouse_pointer):
+    """
+    Obtain geometry of currently focused display
+    :return: (x, y, width, height)
+    """
+    if i3:
+        # On sway or i3 we use i3ipc, to avoid less reliable, Gdk-based way.
+        # We should get results at 1st try.
+        root = i3.get_tree()
+        found = False
+        f = root.find_focused()
+        while not found:
+            f = f.parent
+            found = f.type == 'output'
+        return f.rect.x, f.rect.y, f.rect.width, f.rect.height
+    else:
+        # This is less reliable and also rises deprecation warnings;
+        # wish I knew a better way to do it with GTK for multi-headed setups.
+        # If window just opened, screen.get_active_window() may return None, so we need to retry.
+        screen = win.get_screen()
+        try:
+            if mouse_pointer:
+                x, y = mouse_pointer.position
+                display_number = screen.get_monitor_at_point(x, y)
+            else:
+                # If pynput missing, the bar will always appear on the screen w/ active window
+                display_number = screen.get_monitor_at_window(screen.get_active_window())
+            rectangle = screen.get_monitor_geometry(display_number)
+            return rectangle.x, rectangle.y, rectangle.width, rectangle.height
+        except:
+            return 0, 0, 0, 0
+
+
 def get_locale_string(forced_lang=None):
     if forced_lang:
         language = forced_lang.split("_")[0]
