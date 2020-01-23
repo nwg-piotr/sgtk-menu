@@ -24,31 +24,23 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 import cairo
 
-from tools import config_dirs, load_json, create_default_configs
+from tools import config_dirs, load_json, create_default_configs, check_wm
 
-# Will apply to the overlay window; we can't do so outside the config file on i3.
+wm = check_wm()
+
+# This will apply to the overlay window; we can't do so outside the config file on i3.
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
-# The variable indicates if we succeeded / are on sway.
-swaymsg = False
-try:
-    swaymsg = subprocess.run(
-        ['swaymsg', 'for_window', '[title=\"~sgtk-bar\"]', 'floating', 'enable'],
-        stdout=subprocess.DEVNULL).returncode == 0
-except:
-    pass
+if wm == "sway":
+    try:
+        subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk-bar\"]', 'floating', 'enable'],
+                       stdout=subprocess.DEVNULL).returncode == 0
+    except:
+        pass
 
-i3_msg = False
-try:
-    i3_msg = subprocess.run(
-        ['i3-msg', '-t', 'get_outputs'],
-        stdout=subprocess.DEVNULL).returncode == 0
-except:
-    pass
-other_wm = not swaymsg and not i3_msg
+other_wm = not wm == "sway" and not wm == "i3"
 
 if not other_wm:
     from i3ipc import Connection
-
     i3 = Connection()
 
 pynput = False
@@ -64,7 +56,6 @@ geometry = (0, 0, 0, 0)
 
 win = None  # overlay window
 args = None
-
 
 config_dir = config_dirs()[0]
 if not os.path.exists(config_dir):
@@ -242,15 +233,13 @@ class MainWindow(Gtk.Window):
 
 
 def show_bar():
-    if not swaymsg:
-        if not other_wm:
-            # we couldn't do this on i3 at the script start
-            subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
-            subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
-    else:
-        if not other_wm:
-            subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
-            
+    if wm == "sway":
+        subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
+    elif wm == "i3":
+        # we couldn't do this on i3 at the script start
+        subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
+        subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
+
     win.show_all()
 
 

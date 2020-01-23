@@ -25,18 +25,25 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 import cairo
 
 from tools import localized_category_names, additional_to_main, get_locale_string, config_dirs, load_json, save_json, \
-    create_default_configs
+    create_default_configs, check_wm
+
+wm = check_wm()
 
 # Will apply to the overlay window; we can't do so outside the config file on i3.
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
-# The variable indicates if we succeeded / are on sway.
-swaymsg = False
-try:
-    swaymsg = subprocess.run(
-        ['swaymsg', 'for_window', '[title=\"~sgtk-menu\"]', 'floating', 'enable'],
-        stdout=subprocess.DEVNULL).returncode == 0
-except:
-    pass
+if wm == "sway":
+    try:
+        subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk-menu\"]', 'floating', 'enable'],
+                       stdout=subprocess.DEVNULL).returncode == 0
+    except:
+        pass
+
+other_wm = not wm == "sway" and not wm == "i3"
+
+if not other_wm:
+    from i3ipc import Connection
+
+    i3 = Connection()
 
 pynput = False
 try:
@@ -47,19 +54,7 @@ try:
 except:
     pass
 
-i3_msg = False
-try:
-    i3_msg = subprocess.run(
-        ['i3-msg', '-t', 'get_outputs'],
-        stdout=subprocess.DEVNULL).returncode == 0
-except:
-    pass
-other_wm = not swaymsg and not i3_msg
-
-if not other_wm:
-    from i3ipc import Connection
-
-    i3 = Connection()
+geometry = (0, 0, 0, 0)
 
 # Lists to hold DesktopEntry objects of each category
 c_audio_video, c_development, c_game, c_graphics, c_network, c_office, c_science, c_settings, c_system, \
@@ -82,8 +77,6 @@ category_icons = {"AudioVideo": "applications-multimedia",
 
 localized_names_dictionary = {}  # name => translated name
 locale = ''
-
-geometry = (0, 0, 0, 0)
 
 win = None  # overlay window
 args = None
@@ -424,14 +417,12 @@ class MainWindow(Gtk.Window):
 
 
 def open_menu():
-    if not swaymsg:
-        if not other_wm:
-            # we couldn't do this on i3 at the script start
-            subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
-            subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
-    else:
-        if not other_wm:
-            subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
+    if wm == "sway":
+        subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
+    elif wm == "i3":
+        # we couldn't do this on i3 at the script start
+        subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
+        subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
 
     if args.bottom:
         gravity = Gdk.Gravity.SOUTH
@@ -471,7 +462,12 @@ def display_geometry():
         # If window just opened, screen.get_active_window() may return None, so we need to retry.
         screen = win.get_screen()
         try:
-            display_number = screen.get_monitor_at_window(screen.get_active_window())
+            if pynput:
+                x, y = mouse_pointer.position
+                display_number = screen.get_monitor_at_point(x, y)
+            else:
+                # If pynput missing, the bar will always appear on the screen w/ active window
+                display_number = screen.get_monitor_at_window(screen.get_active_window())
             rectangle = screen.get_monitor_geometry(display_number)
             return rectangle.x, rectangle.y, rectangle.width, rectangle.height
         except:
@@ -750,7 +746,7 @@ def sub_menu(entries_list, name, localized_name):
     submenu.set_property("reserve_toggle_size", False)
     # On sway 1.2, if popped-up menu length exceeds the screen height, no buttons to scroll appear,
     # and the mouse scroller does not work, too. We need a workaround!
-    if not swaymsg or len(entries_list) < args.t:  # -t stands for sway submenu lines limit
+    if not wm == "sway" or len(entries_list) < args.t:  # -t stands for sway submenu lines limit
         # We are not on sway or submenu is short enough
         for entry in entries_list:
             subitem = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)

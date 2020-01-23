@@ -10,9 +10,41 @@ Copyright (C) 2017-2019 Johan Malm <jgm323@gmail.com>
 Copyright (C) 2020 Piotr Miller <nwg.piotr@gmail.com>
 """
 import os
+import subprocess
 import shutil
 import locale
 import json
+
+
+def check_wm():
+    env = os.environ
+    for key in env:
+        if key == "DESKTOP_SESSION":
+            if env[key].endswith("sway"):
+                return "sway"
+            elif env[key].endswith("i3"):
+                return "i3"
+            elif env[key].endswith("openbox"):
+                return "openbox"
+        elif key == "I3SOCK":
+            if "sway" in env[key]:
+                return "sway"
+            elif "i3" in env[key]:
+                return "i3"
+    try:
+        if subprocess.run(
+                ['swaymsg', '-t', 'get_seats'], stdout=subprocess.DEVNULL).returncode == 0:
+            return "sway"
+    except:
+        pass
+
+    try:
+        if subprocess.run(['i3-msg', '-t', 'get_outputs'], stdout=subprocess.DEVNULL).returncode == 0:
+            return "i3"
+    except:
+        pass
+    
+    return "other"
 
 
 def get_locale_string(forced_lang=None):
@@ -151,7 +183,7 @@ def additional_to_main(category):
     else:
         return None
 
-    
+
 def create_default_configs(config_dir):
     # Create default config files if not found
     scr_files = os.listdir('config')
