@@ -4,6 +4,8 @@ The menu may also be used in some **floating WMs**, but I only use **Openbox**, 
 
 **sgtk-menu uses `pygobject` to create a themeable, searchable, gtk3-based system menu w/ some optional features**.
 
+:clipboard: *If you've just upgraded from version < 0.8.0, read about [Templates](https://github.com/nwg-piotr/sgtk-menu/wiki/Templates)*
+
 ## Features
 
 - `.desktop` entries-based system menu;
