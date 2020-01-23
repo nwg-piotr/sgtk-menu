@@ -25,18 +25,26 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 import cairo
 
 from tools import localized_category_names, additional_to_main, get_locale_string, config_dirs, load_json, save_json, \
-    create_default_configs
+    create_default_configs, check_wm, display_geometry
+
+wm = check_wm()
 
 # Will apply to the overlay window; we can't do so outside the config file on i3.
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
-# The variable indicates if we succeeded / are on sway.
-swaymsg = False
-try:
-    swaymsg = subprocess.run(
-        ['swaymsg', 'for_window', '[title=\"~sgtk-menu\"]', 'floating', 'enable'],
-        stdout=subprocess.DEVNULL).returncode == 0
-except:
-    pass
+if wm == "sway":
+    try:
+        subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk-menu\"]', 'floating', 'enable'],
+                       stdout=subprocess.DEVNULL).returncode == 0
+    except:
+        pass
+
+other_wm = not wm == "sway" and not wm == "i3"
+
+if not other_wm:
+    from i3ipc import Connection
+    i3 = Connection()
+else:
+    i3 = None
 
 pynput = False
 try:
@@ -45,21 +53,10 @@ try:
     mouse_pointer = Controller()
     pynput = True
 except:
+    mouse_pointer = None
     pass
 
-i3_msg = False
-try:
-    i3_msg = subprocess.run(
-        ['i3-msg', '-t', 'get_outputs'],
-        stdout=subprocess.DEVNULL).returncode == 0
-except:
-    pass
-other_wm = not swaymsg and not i3_msg
-
-if not other_wm:
-    from i3ipc import Connection
-
-    i3 = Connection()
+geometry = (0, 0, 0, 0)
 
 # Lists to hold DesktopEntry objects of each category
 c_audio_video, c_development, c_game, c_graphics, c_network, c_office, c_science, c_settings, c_system, \
@@ -82,8 +79,6 @@ category_icons = {"AudioVideo": "applications-multimedia",
 
 localized_names_dictionary = {}  # name => translated name
 locale = ''
-
-geometry = (0, 0, 0, 0)
 
 win = None  # overlay window
 args = None
@@ -224,9 +219,9 @@ def main():
     # Let's try as many times as needed. The retries int protects from an infinite loop.
     retries = 0
     while geometry[0] == 0 and geometry[1] == 0 and geometry[2] == 0 and geometry[3] == 0:
-        geometry = display_geometry()
+        geometry = display_geometry(win, i3, mouse_pointer)
         retries += 1
-        if retries > 500:
+        if retries > 50:
             print("\nFailed to get the current screen geometry, exiting...\n")
             sys.exit(2)
     x, y, w, h = geometry
@@ -424,14 +419,12 @@ class MainWindow(Gtk.Window):
 
 
 def open_menu():
-    if not swaymsg:
-        if not other_wm:
-            # we couldn't do this on i3 at the script start
-            subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
-            subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
-    else:
-        if not other_wm:
-            subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
+    if wm == "sway":
+        subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
+    elif wm == "i3":
+        # we couldn't do this on i3 at the script start
+        subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
+        subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
 
     if args.bottom:
         gravity = Gdk.Gravity.SOUTH
@@ -448,34 +441,6 @@ def open_menu():
             # In Openbox, if the MainWindow (which is invisible!) gets accidentally clicked and dragged,
             # the menu doesn't pop up, but the process is still alive. Let's kill the bastard, if so.
             Gtk.main_quit()
-
-
-def display_geometry():
-    """
-    Obtain geometry of currently focused display
-    :return: (x, y, width, height)
-    """
-    if not other_wm:
-        # On sway or i3 we use i3ipc, to avoid less reliable, Gdk-based way.
-        # We should get results at 1st try.
-        root = i3.get_tree()
-        found = False
-        f = root.find_focused()
-        while not found:
-            f = f.parent
-            found = f.type == 'output'
-        return f.rect.x, f.rect.y, f.rect.width, f.rect.height
-    else:
-        # This is less reliable and also rises deprecation warnings;
-        # wish I knew a better way to do it with GTK for multi-headed setups.
-        # If window just opened, screen.get_active_window() may return None, so we need to retry.
-        screen = win.get_screen()
-        try:
-            display_number = screen.get_monitor_at_window(screen.get_active_window())
-            rectangle = screen.get_monitor_geometry(display_number)
-            return rectangle.x, rectangle.y, rectangle.width, rectangle.height
-        except:
-            return 0, 0, 0, 0
 
 
 def list_entries():
@@ -750,7 +715,7 @@ def sub_menu(entries_list, name, localized_name):
     submenu.set_property("reserve_toggle_size", False)
     # On sway 1.2, if popped-up menu length exceeds the screen height, no buttons to scroll appear,
     # and the mouse scroller does not work, too. We need a workaround!
-    if not swaymsg or len(entries_list) < args.t:  # -t stands for sway submenu lines limit
+    if not wm == "sway" or len(entries_list) < args.t:  # -t stands for sway submenu lines limit
         # We are not on sway or submenu is short enough
         for entry in entries_list:
             subitem = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)

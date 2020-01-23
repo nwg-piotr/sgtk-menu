@@ -24,32 +24,26 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 import cairo
 
-from tools import config_dirs, load_json, create_default_configs
+from tools import config_dirs, load_json, create_default_configs, check_wm, display_geometry
 
-# Will apply to the overlay window; we can't do so outside the config file on i3.
+wm = check_wm()
+
+# This will apply to the overlay window; we can't do so outside the config file on i3.
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
-# The variable indicates if we succeeded / are on sway.
-swaymsg = False
-try:
-    swaymsg = subprocess.run(
-        ['swaymsg', 'for_window', '[title=\"~sgtk-bar\"]', 'floating', 'enable'],
-        stdout=subprocess.DEVNULL).returncode == 0
-except:
-    pass
+if wm == "sway":
+    try:
+        subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk-bar\"]', 'floating', 'enable'],
+                       stdout=subprocess.DEVNULL).returncode == 0
+    except:
+        pass
 
-i3_msg = False
-try:
-    i3_msg = subprocess.run(
-        ['i3-msg', '-t', 'get_outputs'],
-        stdout=subprocess.DEVNULL).returncode == 0
-except:
-    pass
-other_wm = not swaymsg and not i3_msg
+other_wm = not wm == "sway" and not wm == "i3"
 
 if not other_wm:
     from i3ipc import Connection
-
     i3 = Connection()
+else:
+    i3 = None
 
 pynput = False
 try:
@@ -58,13 +52,13 @@ try:
     mouse_pointer = Controller()
     pynput = True
 except:
+    mouse_pointer = None
     pass
 
 geometry = (0, 0, 0, 0)
 
 win = None  # overlay window
 args = None
-
 
 config_dir = config_dirs()[0]
 if not os.path.exists(config_dir):
@@ -151,9 +145,9 @@ def main():
     # Let's try as many times as needed. The retries int protects from an infinite loop.
     retries = 0
     while geometry[0] == 0 and geometry[1] == 0 and geometry[2] == 0 and geometry[3] == 0:
-        geometry = display_geometry()
+        geometry = display_geometry(win, i3, mouse_pointer)
         retries += 1
-        if retries > 500:
+        if retries > 50:
             print("\nFailed to get the current screen geometry, exiting...\n")
             sys.exit(2)
     x, y, w, h = geometry
@@ -242,49 +236,14 @@ class MainWindow(Gtk.Window):
 
 
 def show_bar():
-    if not swaymsg:
-        if not other_wm:
-            # we couldn't do this on i3 at the script start
-            subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
-            subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
-    else:
-        if not other_wm:
-            subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
-            
+    if wm == "sway":
+        subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
+    elif wm == "i3":
+        # we couldn't do this on i3 at the script start
+        subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
+        subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
+
     win.show_all()
-
-
-def display_geometry():
-    """
-    Obtain geometry of currently focused display
-    :return: (x, y, width, height)
-    """
-    if not other_wm:
-        # On sway or i3 we use i3ipc, to avoid less reliable, Gdk-based way.
-        # We should get results at 1st try.
-        root = i3.get_tree()
-        found = False
-        f = root.find_focused()
-        while not found:
-            f = f.parent
-            found = f.type == 'output'
-        return f.rect.x, f.rect.y, f.rect.width, f.rect.height
-    else:
-        # This is less reliable and also rises deprecation warnings;
-        # wish I knew a better way to do it with GTK for multi-headed setups.
-        # If window just opened, screen.get_active_window() may return None, so we need to retry.
-        screen = win.get_screen()
-        try:
-            if pynput:
-                x, y = mouse_pointer.position
-                display_number = screen.get_monitor_at_point(x, y)
-            else:
-                # If pynput missing, the bar will always appear on the screen w/ active window
-                display_number = screen.get_monitor_at_window(screen.get_active_window())
-            rectangle = screen.get_monitor_geometry(display_number)
-            return rectangle.x, rectangle.y, rectangle.width, rectangle.height
-        except:
-            return 0, 0, 0, 0
 
 
 def build_bar():
