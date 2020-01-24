@@ -1,5 +1,5 @@
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 def read(f_name):
@@ -10,12 +10,21 @@ setup(
     name='sgtk-menu',
     version='0.8.1',
     description='GTK menu for sway, i3 and some other WMs',
-    packages=['sgtk-menu'],
+    packages=find_packages(),
     include_package_data=True,
+    package_data={
+        "": ["config/*"]
+    },
     url='https://github.com/nwg-piotr/sgtk-menu',
     license='GPL3',
     author='Piotr Miller',
     author_email='nwg.piotr@gmail.com',
     python_requires='>=3.4.0',
-    install_requires=['pygobject', 'pycairo', 'i3ipc']
+    install_requires=['pygobject', 'pycairo', 'i3ipc'],
+    entry_points={
+        'gui_scripts': [
+            'sgtk-menu = sgtk_menu.menu:main',
+            'sgtk-bar = sgtk_menu.bar:main',
+        ]
+    },
 )

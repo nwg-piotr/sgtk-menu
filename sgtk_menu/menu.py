@@ -24,8 +24,10 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 import cairo
 
-from tools import localized_category_names, additional_to_main, get_locale_string, config_dirs, load_json, save_json, \
-    create_default_configs, check_wm, display_geometry
+from sgtk_menu.tools import (
+    localized_category_names, additional_to_main, get_locale_string,
+    config_dirs, load_json, save_json, create_default_configs, check_wm,
+    display_geometry)
 
 wm = check_wm()
 
