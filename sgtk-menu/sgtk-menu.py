@@ -591,7 +591,7 @@ def build_menu():
                 if name:
                     hbox.pack_start(label, False, False, 0)
                 item = Gtk.MenuItem()
-                item.set_property("name", "item-favorites")
+                item.set_property("name", "item")
                 item.add(hbox)
                 item.connect('activate', launch, exec)
                 menu.append(item)
@@ -659,7 +659,7 @@ def build_menu():
             if name:
                 hbox.pack_start(label, False, False, 0)
             item = Gtk.MenuItem()
-            item.set_property("name", "item-appendix")
+            item.set_property("name", "item")
             item.add(hbox)
             item.connect('activate', launch, exec, True)  # do not cache!
             menu.append(item)
@@ -700,7 +700,7 @@ def sub_menu(entries_list, name, localized_name):
     if image:
         outer_hbox.pack_start(image, False, False, 10)
     item = Gtk.MenuItem()
-    item.set_property("name", "item-category")
+    item.set_property("name", "item")
     item.entries_list = entries_list
     main_label = Gtk.Label()
     main_label.set_text(localized_name)

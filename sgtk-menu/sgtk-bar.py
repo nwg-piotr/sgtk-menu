@@ -158,8 +158,6 @@ def main():
     win.set_skip_taskbar_hint(True)
     win.set_gravity(Gdk.Gravity.CENTER)
 
-    win.button_bar.set_property("name", "button")
-
     GLib.timeout_add(args.d, show_bar)
     Gtk.main()
 
