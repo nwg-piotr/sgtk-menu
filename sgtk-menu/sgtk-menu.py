@@ -46,12 +46,10 @@ if not other_wm:
 else:
     i3 = None
 
-pynput = False
 try:
     from pynput.mouse import Controller
 
     mouse_pointer = Controller()
-    pynput = True
 except:
     mouse_pointer = None
     pass
@@ -231,7 +229,7 @@ def main():
     else:
         win.resize(1, 1)
         win.set_gravity(Gdk.Gravity.CENTER)
-        if pynput:
+        if mouse_pointer:
             x, y = mouse_pointer.position
             win.move(x, y)
         else:
