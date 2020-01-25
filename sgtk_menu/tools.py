@@ -14,6 +14,7 @@ import subprocess
 import shutil
 import locale
 import json
+import pkg_resources
 
 
 def check_wm():
@@ -219,12 +220,15 @@ def additional_to_main(category):
 
 def create_default_configs(config_dir):
     # Create default config files if not found
-    scr_files = os.listdir('config')
-    for file_name in scr_files:
-        src_file = os.path.join('config', file_name)
+    src_files = pkg_resources.resource_listdir('sgtk_menu', 'config')
+    for file_name in src_files:
         dst_file = os.path.join(config_dir, file_name)
         if not os.path.isfile(dst_file):
-            shutil.copy(src_file, dst_file)
+            src_file = os.path.join('config', file_name)
+            # Use stream copy, in case of zip egg packaging.
+            fsrc = pkg_resources.resource_stream('sgtk_menu', src_file)
+            with open(dst_file, 'wb') as fdst:
+                shutil.copyfileobj(fsrc, fdst)
 
 
 def load_json(path):
