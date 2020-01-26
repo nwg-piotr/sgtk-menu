@@ -164,6 +164,7 @@ class MainWindow(Gtk.Window):
         self.set_title('~sgtk-bar')
         self.set_role('~sgtk-bar')
         self.connect("destroy", Gtk.main_quit)
+        self.connect("focus-out-event", Gtk.main_quit)
         self.connect('draw', self.draw)  # transparency
         self.connect("key-release-event", self.key_pressed)
         self.connect("button-press-event", Gtk.main_quit)
