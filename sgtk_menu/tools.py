@@ -48,21 +48,19 @@ def check_wm():
     return "other"
 
 
-def display_geometry(win, i3, mouse_pointer):
+def display_geometry(win, wm, mouse_pointer):
     """
-    Obtain geometry of currently focused display
+    Returns geometry of currently focused display
     :return: (x, y, width, height)
     """
-    if i3:
-        # On sway or i3 we use i3ipc, to avoid less reliable, Gdk-based way.
-        # We should get results at 1st try.
-        root = i3.get_tree()
-        found = False
-        f = root.find_focused()
-        while not found:
-            f = f.parent
-            found = f.type == 'output'
-        return f.rect.x, f.rect.y, f.rect.width, f.rect.height
+    if wm == "sway" or wm == "i3":
+        cmd = "swaymsg -t get_outputs" if wm == "sway" else "i3-msg -t get_outputs"
+        string = subprocess.getoutput(cmd)
+        outputs = json.loads(string)
+        for i in range(len(outputs)):
+            if outputs[i]["focused"]:
+                rect = outputs[i]["rect"]
+                return rect["x"], rect["y"], rect["width"], rect["height"]
     else:
         # This is less reliable and also rises deprecation warnings;
         # wish I knew a better way to do it with GTK for multi-headed setups.
