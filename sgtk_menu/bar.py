@@ -5,6 +5,7 @@
 This is an external command for the sgtk-menu package to display a button bar w/ user-defined commands.
 
 Author: Piotr Miller
+Copyright (c) 2020 Piotr Miller & Contributors
 e-mail: nwg.piotr@gmail.com
 Website: http://nwg.pl
 Project: https://github.com/nwg-piotr/sgtk-menu

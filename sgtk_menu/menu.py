@@ -5,6 +5,7 @@
 This is an attempt to develop a menu that behaves decently on sway window manager, and also works on i3.
 
 Author: Piotr Miller
+Copyright (c) 2020 Piotr Miller & Contributors
 e-mail: nwg.piotr@gmail.com
 Website: http://nwg.pl
 Project: https://github.com/nwg-piotr/sgtk-menu
