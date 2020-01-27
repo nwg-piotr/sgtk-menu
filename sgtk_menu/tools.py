@@ -53,13 +53,21 @@ def display_geometry(win, wm, mouse_pointer):
     Returns geometry of currently focused display
     :return: (x, y, width, height)
     """
-    if wm == "sway" or wm == "i3":
-        cmd = "swaymsg -t get_outputs" if wm == "sway" else "i3-msg -t get_outputs"
-        string = subprocess.getoutput(cmd)
+    if wm == "sway":
+        string = subprocess.getoutput("swaymsg -t get_outputs")
         outputs = json.loads(string)
         for i in range(len(outputs)):
             if outputs[i]["focused"]:
                 rect = outputs[i]["rect"]
+                return rect["x"], rect["y"], rect["width"], rect["height"]
+    elif wm == "i3":
+        # Unfortunately `i3-msg -t get_outputs` output does not have the "focused" key.
+        # Let's find the active workspace. It's rectangle should have the same x, y, width and height values.
+        string = subprocess.getoutput("swaymsg -t get_workspaces")
+        workspaces = json.loads(string)
+        for i in range(len(workspaces)):
+            if workspaces[i]['focused']:
+                rect = workspaces[i]["rect"]
                 return rect["x"], rect["y"], rect["width"], rect["height"]
     else:
         # This is less reliable and also rises deprecation warnings;
