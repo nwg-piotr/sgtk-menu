@@ -63,7 +63,7 @@ def display_geometry(win, wm, mouse_pointer):
     elif wm == "i3":
         # Unfortunately `i3-msg -t get_outputs` output does not have the "focused" key.
         # Let's find the active workspace and its rectangle.
-        string = subprocess.getoutput("swaymsg -t get_workspaces")
+        string = subprocess.getoutput("i3-msg -t get_workspaces")
         workspaces = json.loads(string)
         for i in range(len(workspaces)):
             if workspaces[i]['focused']:
