@@ -28,7 +28,7 @@ import cairo
 from sgtk_menu.tools import (
     localized_category_names, additional_to_main, get_locale_string,
     config_dirs, load_json, save_json, create_default_configs, check_wm,
-    display_geometry)
+    display_geometry, data_dirs)
 
 wm = check_wm()
 
@@ -439,8 +439,7 @@ def open_menu():
 
 
 def list_entries():
-    paths = [os.path.expanduser('~/.local/share/applications'), "/usr/share/applications",
-             "/usr/local/share/applications"]
+    paths = ([os.path.join(p, 'applications') for p in data_dirs()])
     for path in paths:
         if os.path.exists(path):
             for f in os.listdir(path):
