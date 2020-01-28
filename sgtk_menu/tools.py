@@ -48,32 +48,38 @@ def check_wm():
     return "other"
 
 
-def display_geometry(win, i3, mouse_pointer):
+def display_geometry(win, wm, mouse_pointer):
     """
-    Obtain geometry of currently focused display
+    Returns geometry of currently focused display
     :return: (x, y, width, height)
     """
-    if i3:
-        # On sway or i3 we use i3ipc, to avoid less reliable, Gdk-based way.
-        # We should get results at 1st try.
-        root = i3.get_tree()
-        found = False
-        f = root.find_focused()
-        while not found:
-            f = f.parent
-            found = f.type == 'output'
-        return f.rect.x, f.rect.y, f.rect.width, f.rect.height
+    if wm == "sway":
+        string = subprocess.getoutput("swaymsg -t get_outputs")
+        outputs = json.loads(string)
+        for i in range(len(outputs)):
+            if outputs[i]["focused"]:
+                rect = outputs[i]["rect"]
+                return rect["x"], rect["y"], rect["width"], rect["height"]
+    elif wm == "i3":
+        # Unfortunately `i3-msg -t get_outputs` output does not have the "focused" key.
+        # Let's find the active workspace and its rectangle.
+        string = subprocess.getoutput("swaymsg -t get_workspaces")
+        workspaces = json.loads(string)
+        for i in range(len(workspaces)):
+            if workspaces[i]['focused']:
+                rect = workspaces[i]["rect"]
+                return rect["x"], rect["y"], rect["width"], rect["height"]
     else:
-        # This is less reliable and also rises deprecation warnings;
-        # wish I knew a better way to do it with GTK for multi-headed setups.
+        # For not sway nor i3. This rises deprecation warnings and won't work w/o `pynput` module.
         # If window just opened, screen.get_active_window() may return None, so we need to retry.
+        # Wish I knew a better way to do it with GTK for multi-headed setups. Anyone?
         screen = win.get_screen()
         try:
             if mouse_pointer:
                 x, y = mouse_pointer.position
                 display_number = screen.get_monitor_at_point(x, y)
             else:
-                # If pynput missing, the bar will always appear on the screen w/ active window
+                # If pynput missing, the bar will always appear at top left corner of the screen w/ active window.
                 display_number = screen.get_monitor_at_window(screen.get_active_window())
             rectangle = screen.get_monitor_geometry(display_number)
             return rectangle.x, rectangle.y, rectangle.width, rectangle.height

@@ -8,7 +8,7 @@ def read(f_name):
 
 setup(
     name='sgtk-menu',
-    version='0.9.0',
+    version='0.10.0',
     description='GTK menu for sway, i3 and some other WMs',
     packages=find_packages(),
     include_package_data=True,
@@ -20,7 +20,7 @@ setup(
     author='Piotr Miller',
     author_email='nwg.piotr@gmail.com',
     python_requires='>=3.4.0',
-    install_requires=['pygobject', 'pycairo', 'i3ipc'],
+    install_requires=['pygobject', 'pycairo'],
     entry_points={
         'gui_scripts': [
             'sgtk-menu = sgtk_menu.menu:main',

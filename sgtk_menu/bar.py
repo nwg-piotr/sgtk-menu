@@ -41,12 +41,6 @@ if wm == "sway":
 
 other_wm = not wm == "sway" and not wm == "i3"
 
-if not other_wm:
-    from i3ipc import Connection
-    i3 = Connection()
-else:
-    i3 = None
-
 pynput = False
 try:
     from pynput.mouse import Controller
@@ -147,7 +141,7 @@ def main():
     # Let's try as many times as needed. The retries int protects from an infinite loop.
     retries = 0
     while geometry[0] == 0 and geometry[1] == 0 and geometry[2] == 0 and geometry[3] == 0:
-        geometry = display_geometry(win, i3, mouse_pointer)
+        geometry = display_geometry(win, wm, mouse_pointer)
         retries += 1
         if retries > 50:
             print("\nFailed to get the current screen geometry, exiting...\n")
@@ -170,6 +164,7 @@ class MainWindow(Gtk.Window):
         self.set_title('~sgtk-bar')
         self.set_role('~sgtk-bar')
         self.connect("destroy", Gtk.main_quit)
+        self.connect("focus-out-event", Gtk.main_quit)
         self.connect('draw', self.draw)  # transparency
         self.connect("key-release-event", self.key_pressed)
         self.connect("button-press-event", Gtk.main_quit)
