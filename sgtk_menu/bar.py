@@ -224,7 +224,6 @@ class MainWindow(Gtk.Window):
 
     def key_pressed(self, window, event):
         if event.type == Gdk.EventType.KEY_RELEASE:
-            print(event.keyval)
             # Escape
             if event.keyval == 65307:
                 Gtk.main_quit()
@@ -245,6 +244,7 @@ def build_bar():
     icon_theme = Gtk.IconTheme.get_default()
     orientation = Gtk.Orientation.VERTICAL if args.vertical else Gtk.Orientation.HORIZONTAL
     box = Gtk.Box(orientation=orientation)
+    box.set_property("name", "bar")
 
     appendix = load_json(build_from_file)
     for entry in appendix:
