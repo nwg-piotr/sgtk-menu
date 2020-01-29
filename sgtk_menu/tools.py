@@ -105,7 +105,7 @@ def localized_category_names(lang='en'):
     :return: dictionary: category name => translated category name
     """
     defined_names = {}
-    for d in settings_dirs():
+    for d in data_dirs():
         d = d + "/desktop-directories/"
         for (dir_path, dir_names, file_names) in os.walk(d):
             for filename in file_names:
@@ -143,7 +143,7 @@ def translate_name(path, lang):
     return name, localized_name
 
 
-def settings_dirs():
+def data_dirs():
     paths = [os.path.expanduser('~/.local/share'), "/usr/share", "/usr/local/share"]
     if "XDG_DATA_DIRS" in os.environ:
         dirs = os.environ["XDG_DATA_DIRS"]
