@@ -37,3 +37,16 @@ Horizontal button bar on sway, bound to mod+x:
 `bindsym $mod+x exec sgtk-bar -o 0.7`
 
 ![screen7](http://nwg.pl/Lychee/uploads/big/e2d600d32e4bc0c8458fbe85c8428853.png)
+
+Use the `#bar` name to give the button bar a background:
+
+```css
+#bar {
+	border-radius: 25px;
+	background: #eee;
+	padding-top: 10px;
+	padding-bottom: 10px
+}
+```
+
+![screen8](http://nwg.pl/Lychee/uploads/big/9f271155e04680b3e9b5c097405d076e.png)
