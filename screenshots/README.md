@@ -42,10 +42,10 @@ Use the `#bar` name to give the button bar a background:
 
 ```css
 #bar {
-	border-radius: 25px;
-	background: #eee;
-	padding-top: 10px;
-	padding-bottom: 10px
+    border-radius: 25px;
+    background: #eee;
+    padding-top: 10px;
+    padding-bottom: 10px
 }
 ```
 
