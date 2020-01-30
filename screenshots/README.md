@@ -50,3 +50,5 @@ Use the `#bar` name to give the button bar a background:
 ```
 
 ![screen8](http://nwg.pl/Lychee/uploads/big/9f271155e04680b3e9b5c097405d076e.png)
+
+![screen9](http://nwg.pl/Lychee/uploads/big/e4912e2e85d769361ce6d02ca5fd834b.jpeg)
