@@ -95,6 +95,10 @@ def main():
                         .format(os.path.join(config_dir, '<CSS>')))
     global args
     args = parser.parse_args()
+
+    # Create default config files if not found
+    create_default_configs(config_dir)
+
     css_file = os.path.join(config_dirs()[0], args.css) if os.path.exists(
         os.path.join(config_dirs()[0], 'style.css')) else None
 
@@ -106,9 +110,6 @@ def main():
     # We do not need any delay in other WMs
     if other_wm:
         args.d = 0
-
-    # Create default config files if not found
-    create_default_configs(config_dir)
 
     # Replace appendix file name with custom - if any
     if args.bf:
