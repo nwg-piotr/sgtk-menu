@@ -361,7 +361,6 @@ def list_commands():
     for path in path_dirs():
         if os.path.exists(path):
             for command in os.listdir(path):
-                print(command)
                 if not command.startswith("."):
                     commands.append(command)
     return commands
