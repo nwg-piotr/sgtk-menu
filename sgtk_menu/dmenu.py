@@ -139,7 +139,6 @@ def main():
     # DesktopEntry adds itself to the proper List in the class constructor
     global all_commands_list
     all_commands_list = list_commands()
-    print(len(all_commands_list))
     all_commands_list = sorted(all_commands_list)
 
     # Overlay window
@@ -252,7 +251,7 @@ class MainWindow(Gtk.Window):
         if event.type == Gdk.EventType.KEY_RELEASE:
             update = False
             # search box only accepts alphanumeric characters, space and backspace
-            if event.string and event.string.isalnum() or event.string in [' ', '-', '+', '_']:
+            if event.string and event.string.isalnum() or event.string in [' ', '-', '+', '_', '.']:
                 update = True
                 # remove menu items, except for search box (item #0)
                 items = self.menu.get_children()
@@ -278,8 +277,13 @@ class MainWindow(Gtk.Window):
                     for item in all_copies_list:
                         self.menu.remove(item)
                         label = item.get_label()
-                        if self.search_phrase.upper() in label.upper():
-                            filtered_items_list.append(item)
+                        if " " not in self.search_phrase:
+                            if self.search_phrase.upper() in label.upper():
+                                filtered_items_list.append(item)
+                        else:
+                            # if the string ends with space, search exact 1st word
+                            if self.search_phrase.upper().split()[0] == label.upper():
+                                filtered_items_list.append(item)
 
                     for item in self.menu.get_children()[1:]:
                         self.menu.remove(item)
@@ -357,7 +361,8 @@ def list_commands():
     for path in path_dirs():
         if os.path.exists(path):
             for command in os.listdir(path):
-                if not "." in command:
+                print(command)
+                if not command.startswith("."):
                     commands.append(command)
     return commands
 
