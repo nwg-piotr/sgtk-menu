@@ -157,6 +157,20 @@ def data_dirs():
     return paths
 
 
+def path_dirs():
+    paths = []
+    if "PATH" in os.environ:
+        dirs = os.environ["PATH"]
+        if dirs:
+            dirs = dirs.split(":")
+            for d in dirs:
+                while d.endswith("/"):
+                    d = d[:-1]
+                if d not in paths:
+                    paths.append(d)
+    return paths
+
+
 def config_dirs():
     paths = [os.path.join(os.path.expanduser('~/.config'), 'sgtk-menu')]
     if "XDG_CONFIG_HOME" in os.environ:
