@@ -67,12 +67,12 @@ build_from_file = os.path.join(config_dirs()[0], 'appendix')
 
 def main():
     # exit if already running, thanks to Slava V at https://stackoverflow.com/a/384493/4040598
-    pid_file = os.path.join(tempfile.gettempdir(), 'sgtk-drun.pid')
+    pid_file = os.path.join(tempfile.gettempdir(), 'sgtk-dmenu.pid')
     fp = open(pid_file, 'w')
     try:
         fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError:
-        subprocess.run("pkill -f sgtk-drun", shell=True)
+        subprocess.run("pkill -f sgtk-dmenu", shell=True)
         sys.exit(2)
 
     global build_from_file
@@ -81,22 +81,17 @@ def main():
     placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom (sway & i3 only)")
     placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen (sway & i3 only)")
 
-    favourites = parser.add_mutually_exclusive_group()
-    favourites.add_argument('-fn', type=int, help="prepend <FN> most used items")
-
     appendix = parser.add_mutually_exclusive_group()
     appendix.add_argument("-a", "--append", action="store_true",
                           help="append custom menu from {}".format(build_from_file))
     appendix.add_argument("-af", type=str, help="append custom menu from {}".format(os.path.join(config_dir, '<AF>')))
 
-    parser.add_argument("-n", "--no-menu", action="store_true", help="skip menu, display appendix only")
-    parser.add_argument("-l", type=str, help="force language (e.g. \"de\" for German)")
     parser.add_argument("-s", type=int, default=20, help="menu icon size (min: 16, max: 48, default: 20)")
     parser.add_argument("-w", type=int, help="menu width in px (integer, default: screen width / 8)")
     parser.add_argument("-d", type=int, default=100, help="menu delay in milliseconds (default: 100; sway & i3 only)")
     parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3; "
                                                             "sway & i3 only)")
-    parser.add_argument("-t", type=int, default=30, help="sway submenu lines limit (default: 30)")
+    parser.add_argument("-t", type=int, default=15, help="lines limit (default: 20)")
     parser.add_argument("-y", type=int, default=0, help="y offset from edge to display menu at (sway & i3 only)")
     parser.add_argument("-css", type=str, default="style.css",
                         help="use alternative {} style sheet instead of style.css"
@@ -282,7 +277,6 @@ class MainWindow(Gtk.Window):
                     filtered_items_list = []
                     for item in all_copies_list:
                         self.menu.remove(item)
-                        # We'll search the entry name and the first element of its command (to skip arguments)
                         label = item.get_label()
                         if self.search_phrase.upper() in label.upper():
                             filtered_items_list.append(item)
@@ -372,29 +366,28 @@ def build_menu(commands):
     icon_theme = Gtk.IconTheme.get_default()
     menu = Gtk.Menu()
 
-    if not args.no_menu:
-        win.search_item = Gtk.MenuItem()
-        win.search_item.add(win.search_box)
-        win.search_item.set_sensitive(False)
-        menu.add(win.search_item)
+    win.search_item = Gtk.MenuItem()
+    win.search_item.add(win.search_box)
+    win.search_item.set_sensitive(False)
+    menu.add(win.search_item)
 
-        # actual drun menu
-        for command in commands:
-            item = Gtk.MenuItem.new_with_label(command)
-            item.set_property("name", "item-drun")
-            item.connect('activate', launch, command)
-            all_items_list.append(item)
-            all_copies_list.append(item)
+    # actual drun menu
+    for command in commands:
+        item = Gtk.MenuItem.new_with_label(command)
+        item.set_property("name", "item-drun")
+        item.connect('activate', launch, command)
+        all_items_list.append(item)
+        all_copies_list.append(item)
 
-        for item in all_items_list[:10]:
-            menu.append(item)
+    for item in all_items_list[:args.t]:
+        menu.append(item)
 
     # user-defined menu from default or custom file (see args)
-    if args.append or args.af or args.no_menu:
-        if not args.no_menu:  # nothing above to separate
-            separator = Gtk.SeparatorMenuItem()
-            separator.set_property("name", "separator")
-            menu.append(separator)
+    if args.append or args.af:
+        separator = Gtk.SeparatorMenuItem()
+        separator.set_property("name", "separator")
+        menu.append(separator)
+
         appendix = load_json(build_from_file)
         for entry in appendix:
             name = entry["name"]
@@ -435,7 +428,7 @@ def build_menu(commands):
     return menu
 
 
-def launch(item, command):
+def launch(item, command, terminal=False):
     # run the command an quit
     subprocess.Popen('exec {}'.format(command), shell=True)
     Gtk.main_quit()
