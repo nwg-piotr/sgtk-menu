@@ -25,7 +25,7 @@ setup(
         'gui_scripts': [
             'sgtk-menu = sgtk_menu.menu:main',
             'sgtk-bar = sgtk_menu.bar:main',
-            'sgtk-dmenu = sgtk_menu.drun:main',
+            'sgtk-dmenu = sgtk_menu.dmenu:main',
         ]
     },
 )
