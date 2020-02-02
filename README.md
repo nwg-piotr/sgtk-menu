@@ -2,15 +2,13 @@
 This project is an attempt to create a launcher, that behaves decently on **sway**, but also on **i3** window manager. 
 It may also be used in some **floating WMs**, but I only use **Openbox**, and don't test it elsewhere.
 
-**sgtk-menu uses `pygobject` to create a themeable, searchable, gtk3-based system menu w/ some optional features**.
-
-## Features
+**sgtk-menu uses `pygobject` to create a themeable, searchable, gtk3-based system menu w/ some optional features:**
 
 - `.desktop` entries-based system menu;
 - search box to find what you need quickly;
 - favourites (most frequently used entries) menu above (optional `[-f | -fn FN]` argument);
 - user-defined menu below (optional `[-a | -af AF]` argument);
-- user-defined horizontal or vertical button bar (`sgtk-bar` command);
+- `sgtk-bar` - user-defined horizontal or vertical button bar (`sgtk-bar` command);
 - `sgtk-dmenu` command to search commands found in `$PATH`.
 
 Read [wiki](https://github.com/nwg-piotr/sgtk-menu/wiki) for more information. 
