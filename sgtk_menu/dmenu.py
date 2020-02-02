@@ -2,7 +2,7 @@
 # _*_ coding: utf-8 _*_
 
 """
-This is an attempt to develop a menu that behaves decently on sway window manager, and also works on i3.
+This script creates Gtk.Menu out of commands found in $PATH.
 
 Author: Piotr Miller
 Copyright (c) 2020 Piotr Miller & Contributors
@@ -29,7 +29,7 @@ from sgtk_menu.tools import (config_dirs, load_json, create_default_configs, che
 
 wm = check_wm()
 
-# Will apply to the overlay window; we can't do so outside the config file on i3.
+# The swaymsg command will apply to the overlay window; we can't do so outside the config file on i3.
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
 if wm == "sway":
     try:
@@ -38,16 +38,18 @@ if wm == "sway":
     except:
         pass
 
+# We expect 'other_wm' to be a floating WM. Otherwise we don't know how the window is going to behave.
 other_wm = not wm == "sway" and not wm == "i3"
 
+# Optional dependency: needed to popup the menu at the cursor position in floating WMs
 try:
     from pynput.mouse import Controller
-
     mouse_pointer = Controller()
 except:
     mouse_pointer = None
     pass
 
+# x, y, width, height
 geometry = (0, 0, 0, 0)
 
 win = None  # overlay window
@@ -57,11 +59,14 @@ all_copies_list = []  # list of copies of above used while searching (not assign
 menu_items_list = []  # created / updated with menu.get_children()
 filtered_items_list = []  # used in the search method
 
+# What we found in $PATH
 all_commands_list = []
 
 config_dir = config_dirs()[0]
 if not os.path.exists(config_dir):
     os.makedirs(config_dir)
+
+# default custom menu template
 build_from_file = os.path.join(config_dirs()[0], 'appendix')
 
 
@@ -99,7 +104,7 @@ def main():
     global args
     args = parser.parse_args()
 
-    # Create default config files if not found
+    # Copy default templates and style sheet - if not found
     create_default_configs(config_dir)
 
     css_file = os.path.join(config_dirs()[0], args.css) if os.path.exists(
@@ -114,7 +119,7 @@ def main():
     if other_wm:
         args.d = 0
 
-    # Replace appendix file name with custom - if any
+    # Replace appendix template file name with custom - if any
     if args.af:
         build_from_file = os.path.join(config_dirs()[0], args.af)
 
@@ -135,8 +140,6 @@ def main():
         screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
     )
 
-    # find all .desktop entries, create DesktopEntry class instances;
-    # DesktopEntry adds itself to the proper List in the class constructor
     global all_commands_list
     all_commands_list = list_commands()
     all_commands_list = sorted(all_commands_list)
@@ -161,6 +164,7 @@ def main():
     x, y, w, h = geometry
 
     if not other_wm:
+        # resize to the active screen dimensions on sway/i3
         win.resize(w, h)
     else:
         win.resize(1, 1)
@@ -172,7 +176,9 @@ def main():
             win.move(0, 0)
             print("\nYou need the python-pynput package!\n")
 
+    # hide window from panel on Openbox
     win.set_skip_taskbar_hint(True)
+
     win.menu = build_menu(all_commands_list)
     win.menu.set_property("name", "menu")
 
@@ -188,6 +194,7 @@ def main():
         win.menu.set_property("width_request", int(win.screen_dimensions[0] / 8))
     win.show_all()
 
+    # on sway/i3 we need a timeout for window to appear in the proper place; for other_wm args.d has been zeroed
     GLib.timeout_add(args.d, open_menu)
     Gtk.main()
 
@@ -201,6 +208,7 @@ class MainWindow(Gtk.Window):
         self.connect('draw', self.draw)  # transparency
 
         if other_wm:
+            # we just want the 1 x 1px window to stay unnoticed
             self.set_sensitive(False)
             self.set_resizable(False)
             self.set_decorated(False)
@@ -208,7 +216,7 @@ class MainWindow(Gtk.Window):
         self.search_box = Gtk.SearchEntry()
         self.search_box.set_property("name", "searchbox")
         self.search_box.set_text('Type to search')
-        self.screen_dimensions = (0, 0)  # parent screen dimensions (obtained outside)
+        self.screen_dimensions = (0, 0)  # parent screen dimensions (will be obtained outside the constructor)
         self.search_phrase = ''
 
         # Credits for transparency go to  KurtJacobson:
@@ -242,6 +250,7 @@ class MainWindow(Gtk.Window):
             else:
                 # display on top
                 vbox.pack_start(hbox, False, False, 0)
+        # vertical margin
         outer_box.pack_start(vbox, True, True, args.y)
 
         self.add(outer_box)
@@ -250,7 +259,7 @@ class MainWindow(Gtk.Window):
         global filtered_items_list
         if event.type == Gdk.EventType.KEY_RELEASE:
             update = False
-            # search box only accepts alphanumeric characters, space and backspace
+            # search box only accepts alphanumeric characters, and couple of special ones:
             if event.string and event.string.isalnum() or event.string in [' ', '-', '+', '_', '.']:
                 update = True
                 # remove menu items, except for search box (item #0)
@@ -266,11 +275,12 @@ class MainWindow(Gtk.Window):
                 self.search_phrase = self.search_phrase[:-1]
                 self.search_box.set_text(self.search_phrase)
 
-            # If our search result is a single item, we may want to activate it with the Enter key,
-            # but it does not work. Here is a workaround:
+            # If our search result is a single item, we may want to activate the highlighted item with the Enter key,
+            # but it does not work in GTK3. Here is a workaround:
             elif event.keyval == 65293 and len(filtered_items_list) == 1:
                 filtered_items_list[0].activate()
 
+            # filter items by search_phrase
             if update:
                 if len(self.search_phrase) > 0:
                     filtered_items_list = []
@@ -294,9 +304,10 @@ class MainWindow(Gtk.Window):
 
                     if len(filtered_items_list) == 1:
                         item = filtered_items_list[0]
-                        item.select()  # But we still can't activate with Enter
+                        item.select()  # But we still can't activate it with Enter!
 
                     self.menu.show_all()
+
                     # as the search box is actually a menu item, it must be sensitive now,
                     # in order not to be skipped while scrolling overflowed menu
                     self.search_item.set_sensitive(True)
@@ -311,9 +322,11 @@ class MainWindow(Gtk.Window):
                     # better to have it insensitive when possible
                     self.search_item.set_sensitive(False)
                     self.menu.reposition()
+
             if len(self.search_phrase) == 0:
                 self.search_box.set_text('Type to search')
 
+        # key-release-event callback must return a boolean
         return True
 
     def resize(self, w, h):
@@ -332,6 +345,7 @@ class MainWindow(Gtk.Window):
 
 
 def open_menu():
+    # Now we can do this, as we've just shown the window
     if wm == "sway":
         subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
     elif wm == "i3":
@@ -386,7 +400,7 @@ def build_menu(commands):
     for item in all_items_list[:args.t]:
         menu.append(item)
 
-    # user-defined menu from default or custom file (see args)
+    # optional user-defined menu from default or custom template (see args)
     if args.append or args.af:
         separator = Gtk.SeparatorMenuItem()
         separator.set_property("name", "separator")
@@ -432,7 +446,7 @@ def build_menu(commands):
     return menu
 
 
-def launch(item, command, terminal=False):
+def launch(item, command):
     # run the command an quit
     subprocess.Popen('exec {}'.format(command), shell=True)
     Gtk.main_quit()
