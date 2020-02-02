@@ -378,7 +378,7 @@ def build_menu(commands):
     # actual drun menu
     for command in commands:
         item = Gtk.MenuItem.new_with_label(command)
-        item.set_property("name", "item-drun")
+        item.set_property("name", "item-dmenu")
         item.connect('activate', launch, command)
         all_items_list.append(item)
         all_copies_list.append(item)
