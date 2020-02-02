@@ -4,18 +4,14 @@ The menu may also be used in some **floating WMs**, but I only use **Openbox**, 
 
 **sgtk-menu uses `pygobject` to create a themeable, searchable, gtk3-based system menu w/ some optional features**.
 
-:clipboard: *If you've just upgraded from version < 0.8.0, read about [Templates](https://github.com/nwg-piotr/sgtk-menu/wiki/Templates)*
-
 ## Features
 
 - `.desktop` entries-based system menu;
 - search box to find what you need quickly;
 - favourites (most frequently used entries) menu above (optional `[-f | -fn FN]` argument);
 - user-defined menu below (optional `[-a | -af AF]` argument);
-- user-defined horizontal or vertical button bar (`sgtk-bar` command).
-
-As the system menu bases on `.desktop` files only, it may be used as a replacement to wofi/rofi `--drun`, but not to 
-`--dmenu` mode.
+- user-defined horizontal or vertical button bar (`sgtk-bar` command);
+- `sgtk-dmenu` command to search commands found in `$PATH`.
 
 Read [wiki](https://github.com/nwg-piotr/sgtk-menu/wiki) for more information. 
 See [screenshots](https://github.com/nwg-piotr/sgtk-menu/tree/master/screenshots) 
@@ -29,6 +25,10 @@ for usage examples.
 ### Horizontal button bar as the Exit menu
 
 ![screenshot](http://nwg.pl/Lychee/uploads/big/e2d600d32e4bc0c8458fbe85c8428853.png)
+
+### sgtk-dmenu
+
+![screenshot](http://nwg.pl/Lychee/uploads/big/8397695512a2d655199f95db683060f8.png)
 
 ## Background
 
