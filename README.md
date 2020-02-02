@@ -1,6 +1,6 @@
 # sgtk-menu
-This project is an attempt to create a simple menu, that behaves decently on **sway**, but also on **i3** window manager. 
-The menu may also be used in some **floating WMs**, but I only use **Openbox**, and don't test it elsewhere.
+This project is an attempt to create a launcher, that behaves decently on **sway**, but also on **i3** window manager. 
+It may also be used in some **floating WMs**, but I only use **Openbox**, and don't test it elsewhere.
 
 **sgtk-menu uses `pygobject` to create a themeable, searchable, gtk3-based system menu w/ some optional features**.
 
