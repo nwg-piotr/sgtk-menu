@@ -24,6 +24,7 @@ import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 import cairo
+import time
 
 from sgtk_menu.tools import (config_dirs, load_json, create_default_configs, check_wm, display_geometry, path_dirs)
 
@@ -54,8 +55,7 @@ geometry = (0, 0, 0, 0)
 
 win = None  # overlay window
 args = None
-all_items_list = []  # list of all DesktopMenuItem objects assigned to a .desktop entry
-all_copies_list = []  # list of copies of above used while searching (not assigned to a submenu!)
+all_items_list = []  # list of all DesktopMenuItem objects assigned to a command
 menu_items_list = []  # created / updated with menu.get_children()
 filtered_items_list = []  # used in the search method
 
@@ -257,6 +257,7 @@ class MainWindow(Gtk.Window):
 
     def search_items(self, menu, event):
         global filtered_items_list
+        filtered_items_list = []
         if event.type == Gdk.EventType.KEY_RELEASE:
             update = False
             # search box only accepts alphanumeric characters, and couple of special ones:
@@ -282,10 +283,10 @@ class MainWindow(Gtk.Window):
 
             # filter items by search_phrase
             if update:
+                start_time = int(round(time.time() * 1000))
                 if len(self.search_phrase) > 0:
                     filtered_items_list = []
-                    for item in all_copies_list:
-                        self.menu.remove(item)
+                    for item in all_items_list:
                         label = item.get_label()
                         if " " not in self.search_phrase:
                             if self.search_phrase.upper() in label.upper():
@@ -294,9 +295,6 @@ class MainWindow(Gtk.Window):
                             # if the string ends with space, search exact 1st word
                             if self.search_phrase.upper().split()[0] == label.upper():
                                 filtered_items_list.append(item)
-
-                    for item in self.menu.get_children()[1:]:
-                        self.menu.remove(item)
 
                     for item in filtered_items_list:
                         self.menu.append(item)
@@ -322,6 +320,7 @@ class MainWindow(Gtk.Window):
                     # better to have it insensitive when possible
                     self.search_item.set_sensitive(False)
                     self.menu.reposition()
+                print("{} ms".format(int(round(time.time() * 1000)) - start_time))
 
             if len(self.search_phrase) == 0:
                 self.search_box.set_text('Type to search')
@@ -383,7 +382,6 @@ def list_commands():
 def build_menu(commands):
     icon_theme = Gtk.IconTheme.get_default()
     menu = Gtk.Menu()
-
     win.search_item = Gtk.MenuItem()
     win.search_item.add(win.search_box)
     win.search_item.set_sensitive(False)
@@ -395,8 +393,8 @@ def build_menu(commands):
         item.set_property("name", "item-dmenu")
         item.connect('activate', launch, command)
         all_items_list.append(item)
-        all_copies_list.append(item)
 
+    # At the beginning we'll only show args.t items. Nobody's gonna scroll through thousands of them.
     for item in all_items_list[:args.t]:
         menu.append(item)
 
