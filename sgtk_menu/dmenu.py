@@ -24,7 +24,6 @@ import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 import cairo
-import time
 
 from sgtk_menu.tools import (config_dirs, load_json, create_default_configs, check_wm, display_geometry, path_dirs)
 
@@ -34,7 +33,7 @@ wm = check_wm()
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
 if wm == "sway":
     try:
-        subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk-menu\"]', 'floating', 'enable'],
+        subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk-dmenu\"]', 'floating', 'enable'],
                        stdout=subprocess.DEVNULL).returncode == 0
     except:
         pass
@@ -142,7 +141,7 @@ def main():
 
     global all_commands_list
     all_commands_list = list_commands()
-    all_commands_list = sorted(all_commands_list)
+    all_commands_list.sort()
 
     # Overlay window
     global win
@@ -202,8 +201,8 @@ def main():
 class MainWindow(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self)
-        self.set_title('~sgtk-menu')
-        self.set_role('~sgtk-menu')
+        self.set_title('~sgtk-dmenu')
+        self.set_role('~sgtk-dmenu')
         self.connect("destroy", Gtk.main_quit)
         self.connect('draw', self.draw)  # transparency
 
@@ -256,8 +255,9 @@ class MainWindow(Gtk.Window):
         self.add(outer_box)
 
     def search_items(self, menu, event):
-        global filtered_items_list
+
         if event.type == Gdk.EventType.KEY_RELEASE:
+            global filtered_items_list
             update = False
             # search box only accepts alphanumeric characters, and couple of special ones:
             if event.string and event.string.isalnum() or event.string in [' ', '-', '+', '_', '.']:
@@ -268,28 +268,23 @@ class MainWindow(Gtk.Window):
                 update = True
                 self.search_phrase = self.search_phrase[:-1]
 
-            self.search_box.set_text(self.search_phrase)
-
             # filter items by search_phrase
             if update:
-                start_time = int(round(time.time() * 1000))
-                # remove menu items, except for search box (item #0)
-                items = self.menu.get_children()
-                if len(items) > 1:
-                    for item in items[1:]:
-                        self.menu.remove(item)
+                self.search_box.set_text(self.search_phrase)
+                if self.search_phrase:
+                    # remove menu items, except for search box (item #0)
+                    items = self.menu.get_children()
+                    if len(items) > 1:
+                        for item in items[1:]:
+                            self.menu.remove(item)
 
-                if len(self.search_phrase) > 0:
-                    filtered_items_list = []
-                    for item in all_items_list:
-                        label = item.get_label()
-                        if " " not in self.search_phrase:
-                            if self.search_phrase.upper() in label.upper():
-                                filtered_items_list.append(item)
-                        else:
-                            # if the string ends with space, search exact 1st word
-                            if self.search_phrase.upper().split()[0] == label.upper():
-                                filtered_items_list.append(item)
+                    if " " not in self.search_phrase:
+                        filtered_items_list = [item for item in all_items_list if
+                                               self.search_phrase in item.get_label()]
+                    else:
+                        # if the string ends with space, search exact 1st word
+                        first = self.search_phrase.split()[0]
+                        filtered_items_list = [item for item in all_items_list if first == item.get_label()]
 
                     for item in filtered_items_list:
                         self.menu.append(item)
@@ -312,13 +307,12 @@ class MainWindow(Gtk.Window):
                     # restore original menu
                     for item in menu_items_list:
                         self.menu.append(item)
-                print("{} ms".format(int(round(time.time() * 1000)) - start_time))
 
             if len(self.search_phrase) == 0:
                 self.search_box.set_text('Type to search')
 
-            # If our search result is a single item, we may want to activate the highlighted item with the Enter key,
-            # but it does not work in GTK3. Here is a workaround:
+            # If our search result is a single, programmatically selected item, we may want to activate it
+            # with the Enter key, but it does not work in GTK3. Here is a workaround:
             if event.keyval == 65293 and len(filtered_items_list) == 1:
                 filtered_items_list[0].activate()
 
@@ -431,7 +425,7 @@ def build_menu(commands):
             item = Gtk.MenuItem()
             item.set_property("name", "item")
             item.add(hbox)
-            item.connect('activate', launch, exec, True)  # do not cache!
+            item.connect('activate', launch, exec)  # do not cache!
             menu.append(item)
 
     menu.connect("hide", win.die)
