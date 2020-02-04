@@ -23,7 +23,7 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Desktop (please complete the following information):**
+**Environment (please complete the following information):**
  - Linux distribution: [e.g. Arch]
  - Window Manager: [e.g. sway, i3, Openbox]
  - Window Manager version: [e.g. 1.4]
