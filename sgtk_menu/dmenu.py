@@ -33,7 +33,7 @@ wm = check_wm()
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
 if wm == "sway":
     try:
-        subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk-menu\"]', 'floating', 'enable'],
+        subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk-dmenu\"]', 'floating', 'enable'],
                        stdout=subprocess.DEVNULL).returncode == 0
     except:
         pass
@@ -54,8 +54,7 @@ geometry = (0, 0, 0, 0)
 
 win = None  # overlay window
 args = None
-all_items_list = []  # list of all DesktopMenuItem objects assigned to a .desktop entry
-all_copies_list = []  # list of copies of above used while searching (not assigned to a submenu!)
+all_items_list = []  # list of all DesktopMenuItem objects assigned to a command
 menu_items_list = []  # created / updated with menu.get_children()
 filtered_items_list = []  # used in the search method
 
@@ -142,7 +141,7 @@ def main():
 
     global all_commands_list
     all_commands_list = list_commands()
-    all_commands_list = sorted(all_commands_list)
+    all_commands_list.sort()
 
     # Overlay window
     global win
@@ -202,8 +201,8 @@ def main():
 class MainWindow(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self)
-        self.set_title('~sgtk-menu')
-        self.set_role('~sgtk-menu')
+        self.set_title('~sgtk-dmenu')
+        self.set_role('~sgtk-dmenu')
         self.connect("destroy", Gtk.main_quit)
         self.connect('draw', self.draw)  # transparency
 
@@ -256,47 +255,36 @@ class MainWindow(Gtk.Window):
         self.add(outer_box)
 
     def search_items(self, menu, event):
-        global filtered_items_list
+
         if event.type == Gdk.EventType.KEY_RELEASE:
+            global filtered_items_list
             update = False
             # search box only accepts alphanumeric characters, and couple of special ones:
             if event.string and event.string.isalnum() or event.string in [' ', '-', '+', '_', '.']:
                 update = True
-                # remove menu items, except for search box (item #0)
-                items = self.menu.get_children()
-                if len(items) > 1:
-                    for item in items[1:]:
-                        self.menu.remove(item)
                 self.search_phrase += event.string
-                self.search_box.set_text(self.search_phrase)
 
             elif event.keyval == 65288:  # backspace
                 update = True
                 self.search_phrase = self.search_phrase[:-1]
-                self.search_box.set_text(self.search_phrase)
-
-            # If our search result is a single item, we may want to activate the highlighted item with the Enter key,
-            # but it does not work in GTK3. Here is a workaround:
-            elif event.keyval == 65293 and len(filtered_items_list) == 1:
-                filtered_items_list[0].activate()
 
             # filter items by search_phrase
             if update:
-                if len(self.search_phrase) > 0:
-                    filtered_items_list = []
-                    for item in all_copies_list:
-                        self.menu.remove(item)
-                        label = item.get_label()
-                        if " " not in self.search_phrase:
-                            if self.search_phrase.upper() in label.upper():
-                                filtered_items_list.append(item)
-                        else:
-                            # if the string ends with space, search exact 1st word
-                            if self.search_phrase.upper().split()[0] == label.upper():
-                                filtered_items_list.append(item)
+                self.search_box.set_text(self.search_phrase)
+                if self.search_phrase:
+                    # remove menu items, except for search box (item #0)
+                    items = self.menu.get_children()
+                    if len(items) > 1:
+                        for item in items[1:]:
+                            self.menu.remove(item)
 
-                    for item in self.menu.get_children()[1:]:
-                        self.menu.remove(item)
+                    if " " not in self.search_phrase:
+                        filtered_items_list = [item for item in all_items_list if
+                                               self.search_phrase.upper() in item.get_label().upper()]
+                    else:
+                        # if the string ends with space, search exact 1st word
+                        first = self.search_phrase.split()[0].upper()
+                        filtered_items_list = [item for item in all_items_list if first == item.get_label().upper()]
 
                     for item in filtered_items_list:
                         self.menu.append(item)
@@ -319,12 +307,14 @@ class MainWindow(Gtk.Window):
                     # restore original menu
                     for item in menu_items_list:
                         self.menu.append(item)
-                    # better to have it insensitive when possible
-                    self.search_item.set_sensitive(False)
-                    self.menu.reposition()
 
             if len(self.search_phrase) == 0:
                 self.search_box.set_text('Type to search')
+
+            # If our search result is a single, programmatically selected item, we may want to activate it
+            # with the Enter key, but it does not work in GTK3. Here is a workaround:
+            if event.keyval == 65293 and len(filtered_items_list) == 1:
+                filtered_items_list[0].activate()
 
         # key-release-event callback must return a boolean
         return True
@@ -383,7 +373,6 @@ def list_commands():
 def build_menu(commands):
     icon_theme = Gtk.IconTheme.get_default()
     menu = Gtk.Menu()
-
     win.search_item = Gtk.MenuItem()
     win.search_item.add(win.search_box)
     win.search_item.set_sensitive(False)
@@ -395,8 +384,8 @@ def build_menu(commands):
         item.set_property("name", "item-dmenu")
         item.connect('activate', launch, command)
         all_items_list.append(item)
-        all_copies_list.append(item)
 
+    # At the beginning we'll only show args.t items. Nobody's gonna scroll through thousands of them.
     for item in all_items_list[:args.t]:
         menu.append(item)
 
@@ -436,7 +425,7 @@ def build_menu(commands):
             item = Gtk.MenuItem()
             item.set_property("name", "item")
             item.add(hbox)
-            item.connect('activate', launch, exec, True)  # do not cache!
+            item.connect('activate', launch, exec)  # do not cache!
             menu.append(item)
 
     menu.connect("hide", win.die)
