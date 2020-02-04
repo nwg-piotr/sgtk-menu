@@ -280,11 +280,11 @@ class MainWindow(Gtk.Window):
 
                     if " " not in self.search_phrase:
                         filtered_items_list = [item for item in all_items_list if
-                                               self.search_phrase in item.get_label()]
+                                               self.search_phrase.upper() in item.get_label().upper()]
                     else:
                         # if the string ends with space, search exact 1st word
-                        first = self.search_phrase.split()[0]
-                        filtered_items_list = [item for item in all_items_list if first == item.get_label()]
+                        first = self.search_phrase.split()[0].upper()
+                        filtered_items_list = [item for item in all_items_list if first == item.get_label().upper()]
 
                     for item in filtered_items_list:
                         self.menu.append(item)
