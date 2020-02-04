@@ -257,33 +257,28 @@ class MainWindow(Gtk.Window):
 
     def search_items(self, menu, event):
         global filtered_items_list
-        filtered_items_list = []
         if event.type == Gdk.EventType.KEY_RELEASE:
             update = False
             # search box only accepts alphanumeric characters, and couple of special ones:
             if event.string and event.string.isalnum() or event.string in [' ', '-', '+', '_', '.']:
                 update = True
+                self.search_phrase += event.string
+
+            elif event.keyval == 65288:  # backspace
+                update = True
+                self.search_phrase = self.search_phrase[:-1]
+
+            self.search_box.set_text(self.search_phrase)
+
+            # filter items by search_phrase
+            if update:
+                start_time = int(round(time.time() * 1000))
                 # remove menu items, except for search box (item #0)
                 items = self.menu.get_children()
                 if len(items) > 1:
                     for item in items[1:]:
                         self.menu.remove(item)
-                self.search_phrase += event.string
-                self.search_box.set_text(self.search_phrase)
 
-            elif event.keyval == 65288:  # backspace
-                update = True
-                self.search_phrase = self.search_phrase[:-1]
-                self.search_box.set_text(self.search_phrase)
-
-            # If our search result is a single item, we may want to activate the highlighted item with the Enter key,
-            # but it does not work in GTK3. Here is a workaround:
-            elif event.keyval == 65293 and len(filtered_items_list) == 1:
-                filtered_items_list[0].activate()
-
-            # filter items by search_phrase
-            if update:
-                start_time = int(round(time.time() * 1000))
                 if len(self.search_phrase) > 0:
                     filtered_items_list = []
                     for item in all_items_list:
@@ -317,13 +312,15 @@ class MainWindow(Gtk.Window):
                     # restore original menu
                     for item in menu_items_list:
                         self.menu.append(item)
-                    # better to have it insensitive when possible
-                    self.search_item.set_sensitive(False)
-                    self.menu.reposition()
                 print("{} ms".format(int(round(time.time() * 1000)) - start_time))
 
             if len(self.search_phrase) == 0:
                 self.search_box.set_text('Type to search')
+
+            # If our search result is a single item, we may want to activate the highlighted item with the Enter key,
+            # but it does not work in GTK3. Here is a workaround:
+            if event.keyval == 65293 and len(filtered_items_list) == 1:
+                filtered_items_list[0].activate()
 
         # key-release-event callback must return a boolean
         return True
