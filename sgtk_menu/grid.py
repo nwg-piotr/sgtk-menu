@@ -36,7 +36,7 @@ wm = check_wm()
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
 if wm == "sway":
     try:
-        subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk-menu\"]', 'floating', 'enable'],
+        subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk-grid\"]', 'floating', 'enable'],
                        stdout=subprocess.DEVNULL).returncode == 0
     except:
         pass
@@ -53,24 +53,10 @@ except:
 
 geometry = (0, 0, 0, 0)
 
-# Lists to hold DesktopEntry objects of each category
-c_audio_video, c_development, c_game, c_graphics, c_network, c_office, c_science, c_settings, c_system, \
-c_utility, c_other, all_entries = [], [], [], [], [], [], [], [], [], [], [], []
-
-category_names = ['AudioVideo', 'Development', 'Game', 'Graphics', 'Network', 'Office', 'Science', 'Settings',
-                  'System', 'Utility', 'Other']
-
-category_icons = {"AudioVideo": "applications-multimedia",
-                  "Development": "applications-development",
-                  "Game": "applications-games",
-                  "Graphics": "applications-graphics",
-                  "Network": "applications-internet",
-                  "Office": "applications-office",
-                  "Science": "applications-science",
-                  "Settings": "preferences-desktop",
-                  "System": "preferences-system",
-                  "Utility": "applications-accessories",
-                  "Other": "applications-other"}
+# List to hold AppButtons for favourites
+all_favs = []
+# Lists to hold AppBoxes for apps found in .desktop files
+all_apps = []
 
 localized_names_dictionary = {}  # name => translated name
 locale = ''
@@ -96,6 +82,8 @@ else:
     cache_dir = os.path.join(os.path.expanduser('~/.cache'))
 if not os.path.exists(cache_dir):
     os.makedirs(cache_dir)
+
+# We track clicks in the same cache file
 cache_file = os.path.join(cache_dir, 'sgtk-menu')
 
 cache = None
@@ -104,12 +92,12 @@ sorted_cache = None
 
 def main():
     # exit if already running, thanks to Slava V at https://stackoverflow.com/a/384493/4040598
-    pid_file = os.path.join(tempfile.gettempdir(), 'sgtk-menu.pid')
+    pid_file = os.path.join(tempfile.gettempdir(), 'sgtk-grid.pid')
     fp = open(pid_file, 'w')
     try:
         fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError:
-        subprocess.run("pkill -f sgtk-menu", shell=True)
+        subprocess.run("pkill -f sgtk-grid", shell=True)
         sys.exit(2)
 
     global build_from_file
@@ -117,6 +105,8 @@ def main():
     placement = parser.add_mutually_exclusive_group()
     placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom (sway & i3 only)")
     placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen (sway & i3 only)")
+
+    parser.add_argument('-cn', type=int, default=6, help="number of columns to display")
 
     favourites = parser.add_mutually_exclusive_group()
     favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used items")
@@ -129,14 +119,14 @@ def main():
 
     parser.add_argument("-n", "--no-menu", action="store_true", help="skip menu, display appendix only")
     parser.add_argument("-l", type=str, help="force language (e.g. \"de\" for German)")
-    parser.add_argument("-s", type=int, default=20, help="menu icon size (min: 16, max: 48, default: 20)")
+    parser.add_argument("-s", type=int, default=72, help="menu icon size (min: 16, max: 48, default: 20)")
     parser.add_argument("-w", type=int, help="menu width in px (integer, default: screen width / 8)")
     parser.add_argument("-d", type=int, default=100, help="menu delay in milliseconds (default: 100; sway & i3 only)")
     parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3; "
                                                             "sway & i3 only)")
     parser.add_argument("-t", type=int, default=30, help="sway submenu lines limit (default: 30)")
-    parser.add_argument("-y", type=int, default=0, help="y offset from edge to display menu at (sway & i3 only)")
-    parser.add_argument("-css", type=str, default="style.css",
+    parser.add_argument("-y", type=int, default=30, help="y offset from edge to display menu at (sway & i3 only)")
+    parser.add_argument("-css", type=str, default="grid.css",
                         help="use alternative {} style sheet instead of style.css"
                         .format(os.path.join(config_dir, '<CSS>')))
     global args
@@ -150,8 +140,8 @@ def main():
 
     if args.s < 16:
         args.s = 16
-    elif args.s > 48:
-        args.s = 48
+    elif args.s > 96:
+        args.s = 96
 
     # We do not need any delay in other WMs
     if other_wm:
@@ -182,15 +172,6 @@ def main():
 
     global locale
     locale = get_locale_string(args.l)
-    category_names_dictionary = localized_category_names(locale)
-
-    # replace additional category names with main ones
-    for name in category_names:
-        main_category_name = additional_to_main(name)
-        try:
-            localized_names_dictionary[main_category_name] = category_names_dictionary[main_category_name]
-        except:
-            pass
 
     screen = Gdk.Screen.get_default()
     provider = Gtk.CssProvider()
@@ -199,15 +180,19 @@ def main():
         screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
     )
 
-    # find all .desktop entries, create DesktopEntry class instances;
-    # DesktopEntry adds itself to the proper List in the class constructor
+    # find all .desktop entries, create AppButton class instances;
     list_entries()
+
+    # find favourites in the list above
+    if args.favourites or args.fn > 0:
+        list_favs()
+        print("Listed {} favourites".format(len(all_favs)))
 
     # Overlay window
     global win
     win = MainWindow()
     if other_wm:
-        # We need this to obtain the screen geometry when i3ipc module unavailable
+        # We need the window to be visible to obtain the screen geometry when i3ipc module unavailable
         win.resize(1, 1)
         win.show_all()
     global geometry
@@ -222,57 +207,38 @@ def main():
             sys.exit(2)
     x, y, w, h = geometry
 
-    if not other_wm:
-        win.resize(w, h)
-    else:
-        win.resize(1, 1)
-        win.set_gravity(Gdk.Gravity.CENTER)
-        if mouse_pointer:
-            x, y = mouse_pointer.position
-            win.move(x, y)
-        else:
-            win.move(0, 0)
-            print("\nYou need the python-pynput package!\n")
-
+    win.resize(w, h)
     win.set_skip_taskbar_hint(True)
-    win.menu = build_menu()
-    win.menu.set_property("name", "menu")
-
-    global menu_items_list
-    menu_items_list = win.menu.get_children()
-
-    win.menu.propagate_key_event = False
-    win.menu.connect("key-release-event", win.search_items)
-    # Let's reserve some width for long entries found with the search box
-    if args.w:
-        win.menu.set_property("width_request", args.w)
-    else:
-        win.menu.set_property("width_request", int(win.screen_dimensions[0] / 8))
     win.show_all()
 
-    GLib.timeout_add(args.d, open_menu)
+    # align width of all buttons
+    max_width = 0
+    for item in all_apps:
+        width = item.get_allocated_width()
+        if width > max_width:
+            max_width = width
+    for item in all_favs:
+        item.set_size_request(max_width, max_width / 2)
+    for item in all_apps:
+        item.set_size_request(max_width, max_width / 2)
+    win.search_box.set_size_request(max_width, 0)
+
+    # GLib.timeout_add(args.d, open_menu)
     Gtk.main()
 
 
 class MainWindow(Gtk.Window):
     def __init__(self):
+        global args
         Gtk.Window.__init__(self)
-        self.set_title('~sgtk-menu')
-        self.set_role('~sgtk-menu')
+        self.set_title('~sgtk-grid')
+        self.set_role('~sgtk-grid')
         self.connect("destroy", Gtk.main_quit)
+        self.connect("focus-out-event", Gtk.main_quit)
         self.connect('draw', self.draw)  # transparency
-
-        if other_wm:
-            self.set_sensitive(False)
-            self.set_resizable(False)
-            self.set_decorated(False)
-
-        self.search_box = Gtk.SearchEntry()
-        self.search_box.set_property("name", "searchbox")
-        self.search_box.set_text('Type to search')
         self.screen_dimensions = (0, 0)  # parent screen dimensions (obtained outside)
         self.search_phrase = ''
-
+        
         # Credits for transparency go to  KurtJacobson:
         # https://gist.github.com/KurtJacobson/374c8cb83aee4851d39981b9c7e2c22c
         screen = self.get_screen()
@@ -281,31 +247,48 @@ class MainWindow(Gtk.Window):
             self.set_visual(visual)
         self.set_app_paintable(True)
 
-        self.menu = None  # We'll create it outside the class
+        if other_wm:
+            self.set_sensitive(False)
+            self.set_resizable(False)
+            self.set_decorated(False)
 
         outer_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        vbox = Gtk.VBox()
+
         hbox = Gtk.HBox()
+        self.search_box = Gtk.SearchEntry()
+        self.search_box.set_property("name", "searchbox")
+        self.search_box.set_text('Type to search')
+        self.search_box.set_sensitive(False)
+        hbox.pack_start(self.search_box, True, False, 0)
+        outer_box.pack_start(hbox, False, False, args.y)
 
-        # the widget we'll popup menu at
-        self.anchor = Gtk.Box()
-        if args.center:
-            hbox.pack_start(self.anchor, True, True, 0)
-        else:
-            hbox.pack_start(self.anchor, False, False, 0)
+        vbox = Gtk.VBox()
+        vbox.set_spacing(15)
 
-        if args.bottom:
-            # display menu at the bottom
-            vbox.pack_end(hbox, False, False, 0)
-        else:
-            if args.center:
-                # center on the screen
-                vbox.pack_start(hbox, True, True, 0)
-            else:
-                # display on top
-                vbox.pack_start(hbox, False, False, 0)
-        outer_box.pack_start(vbox, True, True, args.y)
+        hbox0 = Gtk.HBox()
+        print(args.cn)
+        grid0 = ApplicationGrid(all_favs, columns=args.cn)
+        hbox0.pack_start(grid0, True, False, 0)
+        vbox.pack_start(hbox0, False, False, 0)
+        
+        self.sep1 = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
+        self.sep1.set_property("name", "separator")
+        hbox_s = Gtk.HBox()
+        hbox_s.pack_start(self.sep1, True, True, args.s * 9)
+        vbox.pack_start(hbox_s, True, True, 10)
 
+        hbox1 = Gtk.HBox()
+        grid = ApplicationGrid(all_apps, columns=args.cn)
+        hbox1.pack_start(grid, True, False, 0)
+        vbox.pack_start(hbox1, False, False, 0)
+
+        scrolled_window = Gtk.ScrolledWindow()
+        scrolled_window.set_propagate_natural_height(True)
+        scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.ALWAYS)
+        scrolled_window.add(vbox)
+
+        outer_box.pack_start(scrolled_window, True, True, 0)
+        
         self.add(outer_box)
 
     def search_items(self, menu, event):
@@ -414,37 +397,13 @@ class MainWindow(Gtk.Window):
         Gtk.main_quit()
 
 
-def open_menu():
-    if wm == "sway":
-        subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
-    elif wm == "i3":
-        # we couldn't do this on i3 at the script start
-        subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
-        subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
-
-    if args.bottom:
-        gravity = Gdk.Gravity.SOUTH
-    elif args.center:
-        gravity = Gdk.Gravity.CENTER
-    else:
-        gravity = Gdk.Gravity.NORTH
-
-    if not other_wm:
-        win.menu.popup_at_widget(win.anchor, gravity, gravity, None)
-    else:
-        win.menu.popup_at_widget(win.anchor, Gdk.Gravity.CENTER, Gdk.Gravity.CENTER, None)
-        if not win.menu.get_visible():
-            # In Openbox, if the MainWindow (which is invisible!) gets accidentally clicked and dragged,
-            # the menu doesn't pop up, but the process is still alive. Let's kill the bastard, if so.
-            Gtk.main_quit()
-
-
 def list_entries():
+    apps = []
     paths = ([os.path.join(p, 'applications') for p in data_dirs()])
     for path in paths:
         if os.path.exists(path):
             for f in os.listdir(path):
-                _name, _exec, _icon, _categories = '', '', '', ''
+                _name, _exec, _icon = '', '', ''
                 try:
                     with open(os.path.join(path, f)) as d:
                         lines = d.readlines()
@@ -470,157 +429,160 @@ def list_entries():
                                         _exec = _exec.split('%')[0].strip()
                                 if line.startswith('Icon='):
                                     _icon = line.split('=')[1].strip()
-                                if line.startswith('Categories'):
-                                    _categories = line.split('=')[1].strip()
 
-                        if _name and _exec and _categories:
-                            # this will hold the data we need, and also automagically append itself to the proper list
-                            entry = DesktopEntry(_name, _exec, _icon, _categories)
-                            # we need this list for the favourites menu
-                            all_entries.append(entry)
+                        if _name and _exec and _icon:
+                            # avoid adding twice
+                            found = False
+                            for item in apps:
+                                if item[0] == _name and item[1] == _exec:
+                                    found = True
+                            if not found:
+                                apps.append((_name, _exec, _icon))
+
                 except Exception as e:
                     print(e)
+    apps = sorted(apps, key=lambda x: x[0].upper())
+    for item in apps:
+        all_apps.append(AppButton(item[0], item[1], item[2]))
 
 
-class DesktopEntry(object):
-    """
-    Should be self-explanatory
-    """
+def list_favs():
+    # Prepend favourite items (-f or -fn argument used)
+    favs_number = 0
+    if args.favourites:
+        favs_number = args.cn
+    elif args.fn:
+        favs_number = args.fn * args.cn
+    if favs_number > 0:
+        global sorted_cache
+        if len(sorted_cache) < favs_number:
+            favs_number = len(sorted_cache)
 
-    def __init__(self, name, exec, icon=None, categories=None):
+        to_prepend = []
+        for i in range(favs_number):
+            fav_exec = sorted_cache[i][0]
+            for button in all_apps:
+                if button.exec == fav_exec and button not in to_prepend:
+                    to_prepend.append(button)
+                    break  # stop searching, there may be duplicates on the list
+        for button in to_prepend:
+            all_favs.append(AppButton(button.name, button.exec, button.icon))
+
+
+class AppButton(Gtk.Box):
+    def __init__(self, name, _exec, icon):
+        super().__init__()
         self.name = name
-        self.exec = exec
+        self.exec = _exec
         self.icon = icon
-        if categories:
-            self.categories = categories.split(';')[:-1]
-
-        if self.categories:
-            for category in self.categories:
-                main_category = additional_to_main(category)
-                if main_category == 'AudioVideo' and self not in c_audio_video:
-                    c_audio_video.append(self)
-                elif main_category == 'Development' and self not in c_development:
-                    c_development.append(self)
-                elif main_category == 'Game' and self not in c_game:
-                    c_game.append(self)
-                elif main_category == 'Graphics' and self not in c_graphics:
-                    c_graphics.append(self)
-                elif main_category == 'Network' and self not in c_network:
-                    c_network.append(self)
-                elif main_category == 'Office' and self not in c_office:
-                    c_office.append(self)
-                elif (main_category == 'Science' or main_category == 'Education') and self not in c_science:
-                    c_science.append(self)
-                elif main_category == 'Settings' and self not in c_settings:
-                    c_settings.append(self)
-                elif main_category == 'System' and self not in c_system:
-                    c_system.append(self)
-                elif main_category == 'Utility' and self not in c_utility:
-                    c_utility.append(self)
-
-        if self not in c_audio_video and self not in c_development \
-                and self not in c_game and self not in c_graphics and self not in c_network \
-                and self not in c_office and self not in c_science and self not in c_settings \
-                and self not in c_system and self not in c_utility:
-            c_other.append(self)
-
-        groups = [c_audio_video, c_development, c_game, c_graphics, c_network, c_office, c_science,
-                  c_settings, c_system, c_utility]
-
-        for group in groups:
-            group.sort(key=lambda x: x.name)
+        if len(name) > 25:
+            name = "{}...".format(name[:22])
+        button = Gtk.Button()
+        button.set_property("name", "button")
+        button.set_always_show_image(True)
+        button.set_image(app_image(icon))
+        button.set_image_position(Gtk.PositionType.TOP)
+        button.set_label(name)
+        button.connect("clicked", launch, _exec)
+        button.connect("focus-in-event", on_button_focused)
+        self.pack_start(button, True, True, 5)
 
 
-def build_menu():
+def app_image(icon):
+    """
+    Creates a Gtk.Image instance
+    :param icon: sys icon name or .svg / png path
+    :return: Gtk.Image
+    """
+    image = None
+    icon_theme = Gtk.IconTheme.get_default()
+    if icon.startswith('/'):
+        try:
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
+            image = Gtk.Image.new_from_pixbuf(pixbuf)
+        except:
+            pass
+    else:
+        try:
+            if icon.endswith('.svg') or icon.endswith('.png'):
+                icon = icon.split('.')[0]
+            pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
+            image = Gtk.Image.new_from_pixbuf(pixbuf)
+        except:
+            pass
+    return image
+
+
+"""def build_scrolled_window(columns=10, favorites=False):
+    scrolled_window = Gtk.ScrolledWindow()
+    scrolled_window.set_propagate_natural_height(True)
+    scrolled_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.ALWAYS)
+
+    self.vbox = Gtk.HBox()
+    search_item = Gtk.MenuItem()
+    search_item.add(win.search_box)
+    search_item.set_sensitive(False)
+    self.vbox.add(win.search_item)
+
     icon_theme = Gtk.IconTheme.get_default()
     menu = Gtk.Menu()
 
-    if not args.no_menu:
-        win.search_item = Gtk.MenuItem()
-        win.search_item.add(win.search_box)
-        win.search_item.set_sensitive(False)
-        menu.add(win.search_item)
+    # Prepend favourite items (-f or -fn argument used)
+    favs_number = 0
+    if args.favourites:
+        favs_number = 5
+    elif args.fn:
+        favs_number = args.fn
+    if favs_number > 0:
+        global sorted_cache
+        if len(sorted_cache) < favs_number:
+            favs_number = len(sorted_cache)
 
-        # Prepend favourite items (-f or -fn argument used)
-        favs_number = 0
-        if args.favourites:
-            favs_number = 5
-        elif args.fn:
-            favs_number = args.fn
-        if favs_number > 0:
-            global sorted_cache
-            if len(sorted_cache) < favs_number:
-                favs_number = len(sorted_cache)
+        to_prepend = []  # list of favourite items
+        for i in range(favs_number):
+            fav_exec = sorted_cache[i][0]
+            for item in all_entries:
+                if item.exec == fav_exec and item not in to_prepend:
+                    to_prepend.append(item)
+                    break  # stop searching, there may be duplicates on the list
 
-            to_prepend = []  # list of favourite items
-            for i in range(favs_number):
-                fav_exec = sorted_cache[i][0]
-                for item in all_entries:
-                    if item.exec == fav_exec and item not in to_prepend:
-                        to_prepend.append(item)
-                        break  # stop searching, there may be duplicates on the list
+        # build menu items
+        for entry in to_prepend:
+            name = entry.name
+            exec = entry.exec
+            icon = entry.icon
+            hbox = Gtk.HBox()
+            label = Gtk.Label()
+            label.set_text(name)
+            image = None
+            if icon.startswith('/'):
+                try:
+                    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
+                    image = Gtk.Image.new_from_pixbuf(pixbuf)
+                except:
+                    pass
+            else:
+                try:
+                    if icon.endswith('.svg') or icon.endswith('.png'):
+                        icon = entry.icon.split('.')[0]
+                    pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
+                    image = Gtk.Image.new_from_pixbuf(pixbuf)
+                except:
+                    pass
+            if image:
+                hbox.pack_start(image, False, False, 10)
+            if name:
+                hbox.pack_start(label, False, False, 0)
+            item = Gtk.MenuItem()
+            item.set_property("name", "item")
+            item.add(hbox)
+            item.connect('activate', launch, exec)
+            menu.append(item)
 
-            # build menu items
-            for entry in to_prepend:
-                name = entry.name
-                exec = entry.exec
-                icon = entry.icon
-                hbox = Gtk.HBox()
-                label = Gtk.Label()
-                label.set_text(name)
-                image = None
-                if icon.startswith('/'):
-                    try:
-                        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
-                        image = Gtk.Image.new_from_pixbuf(pixbuf)
-                    except:
-                        pass
-                else:
-                    try:
-                        if icon.endswith('.svg') or icon.endswith('.png'):
-                            icon = entry.icon.split('.')[0]
-                        pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
-                        image = Gtk.Image.new_from_pixbuf(pixbuf)
-                    except:
-                        pass
-                if image:
-                    hbox.pack_start(image, False, False, 10)
-                if name:
-                    hbox.pack_start(label, False, False, 0)
-                item = Gtk.MenuItem()
-                item.set_property("name", "item")
-                item.add(hbox)
-                item.connect('activate', launch, exec)
-                menu.append(item)
-
-            if to_prepend:
-                separator = Gtk.SeparatorMenuItem()
-                separator.set_property("name", "separator")
-                menu.append(separator)
-
-        # actual system menu with submenus for each category
-        if c_audio_video:
-            append_submenu(c_audio_video, menu, 'AudioVideo')
-        if c_development:
-            append_submenu(c_development, menu, 'Development')
-        if c_game:
-            append_submenu(c_game, menu, 'Game')
-        if c_graphics:
-            append_submenu(c_graphics, menu, 'Graphics')
-        if c_network:
-            append_submenu(c_network, menu, 'Network')
-        if c_office:
-            append_submenu(c_office, menu, 'Office')
-        if c_science:
-            append_submenu(c_science, menu, 'Science')
-        if c_settings:
-            append_submenu(c_settings, menu, 'Settings')
-        if c_system:
-            append_submenu(c_system, menu, 'System')
-        if c_utility:
-            append_submenu(c_utility, menu, 'Utility')
-        if c_other:
-            append_submenu(c_other, menu, 'Other')
+        if to_prepend:
+            separator = Gtk.SeparatorMenuItem()
+            separator.set_property("name", "separator")
+            menu.append(separator)
 
     # user-defined menu from default or custom file (see args)
     if args.append or args.af or args.no_menu:
@@ -665,176 +627,27 @@ def build_menu():
     menu.set_property("reserve_toggle_size", False)
     menu.show_all()
 
-    return menu
+    return scrolled_window"""
 
 
-def append_submenu(items_list, menu, submenu_name):
-    try:
-        menu.append(sub_menu(items_list, submenu_name, localized_names_dictionary[submenu_name]))
-    except KeyError:
-        menu.append(sub_menu(items_list, submenu_name, submenu_name))
+class ApplicationGrid(Gtk.Grid):
+    def __init__(self, items_list, columns=6):
+        super().__init__()
+        self.set_column_spacing(25)
+        self.set_row_spacing(15)
+        col, row = 0, 0
+        for item in items_list:
+            if not item.get_parent():  # check if not yet attached (e.g. in favourites)
+                self.attach(item, col, row, 1, 1)
+                if col < columns - 1:
+                    col += 1
+                else:
+                    col = 0
+                    row += 1
 
 
-class SubMenu(Gtk.Menu):
-    """
-    We need to subclass Gtk.Menu, to assign its .desktop entries list to it.
-    Needed to workaround the sway overflowing menus issue. See cheat_sway and cheat_sway_on_exit methods.
-    """
-
-    def __init__(self):
-        Gtk.Menu.__init__(self)
-        self.entries_list = list
-
-
-def sub_menu(entries_list, name, localized_name):
-    icon_theme = Gtk.IconTheme.get_default()
-    outer_hbox = Gtk.HBox()
-    try:
-        pixbuf = icon_theme.load_icon(category_icons[name], args.s, Gtk.IconLookupFlags.FORCE_SIZE)
-        image = Gtk.Image.new_from_pixbuf(pixbuf)
-    except:
-        image = None
-    if image:
-        outer_hbox.pack_start(image, False, False, 10)
-    item = Gtk.MenuItem()
-    item.set_property("name", "item")
-    item.entries_list = entries_list
-    main_label = Gtk.Label()
-    main_label.set_text(localized_name)
-    outer_hbox.pack_start(main_label, False, False, 0)
-
-    submenu = SubMenu()
-    submenu.set_property("name", "submenu")
-    submenu.entries_list = entries_list
-
-    submenu.set_property("reserve_toggle_size", False)
-    # On sway 1.2, if popped-up menu length exceeds the screen height, no buttons to scroll appear,
-    # and the mouse scroller does not work, too. We need a workaround!
-    if not wm == "sway" or len(entries_list) < args.t:  # -t stands for sway submenu lines limit
-        # We are not on sway or submenu is short enough
-        for entry in entries_list:
-            subitem = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
-            subitem.connect('activate', launch, entry.exec)
-            all_items_list.append(subitem)
-
-            subitem_copy = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
-            subitem_copy.connect('activate', launch, entry.exec)
-            subitem_copy.show()
-            all_copies_list.append(subitem_copy)
-
-            submenu.append(subitem)
-
-        item.add(outer_hbox)
-        submenu.connect("key-release-event", win.search_items)
-        item.set_submenu(submenu)
-    else:
-        # This will be tricky as hell. We only add args.t items here.
-        # The rest must be added on menu popped-up (cheat_sway).
-        for i in range(args.t):
-            entry = entries_list[i]
-            subitem = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
-            subitem.connect('activate', launch, entry.exec)
-            all_items_list.append(subitem)
-
-            subitem_copy = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
-            subitem_copy.connect('activate', launch, entry.exec)
-            subitem_copy.show()
-            all_copies_list.append(subitem_copy)
-
-            submenu.append(subitem)
-
-        # If we're cheating sway, entries above args.t will be missing from all_copies_list.
-        # Let's store them here for searching purposes.
-        for entry in entries_list[args.t:]:
-            subitem_copy = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
-            subitem_copy.connect('activate', launch, entry.exec)
-            subitem_copy.show()
-            missing_copies_list.append(subitem_copy)
-
-        item.add(outer_hbox)
-        submenu.connect("key-release-event", win.search_items)
-        submenu.connect("popped-up", cheat_sway, submenu.entries_list)
-        submenu.connect("hide", cheat_sway_on_exit)
-        item.set_submenu(submenu)
-
-    return item
-
-
-def cheat_sway(menu, flipped_rect, final_rect, flipped_x, flipped_y, entries_list):
-    """
-    If we're on sway, all submenus items number have been limited to args.t during their creation, to workaround
-    sway 1.2 / GTK bug. This method is being called on submenu popped-up, to add missing items. We'll have to remove
-    them on submenu exit event (cheat_sway_on_exit). But scrolling overflowed menus works on sway, hurray!
-    """
-    if len(menu.get_children()) < len(entries_list):
-        icon_theme = Gtk.IconTheme.get_default()
-        for i in range(args.t, len(entries_list)):
-            entry = entries_list[i]
-            subitem = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
-            subitem.connect('activate', launch, entry.exec)
-
-            found = False
-            for it in all_items_list:
-                if it.name == subitem.name:
-                    found = True
-            if not found:
-                all_items_list.append(subitem)
-
-            subitem_copy = DesktopMenuItem(icon_theme, entry.name, entry.exec, entry.icon)
-            subitem_copy.connect('activate', launch, entry.exec)
-            subitem_copy.show()
-
-            found = False
-            for it in all_copies_list:
-                if it.name == subitem.name:
-                    found = True
-            if not found:
-                all_copies_list.append(subitem_copy)
-
-            menu.append(subitem)
-    menu.show_all()
-    menu.reposition()
-
-
-def cheat_sway_on_exit(submenu):
-    for item in submenu.get_children()[args.t:]:
-        submenu.remove(item)
-
-
-class DesktopMenuItem(Gtk.MenuItem):
-    """
-    We'll a Gtk.MenuItem here, w/ a hbox inside; the box contains an icon and a label.
-    """
-
-    def __init__(self, icon_theme, name, _exec, icon_name=None):
-        Gtk.MenuItem.__init__(self)
-        self.name = name
-        self.set_property("name", "item")
-        self.exec = _exec
-        hbox = Gtk.HBox()
-        image = None
-        if icon_name:
-            if icon_name.startswith('/'):
-                try:
-                    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon_name, args.s, args.s)
-                    image = Gtk.Image.new_from_pixbuf(pixbuf)
-                except:
-                    pass
-            else:
-                try:
-                    if icon_name.endswith('.svg') or icon_name.endswith('.png'):
-                        icon_name = icon_name.split('.')[0]
-                    pixbuf = icon_theme.load_icon(icon_name, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
-                    image = Gtk.Image.new_from_pixbuf(pixbuf)
-                except:
-                    pass
-        self.icon = image
-        label = Gtk.Label()
-        label.set_text(self.name)
-        if image:
-            hbox.pack_start(image, False, False, 0)
-        hbox.pack_start(label, False, False, 4)
-        self.add(hbox)
+def on_button_focused(button, event):
+    pass
 
 
 def launch(item, command, no_cache=False):
