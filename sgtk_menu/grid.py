@@ -222,6 +222,7 @@ def main():
     for item in all_apps:
         item.set_size_request(max_width, max_width / 2)
     win.search_box.set_size_request(max_width, 0)
+    win.sep1.set_size_request(w / 2, 1)
 
     # GLib.timeout_add(args.d, open_menu)
     Gtk.main()
@@ -274,8 +275,8 @@ class MainWindow(Gtk.Window):
         self.sep1 = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
         self.sep1.set_property("name", "separator")
         hbox_s = Gtk.HBox()
-        hbox_s.pack_start(self.sep1, True, True, args.s * 9)
-        vbox.pack_start(hbox_s, True, True, 10)
+        hbox_s.pack_start(self.sep1, True, False, 0)
+        vbox.pack_start(hbox_s, True, True, 20)
 
         hbox1 = Gtk.HBox()
         grid = ApplicationGrid(all_apps, columns=args.cn)
@@ -288,6 +289,13 @@ class MainWindow(Gtk.Window):
         scrolled_window.add(vbox)
 
         outer_box.pack_start(scrolled_window, True, True, 0)
+
+        hbox = Gtk.HBox()
+        self.prompt = Gtk.Label()
+        self.prompt.set_text("Click")
+        self.prompt.set_property("name", "prompt")
+        hbox.pack_start(self.prompt, True, False, 0)
+        outer_box.pack_start(hbox, False, False, args.y)
         
         self.add(outer_box)
 
@@ -403,7 +411,7 @@ def list_entries():
     for path in paths:
         if os.path.exists(path):
             for f in os.listdir(path):
-                _name, _exec, _icon = '', '', ''
+                _name, _exec, _icon, _comment = '', '', '', ''
                 try:
                     with open(os.path.join(path, f)) as d:
                         lines = d.readlines()
@@ -421,6 +429,14 @@ def list_entries():
                                 if line.startswith(loc_name):
                                     _name = line.split('=')[1].strip()
 
+                                loc_comment = 'Comment{}='.format(locale)
+                                
+                                if line.startswith('Comment='):
+                                    _comment = line.split('=')[1].strip()
+
+                                if line.startswith(loc_comment):
+                                    _comment = line.split('=')[1].strip()
+
                                 if line.startswith('Exec='):
                                     cmd = line.split('=')[1:]
                                     c = '='.join(cmd)
@@ -437,13 +453,13 @@ def list_entries():
                                 if item[0] == _name and item[1] == _exec:
                                     found = True
                             if not found:
-                                apps.append((_name, _exec, _icon))
+                                apps.append((_name, _exec, _icon, _comment))
 
                 except Exception as e:
                     print(e)
     apps = sorted(apps, key=lambda x: x[0].upper())
     for item in apps:
-        all_apps.append(AppButton(item[0], item[1], item[2]))
+        all_apps.append(AppBox(item[0], item[1], item[2], item[3]))
 
 
 def list_favs():
@@ -466,17 +482,23 @@ def list_favs():
                     to_prepend.append(button)
                     break  # stop searching, there may be duplicates on the list
         for button in to_prepend:
-            all_favs.append(AppButton(button.name, button.exec, button.icon))
+            all_favs.append(AppBox(button.name, button.exec, button.icon, button.comment))
 
 
-class AppButton(Gtk.Box):
-    def __init__(self, name, _exec, icon):
+class AppBox(Gtk.EventBox):
+    def __init__(self, name, _exec, icon, comment):
         super().__init__()
         self.name = name
         self.exec = _exec
         self.icon = icon
+        self.comment = comment
         if len(name) > 25:
             name = "{}...".format(name[:22])
+        box = Gtk.Box()
+        box.set_property("name", "button")
+
+        self.connect("enter-notify-event", on_button_focused)
+        
         button = Gtk.Button()
         button.set_property("name", "button")
         button.set_always_show_image(True)
@@ -484,8 +506,10 @@ class AppButton(Gtk.Box):
         button.set_image_position(Gtk.PositionType.TOP)
         button.set_label(name)
         button.connect("clicked", launch, _exec)
-        button.connect("focus-in-event", on_button_focused)
-        self.pack_start(button, True, True, 5)
+        self.connect("focus", on_button_focused)
+        self.connect("proximity-in-event", on_button_focused)
+        box.pack_start(button, True, True, 5)
+        self.add(box)
 
 
 def app_image(icon):
@@ -513,123 +537,6 @@ def app_image(icon):
     return image
 
 
-"""def build_scrolled_window(columns=10, favorites=False):
-    scrolled_window = Gtk.ScrolledWindow()
-    scrolled_window.set_propagate_natural_height(True)
-    scrolled_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.ALWAYS)
-
-    self.vbox = Gtk.HBox()
-    search_item = Gtk.MenuItem()
-    search_item.add(win.search_box)
-    search_item.set_sensitive(False)
-    self.vbox.add(win.search_item)
-
-    icon_theme = Gtk.IconTheme.get_default()
-    menu = Gtk.Menu()
-
-    # Prepend favourite items (-f or -fn argument used)
-    favs_number = 0
-    if args.favourites:
-        favs_number = 5
-    elif args.fn:
-        favs_number = args.fn
-    if favs_number > 0:
-        global sorted_cache
-        if len(sorted_cache) < favs_number:
-            favs_number = len(sorted_cache)
-
-        to_prepend = []  # list of favourite items
-        for i in range(favs_number):
-            fav_exec = sorted_cache[i][0]
-            for item in all_entries:
-                if item.exec == fav_exec and item not in to_prepend:
-                    to_prepend.append(item)
-                    break  # stop searching, there may be duplicates on the list
-
-        # build menu items
-        for entry in to_prepend:
-            name = entry.name
-            exec = entry.exec
-            icon = entry.icon
-            hbox = Gtk.HBox()
-            label = Gtk.Label()
-            label.set_text(name)
-            image = None
-            if icon.startswith('/'):
-                try:
-                    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
-                    image = Gtk.Image.new_from_pixbuf(pixbuf)
-                except:
-                    pass
-            else:
-                try:
-                    if icon.endswith('.svg') or icon.endswith('.png'):
-                        icon = entry.icon.split('.')[0]
-                    pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
-                    image = Gtk.Image.new_from_pixbuf(pixbuf)
-                except:
-                    pass
-            if image:
-                hbox.pack_start(image, False, False, 10)
-            if name:
-                hbox.pack_start(label, False, False, 0)
-            item = Gtk.MenuItem()
-            item.set_property("name", "item")
-            item.add(hbox)
-            item.connect('activate', launch, exec)
-            menu.append(item)
-
-        if to_prepend:
-            separator = Gtk.SeparatorMenuItem()
-            separator.set_property("name", "separator")
-            menu.append(separator)
-
-    # user-defined menu from default or custom file (see args)
-    if args.append or args.af or args.no_menu:
-        if not args.no_menu:  # nothing above to separate
-            separator = Gtk.SeparatorMenuItem()
-            separator.set_property("name", "separator")
-            menu.append(separator)
-        appendix = load_json(build_from_file)
-        for entry in appendix:
-            name = entry["name"]
-            exec = entry["exec"]
-            icon = entry["icon"]
-            hbox = Gtk.HBox()
-            label = Gtk.Label()
-            label.set_text(name)
-            image = None
-            if icon.startswith('/'):
-                try:
-                    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
-                    image = Gtk.Image.new_from_pixbuf(pixbuf)
-                except:
-                    pass
-            else:
-                try:
-                    if icon.endswith('.svg') or icon.endswith('.png'):
-                        icon = entry.icon.split('.')[0]
-                    pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
-                    image = Gtk.Image.new_from_pixbuf(pixbuf)
-                except:
-                    pass
-            if image:
-                hbox.pack_start(image, False, False, 10)
-            if name:
-                hbox.pack_start(label, False, False, 0)
-            item = Gtk.MenuItem()
-            item.set_property("name", "item")
-            item.add(hbox)
-            item.connect('activate', launch, exec, True)  # do not cache!
-            menu.append(item)
-
-    menu.connect("hide", win.die)
-    menu.set_property("reserve_toggle_size", False)
-    menu.show_all()
-
-    return scrolled_window"""
-
-
 class ApplicationGrid(Gtk.Grid):
     def __init__(self, items_list, columns=6):
         super().__init__()
@@ -647,7 +554,10 @@ class ApplicationGrid(Gtk.Grid):
 
 
 def on_button_focused(button, event):
-    pass
+    if button.comment:
+        win.prompt.set_text(button.comment)
+    else:
+        win.prompt.set_text(button.name)
 
 
 def launch(item, command, no_cache=False):
