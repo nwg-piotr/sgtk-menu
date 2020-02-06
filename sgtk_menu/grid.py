@@ -102,11 +102,10 @@ def main():
 
     global build_from_file
     parser = argparse.ArgumentParser(description="GTK menu for sway, i3 and some floating WMs")
-    placement = parser.add_mutually_exclusive_group()
-    placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom (sway & i3 only)")
-    placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen (sway & i3 only)")
 
-    parser.add_argument('-cn', type=int, default=6, help="number of columns to display")
+    parser.add_argument('-c', "--columns", type=int, default=6, help="number of columns to display")
+    parser.add_argument('-t', "--top", type=int, default=30, help="top margin width")
+    parser.add_argument('-b', "--bottom", type=int, default=30, help="bottom margin width")
 
     favourites = parser.add_mutually_exclusive_group()
     favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used items")
@@ -117,14 +116,10 @@ def main():
                           help="append custom menu from {}".format(build_from_file))
     appendix.add_argument("-af", type=str, help="append custom menu from {}".format(os.path.join(config_dir, '<AF>')))
 
-    parser.add_argument("-n", "--no-menu", action="store_true", help="skip menu, display appendix only")
     parser.add_argument("-l", type=str, help="force language (e.g. \"de\" for German)")
     parser.add_argument("-s", type=int, default=72, help="menu icon size (min: 16, max: 48, default: 20)")
-    parser.add_argument("-w", type=int, help="menu width in px (integer, default: screen width / 8)")
-    parser.add_argument("-d", type=int, default=100, help="menu delay in milliseconds (default: 100; sway & i3 only)")
     parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3; "
                                                             "sway & i3 only)")
-    parser.add_argument("-t", type=int, default=30, help="sway submenu lines limit (default: 30)")
     parser.add_argument("-y", type=int, default=30, help="y offset from edge to display menu at (sway & i3 only)")
     parser.add_argument("-css", type=str, default="grid.css",
                         help="use alternative {} style sheet instead of style.css"
@@ -142,10 +137,6 @@ def main():
         args.s = 16
     elif args.s > 96:
         args.s = 96
-
-    # We do not need any delay in other WMs
-    if other_wm:
-        args.d = 0
 
     # Replace appendix file name with custom - if any
     if args.af:
@@ -186,7 +177,6 @@ def main():
     # find favourites in the list above
     if args.favourites or args.fn > 0:
         list_favs()
-        print("Listed {} favourites".format(len(all_favs)))
 
     # Overlay window
     global win
@@ -222,7 +212,7 @@ def main():
     for item in all_apps:
         item.set_size_request(max_width, max_width / 2)
     win.search_box.set_size_request(max_width, 0)
-    win.sep1.set_size_request(w / 2, 1)
+    win.sep1.set_size_request(w / 3, 1)
 
     # GLib.timeout_add(args.d, open_menu)
     Gtk.main()
@@ -261,14 +251,13 @@ class MainWindow(Gtk.Window):
         self.search_box.set_text('Type to search')
         self.search_box.set_sensitive(False)
         hbox.pack_start(self.search_box, True, False, 0)
-        outer_box.pack_start(hbox, False, False, args.y)
+        outer_box.pack_start(hbox, False, False, args.top)
 
         vbox = Gtk.VBox()
         vbox.set_spacing(15)
 
         hbox0 = Gtk.HBox()
-        print(args.cn)
-        grid0 = ApplicationGrid(all_favs, columns=args.cn)
+        grid0 = ApplicationGrid(all_favs, columns=args.columns)
         hbox0.pack_start(grid0, True, False, 0)
         vbox.pack_start(hbox0, False, False, 0)
         
@@ -279,7 +268,7 @@ class MainWindow(Gtk.Window):
         vbox.pack_start(hbox_s, True, True, 20)
 
         hbox1 = Gtk.HBox()
-        grid = ApplicationGrid(all_apps, columns=args.cn)
+        grid = ApplicationGrid(all_apps, columns=args.columns)
         hbox1.pack_start(grid, True, False, 0)
         vbox.pack_start(hbox1, False, False, 0)
 
@@ -295,7 +284,7 @@ class MainWindow(Gtk.Window):
         self.prompt.set_text("Click")
         self.prompt.set_property("name", "prompt")
         hbox.pack_start(self.prompt, True, False, 0)
-        outer_box.pack_start(hbox, False, False, args.y)
+        outer_box.pack_start(hbox, False, False, args.bottom)
         
         self.add(outer_box)
 
@@ -466,9 +455,9 @@ def list_favs():
     # Prepend favourite items (-f or -fn argument used)
     favs_number = 0
     if args.favourites:
-        favs_number = args.cn
+        favs_number = args.columns
     elif args.fn:
-        favs_number = args.fn * args.cn
+        favs_number = args.fn * args.columns
     if favs_number > 0:
         global sorted_cache
         if len(sorted_cache) < favs_number:
@@ -525,7 +514,8 @@ def app_image(icon):
             pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
             image = Gtk.Image.new_from_pixbuf(pixbuf)
         except:
-            pass
+            pixbuf = icon_theme.load_icon('help', args.s, Gtk.IconLookupFlags.FORCE_SIZE)
+            image = Gtk.Image.new_from_pixbuf(pixbuf)
     else:
         try:
             if icon.endswith('.svg') or icon.endswith('.png'):
@@ -533,7 +523,8 @@ def app_image(icon):
             pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
             image = Gtk.Image.new_from_pixbuf(pixbuf)
         except:
-            pass
+            pixbuf = icon_theme.load_icon('help', args.s, Gtk.IconLookupFlags.FORCE_SIZE)
+            image = Gtk.Image.new_from_pixbuf(pixbuf)
     return image
 
 
