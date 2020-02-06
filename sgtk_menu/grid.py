@@ -109,7 +109,7 @@ def main():
 
     favourites = parser.add_mutually_exclusive_group()
     favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used items")
-    favourites.add_argument('-fn', type=int, help="prepend <FN> most used items")
+    favourites.add_argument('-fn', default=0, type=int, help="prepend <FN> most used items")
 
     appendix = parser.add_mutually_exclusive_group()
     appendix.add_argument("-a", "--append", action="store_true",
@@ -212,7 +212,8 @@ def main():
     for item in all_apps:
         item.set_size_request(max_width, max_width / 2)
     win.search_box.set_size_request(max_width, 0)
-    win.sep1.set_size_request(w / 3, 1)
+    if all_favs:
+        win.sep1.set_size_request(w / 3, 1)
 
     # GLib.timeout_add(args.d, open_menu)
     Gtk.main()
@@ -256,16 +257,17 @@ class MainWindow(Gtk.Window):
         vbox = Gtk.VBox()
         vbox.set_spacing(15)
 
-        hbox0 = Gtk.HBox()
-        grid0 = ApplicationGrid(all_favs, columns=args.columns)
-        hbox0.pack_start(grid0, True, False, 0)
-        vbox.pack_start(hbox0, False, False, 0)
-        
-        self.sep1 = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
-        self.sep1.set_property("name", "separator")
-        hbox_s = Gtk.HBox()
-        hbox_s.pack_start(self.sep1, True, False, 0)
-        vbox.pack_start(hbox_s, True, True, 20)
+        if all_favs:
+            hbox0 = Gtk.HBox()
+            grid0 = ApplicationGrid(all_favs, columns=args.columns)
+            hbox0.pack_start(grid0, True, False, 0)
+            vbox.pack_start(hbox0, False, False, 0)
+
+            self.sep1 = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
+            self.sep1.set_property("name", "separator")
+            hbox_s = Gtk.HBox()
+            hbox_s.pack_start(self.sep1, True, False, 0)
+            vbox.pack_start(hbox_s, True, True, 20)
 
         hbox1 = Gtk.HBox()
         grid = ApplicationGrid(all_apps, columns=args.columns)
