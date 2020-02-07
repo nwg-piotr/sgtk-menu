@@ -181,6 +181,8 @@ def main():
     # Overlay window
     global win
     win = MainWindow()
+    win.connect("key-release-event", win.search_items)
+    
     if other_wm:
         # We need the window to be visible to obtain the screen geometry when i3ipc module unavailable
         win.resize(1, 1)
@@ -259,20 +261,20 @@ class MainWindow(Gtk.Window):
 
         if all_favs:
             hbox0 = Gtk.HBox()
-            grid0 = ApplicationGrid(all_favs, columns=args.columns)
-            hbox0.pack_start(grid0, True, False, 0)
+            self.grid_favs = ApplicationGrid(all_favs, columns=args.columns)
+            hbox0.pack_start(self.grid_favs, True, False, 0)
             vbox.pack_start(hbox0, False, False, 0)
 
             self.sep1 = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
             self.sep1.set_property("name", "separator")
             hbox_s = Gtk.HBox()
             hbox_s.pack_start(self.sep1, True, False, 0)
-            vbox.pack_start(hbox_s, True, True, 20)
+            vbox.pack_start(hbox_s, False, True, 20)
 
-        hbox1 = Gtk.HBox()
-        grid = ApplicationGrid(all_apps, columns=args.columns)
-        hbox1.pack_start(grid, True, False, 0)
-        vbox.pack_start(hbox1, False, False, 0)
+        self.hbox1 = Gtk.HBox()
+        self.grid_apps = ApplicationGrid(all_apps, columns=args.columns)
+        self.hbox1.pack_start(self.grid_apps, True, False, 0)
+        vbox.pack_start(self.hbox1, False, False, 0)
 
         scrolled_window = Gtk.ScrolledWindow()
         scrolled_window.set_propagate_natural_height(True)
@@ -290,22 +292,15 @@ class MainWindow(Gtk.Window):
         
         self.add(outer_box)
 
-    def search_items(self, menu, event):
-        if args.no_menu:
-            # we don't search custom menus
-            return False
-
+    def search_items(self, item, event):
         global filtered_items_list
         if event.type == Gdk.EventType.KEY_RELEASE:
             update = False
             # search box only accepts alphanumeric characters, space and backspace
             if event.string and event.string.isalnum() or event.string == ' ':
+                self.grid_favs.hide()
+                self.sep1.get_parent().hide()
                 update = True
-                # remove menu items, except for search box (item #0)
-                items = self.menu.get_children()
-                if len(items) > 1:
-                    for item in items[1:]:
-                        self.menu.remove(item)
                 self.search_phrase += event.string
                 self.search_box.set_text(self.search_phrase)
 
@@ -314,16 +309,17 @@ class MainWindow(Gtk.Window):
                 self.search_phrase = self.search_phrase[:-1]
                 self.search_box.set_text(self.search_phrase)
 
-            # If our search result is a single item, we may want to activate it with the Enter key,
-            # but it does not work. Here is a workaround:
-            elif event.keyval == 65293 and len(filtered_items_list) == 1:
-                filtered_items_list[0].activate()
+            elif event.keyval == 65307:  # Escape
+                Gtk.main_quit()
+                
+            if not self.search_phrase:
+                self.grid_favs.show()
+                self.sep1.get_parent().show()
 
             if update:
                 if len(self.search_phrase) > 0:
                     filtered_items_list = []
-                    for item in all_copies_list:
-                        self.menu.remove(item)
+                    for item in all_apps:
                         # We'll search the entry name and the first element of its command (to skip arguments)
                         if self.search_phrase.upper() in item.name.upper() or self.search_phrase.upper() in \
                                 item.exec.split()[0].upper():
@@ -334,48 +330,9 @@ class MainWindow(Gtk.Window):
                                     found = True
                             if not found:
                                 filtered_items_list.append(item)
-
-                    # If we needed to cheat_sway, the values missing from all_copies_list are now here
-                    if missing_copies_list:
-                        for item in missing_copies_list:
-                            self.menu.remove(item)
-                            # We'll search the entry name and the first element of its command (to skip arguments)
-                            if self.search_phrase.upper() in item.name.upper() or self.search_phrase.upper() in \
-                                    item.exec.split()[0].upper():
-                                # avoid adding twice
-                                found = False
-                                for i in filtered_items_list:
-                                    if i.name == item.name:
-                                        found = True
-                                if not found:
-                                    filtered_items_list.append(item)
-
-                    for item in self.menu.get_children()[1:]:
-                        self.menu.remove(item)
-
-                    for item in filtered_items_list:
-                        self.menu.append(item)
-                        item.deselect()
-
-                    if len(filtered_items_list) == 1:
-                        item = filtered_items_list[0]
-                        item.select()  # But we still can't activate with Enter
-
-                    self.menu.show_all()
-                    # as the search box is actually a menu item, it must be sensitive now,
-                    # in order not to be skipped while scrolling overflowed menu
-                    self.search_item.set_sensitive(True)
-                    self.menu.reposition()
+                    self.grid_apps.update(filtered_items_list)
                 else:
-                    # clear search results
-                    for item in self.menu.get_children():
-                        self.menu.remove(item)
-                    # restore original menu
-                    for item in menu_items_list:
-                        self.menu.append(item)
-                    # better to have it insensitive when possible
-                    self.search_item.set_sensitive(False)
-                    self.menu.reposition()
+                    self.grid_apps.update(all_apps)
             if len(self.search_phrase) == 0:
                 self.search_box.set_text('Type to search')
 
@@ -486,22 +443,25 @@ class AppBox(Gtk.EventBox):
         if len(name) > 25:
             name = "{}...".format(name[:22])
         box = Gtk.Box()
-        box.set_property("name", "button")
+        #box.set_property("name", "button")
 
         self.connect("enter-notify-event", on_button_focused)
         
-        button = Gtk.Button()
-        button.set_property("name", "button")
-        button.set_always_show_image(True)
-        button.set_image(app_image(icon))
-        button.set_image_position(Gtk.PositionType.TOP)
-        button.set_label(name)
-        button.connect("clicked", launch, _exec)
+        self.button = Gtk.Button()
+        self.button.set_property("name", "button")
+        self.button.set_always_show_image(True)
+        self.button.set_image(app_image(icon))
+        self.button.set_image_position(Gtk.PositionType.TOP)
+        self.button.set_label(name)
+        self.button.connect("clicked", launch, _exec)
         self.connect("focus", on_button_focused)
         self.connect("proximity-in-event", on_button_focused)
-        box.pack_start(button, True, True, 5)
+        box.pack_start(self.button, True, True, 5)
         self.add(box)
 
+
+def dont_care(button, event):
+    print(event)
 
 def app_image(icon):
     """
@@ -535,11 +495,32 @@ class ApplicationGrid(Gtk.Grid):
         super().__init__()
         self.set_column_spacing(25)
         self.set_row_spacing(15)
+        self.items_list = items_list
+        self.columns = columns
+        col, row = 0, 0
+        for item in self.items_list:
+            if not item.get_parent():  # check if not yet attached (e.g. in favourites)
+                self.attach(item, col, row, 1, 1)
+                if col < self.columns - 1:
+                    col += 1
+                else:
+                    col = 0
+                    row += 1
+
+    def update(self, items_list):
+        for item in all_favs:
+            item.button.unset_state_flags(Gtk.StateFlags.PRELIGHT)
+            item.button.unset_state_flags(Gtk.StateFlags.SELECTED)
+            item.button.unset_state_flags(Gtk.StateFlags.FOCUSED)
+        for item in self.get_children():
+            self.remove(item)
+            # indicates if the widget has a mouse pointer over it
+            item.button.unset_state_flags(Gtk.StateFlags.PRELIGHT)
         col, row = 0, 0
         for item in items_list:
             if not item.get_parent():  # check if not yet attached (e.g. in favourites)
                 self.attach(item, col, row, 1, 1)
-                if col < columns - 1:
+                if col < self.columns - 1:
                     col += 1
                 else:
                     col = 0
