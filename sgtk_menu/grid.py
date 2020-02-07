@@ -182,7 +182,7 @@ def main():
     global win
     win = MainWindow()
     win.connect("key-release-event", win.search_items)
-    
+
     if other_wm:
         # We need the window to be visible to obtain the screen geometry when i3ipc module unavailable
         win.resize(1, 1)
