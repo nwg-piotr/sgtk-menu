@@ -105,7 +105,7 @@ def main():
 
     parser.add_argument('-c', "--columns", type=int, default=6, help="number of columns to display")
     parser.add_argument('-t', "--top", type=int, default=30, help="top margin width")
-    parser.add_argument('-b', "--bottom", type=int, default=30, help="bottom margin width")
+    parser.add_argument('-b', "--bottom", type=int, default=15, help="bottom margin width")
 
     favourites = parser.add_mutually_exclusive_group()
     favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used items")
@@ -118,9 +118,8 @@ def main():
 
     parser.add_argument("-l", type=str, help="force language (e.g. \"de\" for German)")
     parser.add_argument("-s", type=int, default=72, help="menu icon size (min: 16, max: 48, default: 20)")
-    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3; "
+    parser.add_argument("-o", type=float, default=0.9, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3; "
                                                             "sway & i3 only)")
-    parser.add_argument("-y", type=int, default=30, help="y offset from edge to display menu at (sway & i3 only)")
     parser.add_argument("-css", type=str, default="grid.css",
                         help="use alternative {} style sheet instead of style.css"
                         .format(os.path.join(config_dir, '<CSS>')))
@@ -310,7 +309,11 @@ class MainWindow(Gtk.Window):
                 self.search_box.set_text(self.search_phrase)
 
             elif event.keyval == 65307:  # Escape
-                Gtk.main_quit()
+                if self.search_phrase:
+                    self.search_phrase = ""
+                    update = True
+                else:
+                    Gtk.main_quit()
                 
             if not self.search_phrase:
                 self.grid_favs.show()
@@ -333,8 +336,12 @@ class MainWindow(Gtk.Window):
                     self.grid_apps.update(filtered_items_list)
                 else:
                     self.grid_apps.update(all_apps)
+            
             if len(self.search_phrase) == 0:
                 self.search_box.set_text('Type to search')
+                
+            if len(filtered_items_list) == 1:
+                filtered_items_list[0].button.set_property("has-focus", True)
 
         return True
 
