@@ -29,6 +29,10 @@ for usage examples.
 
 ![screenshot](http://nwg.pl/Lychee/uploads/big/8397695512a2d655199f95db683060f8.png)
 
+### sgtk-grid
+
+![screenshot](http://nwg.pl/Lychee/uploads/big/5a00ddd6dbf4cd27a5eb088f8d3f8444.png)
+
 ## Background
 
 Well, I didn't even think that sway needed a menu, being happy with [wofi](https://hg.sr.ht/~scoopta/wofi) and 
