@@ -316,6 +316,7 @@ class MainWindow(Gtk.Window):
                     Gtk.main_quit()
                 
             if not self.search_phrase:
+                filtered_items_list = []
                 self.grid_favs.show()
                 self.sep1.get_parent().show()
 
