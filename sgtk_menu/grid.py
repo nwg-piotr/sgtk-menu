@@ -101,27 +101,21 @@ def main():
         sys.exit(2)
 
     global build_from_file
-    parser = argparse.ArgumentParser(description="GTK menu for sway, i3 and some floating WMs")
+    parser = argparse.ArgumentParser(description="Application grid for sgtk-menu")
 
-    parser.add_argument('-c', "--columns", type=int, default=6, help="number of columns to display")
-    parser.add_argument('-t', "--top", type=int, default=30, help="top margin width")
-    parser.add_argument('-b', "--bottom", type=int, default=15, help="bottom margin width")
+    parser.add_argument('-c', type=int, default=6, help="number of grid columns (default: 6)")
+    parser.add_argument('-t', type=int, default=30, help="top margin width in px (default: 30)")
+    parser.add_argument('-b', type=int, default=15, help="bottom margin width in px (default: 15)")
 
     favourites = parser.add_mutually_exclusive_group()
-    favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used items")
-    favourites.add_argument('-fn', default=0, type=int, help="prepend <FN> most used items")
-
-    appendix = parser.add_mutually_exclusive_group()
-    appendix.add_argument("-a", "--append", action="store_true",
-                          help="append custom menu from {}".format(build_from_file))
-    appendix.add_argument("-af", type=str, help="append custom menu from {}".format(os.path.join(config_dir, '<AF>')))
+    favourites.add_argument("-f", action="store_true", help="prepend 1 row of favourites (most used items)")
+    favourites.add_argument('-fn', default=0, type=int, help="prepend <FN> rows of favourites")
 
     parser.add_argument("-l", type=str, help="force language (e.g. \"de\" for German)")
-    parser.add_argument("-s", type=int, default=72, help="menu icon size (min: 16, max: 48, default: 20)")
-    parser.add_argument("-o", type=float, default=0.9, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3; "
-                                                            "sway & i3 only)")
+    parser.add_argument("-s", type=int, default=72, help="menu icon size (min: 16, max: 96, default: 72)")
+    parser.add_argument("-o", type=float, default=0.9, help="overlay opacity (min: 0.0, max: 1.0, default: 0.9)")
     parser.add_argument("-css", type=str, default="grid.css",
-                        help="use alternative {} style sheet instead of style.css"
+                        help="use alternative {} style sheet instead of grid.css"
                         .format(os.path.join(config_dir, '<CSS>')))
     global args
     args = parser.parse_args()
@@ -136,10 +130,6 @@ def main():
         args.s = 16
     elif args.s > 96:
         args.s = 96
-
-    # Replace appendix file name with custom - if any
-    if args.af:
-        build_from_file = os.path.join(config_dirs()[0], args.af)
 
     if css_file:
         screen = Gdk.Screen.get_default()
@@ -174,7 +164,7 @@ def main():
     list_entries()
 
     # find favourites in the list above
-    if args.favourites or args.fn > 0:
+    if args.f or args.fn > 0:
         list_favs()
 
     # Overlay window
@@ -253,14 +243,14 @@ class MainWindow(Gtk.Window):
         self.search_box.set_text('Type to search')
         self.search_box.set_sensitive(False)
         hbox.pack_start(self.search_box, True, False, 0)
-        outer_box.pack_start(hbox, False, False, args.top)
+        outer_box.pack_start(hbox, False, False, args.t)
 
         vbox = Gtk.VBox()
         vbox.set_spacing(15)
 
         if all_favs:
             hbox0 = Gtk.HBox()
-            self.grid_favs = ApplicationGrid(all_favs, columns=args.columns)
+            self.grid_favs = ApplicationGrid(all_favs, columns=args.c)
             hbox0.pack_start(self.grid_favs, True, False, 0)
             vbox.pack_start(hbox0, False, False, 0)
 
@@ -271,7 +261,7 @@ class MainWindow(Gtk.Window):
             vbox.pack_start(hbox_s, False, True, 20)
 
         self.hbox1 = Gtk.HBox()
-        self.grid_apps = ApplicationGrid(all_apps, columns=args.columns)
+        self.grid_apps = ApplicationGrid(all_apps, columns=args.c)
         self.hbox1.pack_start(self.grid_apps, True, False, 0)
         vbox.pack_start(self.hbox1, False, False, 0)
 
@@ -287,7 +277,7 @@ class MainWindow(Gtk.Window):
         self.prompt.set_text("Click")
         self.prompt.set_property("name", "prompt")
         hbox.pack_start(self.prompt, True, False, 0)
-        outer_box.pack_start(hbox, False, False, args.bottom)
+        outer_box.pack_start(hbox, False, False, args.b)
         
         self.add(outer_box)
 
@@ -421,10 +411,10 @@ def list_entries():
 def list_favs():
     # Prepend favourite items (-f or -fn argument used)
     favs_number = 0
-    if args.favourites:
-        favs_number = args.columns
+    if args.f:
+        favs_number = args.c
     elif args.fn:
-        favs_number = args.fn * args.columns
+        favs_number = args.fn * args.c
     if favs_number > 0:
         global sorted_cache
         if len(sorted_cache) < favs_number:
