@@ -8,8 +8,9 @@ It may also be used in some **floating WMs**, but I only use **Openbox**, and do
 - search box to find what you need quickly;
 - favourites (most frequently used entries) menu above (optional `[-f | -fn FN]` argument);
 - user-defined menu below (optional `[-a | -af AF]` argument);
+- `sgtk-dmenu` command: search and run commands in `$PATH`;
 - `sgtk-bar` command: user-defined horizontal or vertical button bar;
-- `sgtk-dmenu` command: search and run commands in `$PATH`.
+- `sgtk-grid` command: a GNOME-like application grid.
 
 Read [wiki](https://github.com/nwg-piotr/sgtk-menu/wiki) for more information. 
 See [screenshots](https://github.com/nwg-piotr/sgtk-menu/tree/master/screenshots) 
