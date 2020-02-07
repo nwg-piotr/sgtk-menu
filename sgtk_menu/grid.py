@@ -190,6 +190,8 @@ def main():
 
     win.resize(w, h)
     win.set_skip_taskbar_hint(True)
+    if other_wm:
+        win.move(x, y)
     win.show_all()
 
     # align width of all buttons
@@ -231,7 +233,6 @@ class MainWindow(Gtk.Window):
         self.set_app_paintable(True)
 
         if other_wm:
-            self.set_sensitive(False)
             self.set_resizable(False)
             self.set_decorated(False)
 
