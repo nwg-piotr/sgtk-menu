@@ -1,0 +1,26 @@
+#searchbox {
+	background: none;
+	border-color: #999;
+	color: #ccc
+}
+#button {
+	background: none;
+	border-style: none;
+	box-shadow: none;
+	color: #999;
+}
+#button:hover {
+	background-color: rgba(255, 255, 255, 0.07);
+	color: #eee
+}
+#button:focus {
+	border-style: solid;
+	border-width: 1px;
+	border-color: rgba(255, 255, 255, 0.2)
+}
+#separator {
+	background-color: rgba(200, 200, 200, 0.7);
+}
+#prompt {
+	color: #999
+}
