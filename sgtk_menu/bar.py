@@ -230,9 +230,7 @@ class MainWindow(Gtk.Window):
 
 
 def show_bar():
-    if wm == "sway":
-        subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
-    elif wm == "i3":
+    if wm == "i3":
         # we couldn't do this on i3 at the script start
         subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
         subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)

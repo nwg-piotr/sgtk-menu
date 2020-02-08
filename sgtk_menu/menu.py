@@ -35,11 +35,10 @@ wm = check_wm()
 # Will apply to the overlay window; we can't do so outside the config file on i3.
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
 if wm == "sway":
-    try:
-        subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk-menu\"]', 'floating', 'enable'],
-                       stdout=subprocess.DEVNULL).returncode == 0
-    except:
-        pass
+    var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk*\"]', 'floating', 'enable'],
+                         stdout=subprocess.DEVNULL).returncode == 0
+    var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk*\"]', 'border', 'none'],
+                         stdout=subprocess.DEVNULL).returncode == 0
 
 other_wm = not wm == "sway" and not wm == "i3"
 
@@ -415,9 +414,7 @@ class MainWindow(Gtk.Window):
 
 
 def open_menu():
-    if wm == "sway":
-        subprocess.run(['swaymsg', 'border', 'none'], stdout=subprocess.DEVNULL)
-    elif wm == "i3":
+    if wm == "i3":
         # we couldn't do this on i3 at the script start
         subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
         subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)

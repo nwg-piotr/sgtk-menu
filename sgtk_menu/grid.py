@@ -34,9 +34,9 @@ wm = check_wm()
 # Will apply to the overlay window; we can't do so outside the config file on i3.
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
 if wm == "sway":
-    var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk-grid\"]', 'floating', 'enable'],
+    var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk*\"]', 'floating', 'enable'],
                          stdout=subprocess.DEVNULL).returncode == 0
-    var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk-grid\"]', 'border', 'none'],
+    var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk*\"]', 'border', 'none'],
                          stdout=subprocess.DEVNULL).returncode == 0
 
 other_wm = not wm == "sway" and not wm == "i3"
@@ -192,8 +192,6 @@ def main():
     if other_wm:
         win.move(x, y)
     win.show_all()
-    # gdk_win = Gtk.Widget.get_window(win)
-    # gdk_win.set_override_redirect(True)
 
     # align width of all buttons
     max_width = 0
