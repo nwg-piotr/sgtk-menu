@@ -33,11 +33,10 @@ wm = check_wm()
 # This will apply to the overlay window; we can't do so outside the config file on i3.
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
 if wm == "sway":
-    try:
-        subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk-bar\"]', 'floating', 'enable'],
-                       stdout=subprocess.DEVNULL).returncode == 0
-    except:
-        pass
+    var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk-grid\"]', 'floating', 'enable'],
+                         stdout=subprocess.DEVNULL).returncode == 0
+    var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk-grid\"]', 'border', 'none'],
+                         stdout=subprocess.DEVNULL).returncode == 0
 
 other_wm = not wm == "sway" and not wm == "i3"
 
