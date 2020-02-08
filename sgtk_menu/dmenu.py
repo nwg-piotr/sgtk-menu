@@ -2,7 +2,7 @@
 # _*_ coding: utf-8 _*_
 
 """
-This script creates Gtk.Menu out of commands found in $PATH.
+This script creates a Gtk.Menu out of commands found in $PATH.
 
 Author: Piotr Miller
 Copyright (c) 2020 Piotr Miller & Contributors

@@ -2,7 +2,7 @@
 # _*_ coding: utf-8 _*_
 
 """
-This is an attempt to develop a menu that behaves decently on sway window manager, and also works on i3.
+This is an attempt to develop a menu that behaves decently on sway window manager, and also works on i3 & Openbox.
 
 Author: Piotr Miller
 Copyright (c) 2020 Piotr Miller & Contributors

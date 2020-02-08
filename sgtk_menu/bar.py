@@ -2,7 +2,7 @@
 # _*_ coding: utf-8 _*_
 
 """
-This is an external command for the sgtk-menu package to display a button bar w/ user-defined commands.
+This script creates a button bar out of user-defined template.
 
 Author: Piotr Miller
 Copyright (c) 2020 Piotr Miller & Contributors

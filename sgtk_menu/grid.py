@@ -2,7 +2,8 @@
 # _*_ coding: utf-8 _*_
 
 """
-This is an attempt to develop a menu that behaves decently on sway window manager, and also works on i3.
+This script creates a GNOME-like application grid out of .desktop files content,
+optionally prepended with a menu created out of user-defined template.
 
 Author: Piotr Miller
 Copyright (c) 2020 Piotr Miller & Contributors
@@ -216,6 +217,7 @@ def open_menu():
     # we couldn't do this on i3 at the script start
     subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
     subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
+
 
 class MainWindow(Gtk.Window):
     def __init__(self):
