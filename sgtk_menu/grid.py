@@ -230,6 +230,7 @@ class MainWindow(Gtk.Window):
         self.connect('draw', self.draw)  # transparency
         self.screen_dimensions = (0, 0)  # parent screen dimensions (obtained outside)
         self.search_phrase = ''
+        self.grid_favs = None
         # Credits for transparency go to  KurtJacobson:
         # https://gist.github.com/KurtJacobson/374c8cb83aee4851d39981b9c7e2c22c
         screen = self.get_screen()
@@ -266,6 +267,9 @@ class MainWindow(Gtk.Window):
             hbox_s = Gtk.HBox()
             hbox_s.pack_start(self.sep1, True, False, 0)
             vbox.pack_start(hbox_s, False, True, 20)
+        else:
+            self.grid_favs = None
+            self.sep1 = None
 
         self.hbox1 = Gtk.HBox()
         self.grid_apps = ApplicationGrid(all_apps, columns=args.c)
@@ -294,8 +298,9 @@ class MainWindow(Gtk.Window):
             update = False
             # search box only accepts alphanumeric characters, space and backspace
             if event.string and event.string.isalnum() or event.string == ' ':
-                self.grid_favs.hide()
-                self.sep1.get_parent().hide()
+                if self.grid_favs:
+                    self.grid_favs.hide()
+                    self.sep1.get_parent().hide()
                 update = True
                 self.search_phrase += event.string
                 self.search_box.set_text(self.search_phrase)
@@ -314,8 +319,9 @@ class MainWindow(Gtk.Window):
 
             if not self.search_phrase:
                 filtered_items_list = []
-                self.grid_favs.show()
-                self.sep1.get_parent().show()
+                if self.grid_favs:
+                    self.grid_favs.show()
+                    self.sep1.get_parent().show()
 
             if update:
                 if len(self.search_phrase) > 0:
