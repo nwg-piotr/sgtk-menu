@@ -22,7 +22,7 @@ import argparse
 import gi
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk, GdkPixbuf
+from gi.repository import Gtk, Gdk, GLib, GdkPixbuf
 import cairo
 
 from sgtk_menu.tools import (
@@ -34,11 +34,10 @@ wm = check_wm()
 # Will apply to the overlay window; we can't do so outside the config file on i3.
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
 if wm == "sway":
-    try:
-        subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk-grid\"]', 'floating', 'enable'],
-                       stdout=subprocess.DEVNULL).returncode == 0
-    except:
-        pass
+    var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk-grid\"]', 'floating', 'enable'],
+                         stdout=subprocess.DEVNULL).returncode == 0
+    var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk-grid\"]', 'border', 'none'],
+                         stdout=subprocess.DEVNULL).returncode == 0
 
 other_wm = not wm == "sway" and not wm == "i3"
 
@@ -110,6 +109,7 @@ def main():
     favourites.add_argument("-f", action="store_true", help="prepend 1 row of favourites (most used items)")
     favourites.add_argument('-fn', default=0, type=int, help="prepend <FN> rows of favourites")
 
+    parser.add_argument("-d", type=int, default=50, help="window delay in milliseconds (default: 50; i3 only)")
     parser.add_argument("-l", type=str, help="force language (e.g. \"de\" for German)")
     parser.add_argument("-s", type=int, default=72, help="menu icon size (min: 16, max: 96, default: 72)")
     parser.add_argument("-o", type=float, default=0.9, help="overlay opacity (min: 0.0, max: 1.0, default: 0.9)")
@@ -192,6 +192,8 @@ def main():
     if other_wm:
         win.move(x, y)
     win.show_all()
+    # gdk_win = Gtk.Widget.get_window(win)
+    # gdk_win.set_override_redirect(True)
 
     # align width of all buttons
     max_width = 0
@@ -207,9 +209,15 @@ def main():
     if all_favs:
         win.sep1.set_size_request(w / 3, 1)
 
-    # GLib.timeout_add(args.d, open_menu)
+    if wm == "i3":
+        GLib.timeout_add(args.d, open_menu)
     Gtk.main()
 
+
+def open_menu():
+    # we couldn't do this on i3 at the script start
+    subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
+    subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
 
 class MainWindow(Gtk.Window):
     def __init__(self):
@@ -222,7 +230,6 @@ class MainWindow(Gtk.Window):
         self.connect('draw', self.draw)  # transparency
         self.screen_dimensions = (0, 0)  # parent screen dimensions (obtained outside)
         self.search_phrase = ''
-        
         # Credits for transparency go to  KurtJacobson:
         # https://gist.github.com/KurtJacobson/374c8cb83aee4851d39981b9c7e2c22c
         screen = self.get_screen()
@@ -278,7 +285,7 @@ class MainWindow(Gtk.Window):
         self.prompt.set_property("name", "prompt")
         hbox.pack_start(self.prompt, True, False, 0)
         outer_box.pack_start(hbox, False, False, args.b)
-        
+
         self.add(outer_box)
 
     def search_items(self, item, event):
@@ -304,7 +311,7 @@ class MainWindow(Gtk.Window):
                     update = True
                 else:
                     Gtk.main_quit()
-                
+
             if not self.search_phrase:
                 filtered_items_list = []
                 self.grid_favs.show()
@@ -327,10 +334,10 @@ class MainWindow(Gtk.Window):
                     self.grid_apps.update(filtered_items_list)
                 else:
                     self.grid_apps.update(all_apps)
-            
+
             if len(self.search_phrase) == 0:
                 self.search_box.set_text('Type to search')
-                
+
             if len(filtered_items_list) == 1:
                 filtered_items_list[0].button.set_property("has-focus", True)
 
@@ -376,7 +383,7 @@ def list_entries():
                                     _name = line.split('=')[1].strip()
 
                                 loc_comment = 'Comment{}='.format(locale)
-                                
+
                                 if line.startswith('Comment='):
                                     _comment = line.split('=')[1].strip()
 
@@ -441,10 +448,10 @@ class AppBox(Gtk.EventBox):
         if len(name) > 25:
             name = "{}...".format(name[:22])
         box = Gtk.Box()
-        #box.set_property("name", "button")
+        # box.set_property("name", "button")
 
         self.connect("enter-notify-event", on_button_focused)
-        
+
         self.button = Gtk.Button()
         self.button.set_property("name", "button")
         self.button.set_always_show_image(True)
@@ -460,6 +467,7 @@ class AppBox(Gtk.EventBox):
 
 def dont_care(button, event):
     print(event)
+
 
 def app_image(icon):
     """
