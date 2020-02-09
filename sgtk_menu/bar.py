@@ -134,8 +134,10 @@ def main():
     # Overlay window
     global win
     win = MainWindow()
-    win.show_all()
-    win.present_with_time(Gdk.CURRENT_TIME)
+    if other_wm:
+        # We need the window to be visible to obtain the screen geometry when i3ipc module unavailable
+        win.resize(1, 1)
+        win.show_all()
     global geometry
     # If we're not on sway neither i3, this won't return values until the window actually shows up.
     # Let's try as many times as needed. The retries int protects from an infinite loop.
@@ -148,11 +150,11 @@ def main():
             sys.exit(2)
     x, y, w, h = geometry
 
-    win.move(x, y)
     win.resize(w, h)
-
     win.set_skip_taskbar_hint(True)
-    win.set_gravity(Gdk.Gravity.CENTER)
+    if other_wm:
+        win.move(x, y)
+    win.show_all()
 
     GLib.timeout_add(args.d, show_bar)
     Gtk.main()
