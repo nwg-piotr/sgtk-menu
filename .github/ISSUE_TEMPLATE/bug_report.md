@@ -28,6 +28,7 @@ If applicable, add screenshots to help explain your problem.
  - Window Manager: [e.g. sway, i3, Openbox]
  - Window Manager version: [e.g. 1.4]
  - Python version: [e.g. 3.8]
+ - sgtk-menu version [`sgtk-menu -v`]
 
 **Additional context**
 Add any other context about the problem here.
