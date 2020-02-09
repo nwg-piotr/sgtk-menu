@@ -273,5 +273,4 @@ def print_version():
         version = pkg_resources.require('sgtk-menu')[0].version
     except Exception as e:
         version = 'unknown version ({})'.format(e)
-    print('\nsgtk-menu {}'.format(version))
-    print('Copyright (c) 2020 Piotr Miller & Contributors')
+    print('\nsgtk-menu {} Copyright (c) 2020 Piotr Miller & Contributors\n'.format(version))

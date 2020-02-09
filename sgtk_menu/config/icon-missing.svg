@@ -21,7 +21,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -58,10 +58,10 @@
      transform="matrix(0,-1,-1,0,0,0)"
      id="rect2" />
   <rect
-     style="fill:#ff0000"
+     style="fill:#666666;fill-opacity:1"
      width="60"
      height="60"
-     x="-62"
+     x="-63"
      y="-62"
      rx="3"
      ry="3"
