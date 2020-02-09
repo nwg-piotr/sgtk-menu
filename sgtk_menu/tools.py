@@ -266,3 +266,12 @@ def load_json(path):
 def save_json(src_dict, path):
     with open(path, 'w') as f:
         json.dump(src_dict, f, indent=2)
+
+
+def print_version():
+    try:
+        version = pkg_resources.require('sgtk-menu')[0].version
+    except Exception as e:
+        version = 'unknown version ({})'.format(e)
+    print('\nsgtk-menu {}'.format(version))
+    print('Copyright (c) 2020 Piotr Miller & Contributors')

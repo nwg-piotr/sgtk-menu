@@ -28,7 +28,7 @@ import cairo
 from sgtk_menu.tools import (
     localized_category_names, additional_to_main, get_locale_string,
     config_dirs, load_json, save_json, create_default_configs, check_wm,
-    display_geometry, data_dirs)
+    display_geometry, data_dirs, print_version)
 
 wm = check_wm()
 
@@ -138,8 +138,13 @@ def main():
     parser.add_argument("-css", type=str, default="style.css",
                         help="use alternative {} style sheet instead of style.css"
                         .format(os.path.join(config_dir, '<CSS>')))
+    parser.add_argument("-v", "--version", action="store_true", help="display version and exit")
     global args
     args = parser.parse_args()
+    
+    if args.version:
+        print_version()
+        sys.exit(0)
 
     # Create default config files if not found
     create_default_configs(config_dir)
