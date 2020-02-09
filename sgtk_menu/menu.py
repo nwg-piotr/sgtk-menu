@@ -470,6 +470,9 @@ def list_entries():
                                 if line.startswith('Categories'):
                                     _categories = line.split('=')[1].strip()
 
+                        if not _icon:
+                            _icon = os.path.join(config_dir, 'icon-missing.svg')
+
                         if _name and _exec and _categories:
                             # this will hold the data we need, and also automagically append itself to the proper list
                             entry = DesktopEntry(_name, _exec, _icon, _categories)
@@ -571,7 +574,9 @@ def build_menu():
                         pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
                         image = Gtk.Image.new_from_pixbuf(pixbuf)
                     except:
-                        pass
+                        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(os.path.join(config_dir, 'icon-missing.svg'),
+                                                                        args.s, args.s)
+                        image = Gtk.Image.new_from_pixbuf(pixbuf)
                 else:
                     try:
                         if icon.endswith('.svg') or icon.endswith('.png'):
@@ -579,7 +584,9 @@ def build_menu():
                         pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
                         image = Gtk.Image.new_from_pixbuf(pixbuf)
                     except:
-                        pass
+                        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(os.path.join(config_dir, 'icon-missing.svg'),
+                                                                        args.s, args.s)
+                        image = Gtk.Image.new_from_pixbuf(pixbuf)
                 if image:
                     hbox.pack_start(image, False, False, 10)
                 if name:
@@ -639,7 +646,9 @@ def build_menu():
                     pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
                     image = Gtk.Image.new_from_pixbuf(pixbuf)
                 except:
-                    pass
+                    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(os.path.join(config_dir, 'icon-missing.svg'),
+                                                                    args.s, args.s)
+                    image = Gtk.Image.new_from_pixbuf(pixbuf)
             else:
                 try:
                     if icon.endswith('.svg') or icon.endswith('.png'):
@@ -647,7 +656,9 @@ def build_menu():
                     pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
                     image = Gtk.Image.new_from_pixbuf(pixbuf)
                 except:
-                    pass
+                    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(os.path.join(config_dir, 'icon-missing.svg'),
+                                                                    args.s, args.s)
+                    image = Gtk.Image.new_from_pixbuf(pixbuf)
             if image:
                 hbox.pack_start(image, False, False, 10)
             if name:
@@ -690,7 +701,9 @@ def sub_menu(entries_list, name, localized_name):
         pixbuf = icon_theme.load_icon(category_icons[name], args.s, Gtk.IconLookupFlags.FORCE_SIZE)
         image = Gtk.Image.new_from_pixbuf(pixbuf)
     except:
-        image = None
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(os.path.join(config_dir, 'icon-missing.svg'),
+                                                        args.s, args.s)
+        image = Gtk.Image.new_from_pixbuf(pixbuf)
     if image:
         outer_hbox.pack_start(image, False, False, 10)
     item = Gtk.MenuItem()
@@ -816,7 +829,9 @@ class DesktopMenuItem(Gtk.MenuItem):
                     pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon_name, args.s, args.s)
                     image = Gtk.Image.new_from_pixbuf(pixbuf)
                 except:
-                    pass
+                    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(os.path.join(config_dir, 'icon-missing.svg'),
+                                                                    args.s, args.s)
+                    image = Gtk.Image.new_from_pixbuf(pixbuf)
             else:
                 try:
                     if icon_name.endswith('.svg') or icon_name.endswith('.png'):
@@ -824,7 +839,9 @@ class DesktopMenuItem(Gtk.MenuItem):
                     pixbuf = icon_theme.load_icon(icon_name, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
                     image = Gtk.Image.new_from_pixbuf(pixbuf)
                 except:
-                    pass
+                    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(os.path.join(config_dir, 'icon-missing.svg'),
+                                                                    args.s, args.s)
+                    image = Gtk.Image.new_from_pixbuf(pixbuf)
         self.icon = image
         label = Gtk.Label()
         label.set_text(self.name)

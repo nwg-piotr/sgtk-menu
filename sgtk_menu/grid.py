@@ -497,7 +497,7 @@ def app_image(icon):
             pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
             image = Gtk.Image.new_from_pixbuf(pixbuf)
         except:
-            pixbuf = icon_theme.load_icon('help', args.s, Gtk.IconLookupFlags.FORCE_SIZE)
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(os.path.join(config_dir, 'icon-missing.svg'), args.s, args.s)
             image = Gtk.Image.new_from_pixbuf(pixbuf)
     return image
 

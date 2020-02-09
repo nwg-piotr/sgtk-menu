@@ -257,7 +257,9 @@ def build_bar():
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
                 image = Gtk.Image.new_from_pixbuf(pixbuf)
             except:
-                pass
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(os.path.join(config_dir, 'icon-missing.svg'), args.s,
+                                                                args.s)
+                image = Gtk.Image.new_from_pixbuf(pixbuf)
         else:
             try:
                 if icon.endswith('.svg') or icon.endswith('.png'):
@@ -265,7 +267,9 @@ def build_bar():
                 pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
                 image = Gtk.Image.new_from_pixbuf(pixbuf)
             except:
-                pass
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(os.path.join(config_dir, 'icon-missing.svg'), args.s,
+                                                                args.s)
+                image = Gtk.Image.new_from_pixbuf(pixbuf)
 
         button = Gtk.Button()
         button.set_property("name", "button")
