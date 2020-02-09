@@ -27,20 +27,9 @@ from gi.repository import Gtk, Gdk, GLib, GdkPixbuf
 import cairo
 
 from sgtk_menu.tools import (
-    get_locale_string, config_dirs, load_json, save_json, create_default_configs, check_wm,
-    display_geometry, data_dirs)
-
-wm = check_wm()
-
-# Will apply to the overlay window; we can't do so outside the config file on i3.
-# We'll do it for i3 by applying commands to the focused window in open_menu method.
-if wm == "sway":
-    var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk*\"]', 'floating', 'enable'],
-                         stdout=subprocess.DEVNULL).returncode == 0
-    var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk*\"]', 'border', 'none'],
-                         stdout=subprocess.DEVNULL).returncode == 0
-
-other_wm = not wm == "sway" and not wm == "i3"
+        get_locale_string, config_dirs, load_json,
+        save_json, create_default_configs, data_dirs
+        )
 
 try:
     from pynput.mouse import Controller
@@ -49,8 +38,6 @@ try:
 except:
     mouse_pointer = None
     pass
-
-geometry = (0, 0, 0, 0)
 
 # List to hold AppButtons for favourites
 all_favs = []
@@ -84,10 +71,8 @@ if not os.path.exists(cache_dir):
 
 # We track clicks in the same cache file
 cache_file = os.path.join(cache_dir, 'sgtk-menu')
-
 cache = None
 sorted_cache = None
-
 
 def main():
     # exit if already running, thanks to Slava V at https://stackoverflow.com/a/384493/4040598
@@ -170,28 +155,6 @@ def main():
     # Overlay window
     global win
     win = MainWindow()
-    win.connect("key-release-event", win.search_items)
-
-    if other_wm:
-        # We need the window to be visible to obtain the screen geometry when i3ipc module unavailable
-        win.resize(1, 1)
-        win.show_all()
-    global geometry
-    # If we're not on sway neither i3, this won't return values until the window actually shows up.
-    # Let's try as many times as needed. The retries int protects from an infinite loop.
-    retries = 0
-    while geometry[0] == 0 and geometry[1] == 0 and geometry[2] == 0 and geometry[3] == 0:
-        geometry = display_geometry(win, wm, mouse_pointer)
-        retries += 1
-        if retries > 50:
-            print("\nFailed to get the current screen geometry, exiting...\n")
-            sys.exit(2)
-    x, y, w, h = geometry
-
-    win.resize(w, h)
-    win.set_skip_taskbar_hint(True)
-    if other_wm:
-        win.move(x, y)
     win.show_all()
 
     # align width of all buttons
@@ -208,15 +171,7 @@ def main():
     if all_favs:
         win.sep1.set_size_request(w / 3, 1)
 
-    if wm == "i3":
-        GLib.timeout_add(args.d, open_menu)
     Gtk.main()
-
-
-def open_menu():
-    # we couldn't do this on i3 at the script start
-    subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
-    subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
 
 
 class MainWindow(Gtk.Window):
@@ -225,10 +180,17 @@ class MainWindow(Gtk.Window):
         Gtk.Window.__init__(self)
         self.set_title('~sgtk-grid')
         self.set_role('~sgtk-grid')
+        # we set the main window fullscreen to *hopefully* support any window manager
+        # see https://developer.gnome.org/pygtk/stable/class-gtkwindow.html#method-gtkwindow--fullscreen
+        self.fullscreen()
+        # stop the window from showing up in taskbars and task switchers (pagers)
+        self.set_skip_taskbar_hint(True)
+        self.set_skip_pager_hint(True)
+
         self.connect("destroy", Gtk.main_quit)
         self.connect("focus-out-event", Gtk.main_quit)
+        self.connect("key-release-event", self.search_items)
         self.connect('draw', self.draw)  # transparency
-        self.screen_dimensions = (0, 0)  # parent screen dimensions (obtained outside)
         self.search_phrase = ''
         self.grid_favs = None
         # Credits for transparency go to  KurtJacobson:
@@ -238,10 +200,6 @@ class MainWindow(Gtk.Window):
         if visual and screen.is_composited():
             self.set_visual(visual)
         self.set_app_paintable(True)
-
-        if other_wm:
-            self.set_resizable(False)
-            self.set_decorated(False)
 
         outer_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 
@@ -348,10 +306,6 @@ class MainWindow(Gtk.Window):
                 filtered_items_list[0].button.set_property("has-focus", True)
 
         return True
-
-    def resize(self, w, h):
-        self.set_size_request(w, h)
-        self.screen_dimensions = w, h
 
     # transparency
     def draw(self, widget, context):
