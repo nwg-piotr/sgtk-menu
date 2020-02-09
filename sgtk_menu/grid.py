@@ -74,6 +74,7 @@ cache_file = os.path.join(cache_dir, 'sgtk-menu')
 cache = None
 sorted_cache = None
 
+
 def main():
     # exit if already running, thanks to Slava V at https://stackoverflow.com/a/384493/4040598
     pid_file = os.path.join(tempfile.gettempdir(), 'sgtk-grid.pid')
