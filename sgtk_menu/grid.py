@@ -181,8 +181,8 @@ def main():
     # On sway we don't execute window.fullscreen() in the constructor, as it would make it opaque.
     if wm == "sway":
         win.resize(w, h)
-    # On yaxwm the .fullscreen() window from secondary display appears in between of both screens (wtf?).
-    # Otherwise we would need the geometry values on sway only.
+
+    # Necessary in FVWM
     win.move(x, y)
 
     # align width of all buttons
@@ -219,7 +219,8 @@ class MainWindow(Gtk.Window):
         self.connect('draw', self.draw)  # transparency
         self.search_phrase = ''
         self.grid_favs = None
-        # Credits for transparency go to  KurtJacobson:
+
+        # Credits for transparency go to KurtJacobson:
         # https://gist.github.com/KurtJacobson/374c8cb83aee4851d39981b9c7e2c22c
         screen = self.get_screen()
         visual = screen.get_rgba_visual()
