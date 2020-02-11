@@ -147,9 +147,9 @@ def main():
         print_version()
         sys.exit(0)
 
-    if args.pointer and not other_wm:
+    if args.pointer and wm == "sway":
         args.pointer = False
-        print("[--pointer] argument ignored in sway & i3")
+        print("[--pointer] argument ignored in sway")
 
     # Create default config files if not found
     create_default_configs(config_dir)
@@ -231,7 +231,7 @@ def main():
             sys.exit(2)
     x, y, w, h = geometry
 
-    if not other_wm:
+    if wm == "sway":
         # resize to current screen dimensions on sway
         win.resize(w, h)
     else:
@@ -443,7 +443,7 @@ def open_menu():
     else:
         gravity = Gdk.Gravity.NORTH
 
-    if not other_wm or wm.upper() == "OPENBOX" or wm.upper() == "FLUXBOX":
+    if wm.upper() in ["SWAY", "OPENBOX", "FLUXBOX"]:
         win.menu.popup_at_widget(win.anchor, gravity, gravity, None)
     else:
         win.menu.popup_at_widget(win.anchor, gravity, Gdk.Gravity.CENTER, None)
