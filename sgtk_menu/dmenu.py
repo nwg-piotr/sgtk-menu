@@ -81,8 +81,9 @@ def main():
     global build_from_file
     parser = argparse.ArgumentParser(description="GTK menu for sway, i3 and some floating WMs")
     placement = parser.add_mutually_exclusive_group()
-    placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom (sway & i3 only)")
-    placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen (sway & i3 only)")
+    placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom")
+    placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen")
+    placement.add_argument("-p", "--pointer", action="store_true", help="display at mouse pointer (not-sway/i3 only)")
 
     appendix = parser.add_mutually_exclusive_group()
     appendix.add_argument("-a", "--append", action="store_true",
@@ -162,19 +163,23 @@ def main():
     x, y, w, h = geometry
 
     if not other_wm:
-        # resize to the active screen dimensions on sway/i3
+        # resize to current screen dimensions on sway
         win.resize(w, h)
     else:
         win.resize(1, 1)
-        win.set_gravity(Gdk.Gravity.CENTER)
-        if mouse_pointer:
-            x, y = mouse_pointer.position
+        if args.center:
+            win.move(x + (w // 2), y + (h // 2))
+        elif args.bottom:
+            win.move(x, h - args.y)
+        elif args.pointer:
+            if mouse_pointer:
+                x, y = mouse_pointer.position
+            else:
+                print("\nYou need the python-pynput package!\n")
             win.move(x, y)
         else:
-            win.move(0, 0)
-            print("\nYou need the python-pynput package!\n")
+            win.move(x, y + args.y)
 
-    # hide window from panel on Openbox
     win.set_skip_taskbar_hint(True)
 
     win.menu = build_menu(all_commands_list)
@@ -334,7 +339,6 @@ class MainWindow(Gtk.Window):
 
 
 def open_menu():
-    # Now we can do this, as we've just shown the window
     if wm == "i3":
         # we couldn't do this on i3 at the script start
         subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
@@ -342,19 +346,20 @@ def open_menu():
 
     if args.bottom:
         gravity = Gdk.Gravity.SOUTH
-    elif args.center:
+    elif args.center or args.pointer:
         gravity = Gdk.Gravity.CENTER
     else:
         gravity = Gdk.Gravity.NORTH
 
-    if not other_wm:
+    if not other_wm or wm.upper() == "OPENBOX" or wm.upper() == "FLUXBOX":
         win.menu.popup_at_widget(win.anchor, gravity, gravity, None)
     else:
-        win.menu.popup_at_widget(win.anchor, Gdk.Gravity.CENTER, Gdk.Gravity.CENTER, None)
-        if not win.menu.get_visible():
-            # In Openbox, if the MainWindow (which is invisible!) gets accidentally clicked and dragged,
-            # the menu doesn't pop up, but the process is still alive. Let's kill the bastard, if so.
-            Gtk.main_quit()
+        win.menu.popup_at_widget(win.anchor, gravity, Gdk.Gravity.CENTER, None)
+
+    if other_wm and not win.menu.get_visible():
+        # In Openbox, if the MainWindow (which is invisible!) gets accidentally clicked and dragged,
+        # the menu doesn't pop up, but the process is still alive. Let's kill the bastard, if so.
+        Gtk.main_quit()
 
 
 def list_commands():

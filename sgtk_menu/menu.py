@@ -230,13 +230,11 @@ def main():
             print("\nFailed to get the current screen geometry, exiting...\n")
             sys.exit(2)
     x, y, w, h = geometry
-    print(geometry)
 
     if not other_wm:
         # resize to current screen dimensions on sway
         win.resize(w, h)
     else:
-        #win.set_gravity(Gdk.Gravity.CENTER)
         win.resize(1, 1)
         if args.center:
             win.move(x + (w // 2), y + (h // 2))
