@@ -210,8 +210,7 @@ class MainWindow(Gtk.Window):
         self.connect("destroy", Gtk.main_quit)
         self.connect('draw', self.draw)  # transparency
 
-        if other_wm:
-            # we just want the 1 x 1px window to stay unnoticed
+        if not wm == "sway":
             self.set_sensitive(False)
             self.set_resizable(False)
             self.set_decorated(False)
