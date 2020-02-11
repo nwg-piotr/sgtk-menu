@@ -114,8 +114,9 @@ def main():
     global build_from_file
     parser = argparse.ArgumentParser(description="GTK menu for sway, i3 and some floating WMs")
     placement = parser.add_mutually_exclusive_group()
-    placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom (sway & i3 only)")
-    placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen (sway & i3 only)")
+    placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom")
+    placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen")
+    placement.add_argument("-p", "--pointer", action="store_true", help="display at mouse pointer (not-sway/i3 only)")
 
     favourites = parser.add_mutually_exclusive_group()
     favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used items")
@@ -145,6 +146,10 @@ def main():
     if args.version:
         print_version()
         sys.exit(0)
+
+    if args.pointer and not other_wm:
+        args.pointer = False
+        print("[--pointer] argument ignored in sway & i3")
 
     # Create default config files if not found
     create_default_configs(config_dir)
@@ -225,18 +230,26 @@ def main():
             print("\nFailed to get the current screen geometry, exiting...\n")
             sys.exit(2)
     x, y, w, h = geometry
+    print(geometry)
 
     if not other_wm:
+        # resize to current screen dimensions on sway
         win.resize(w, h)
     else:
+        #win.set_gravity(Gdk.Gravity.CENTER)
         win.resize(1, 1)
-        win.set_gravity(Gdk.Gravity.CENTER)
-        if mouse_pointer:
-            x, y = mouse_pointer.position
+        if args.center:
+            win.move(x + (w // 2), y + (h // 2))
+        elif args.bottom:
+            win.move(x, h - args.y)
+        elif args.pointer:
+            if mouse_pointer:
+                x, y = mouse_pointer.position
+            else:
+                print("\nYou need the python-pynput package!\n")
             win.move(x, y)
         else:
-            win.move(0, 0)
-            print("\nYou need the python-pynput package!\n")
+            win.move(x, y + args.y)
 
     win.set_skip_taskbar_hint(True)
     win.menu = build_menu()
@@ -266,7 +279,7 @@ class MainWindow(Gtk.Window):
         self.connect("destroy", Gtk.main_quit)
         self.connect('draw', self.draw)  # transparency
 
-        if other_wm:
+        if not wm == "sway":
             self.set_sensitive(False)
             self.set_resizable(False)
             self.set_decorated(False)
@@ -308,7 +321,8 @@ class MainWindow(Gtk.Window):
             else:
                 # display on top
                 vbox.pack_start(hbox, False, False, 0)
-        outer_box.pack_start(vbox, True, True, args.y)
+        margin = args.y if not other_wm else 0
+        outer_box.pack_start(vbox, True, True, margin)
 
         self.add(outer_box)
 
@@ -426,19 +440,20 @@ def open_menu():
 
     if args.bottom:
         gravity = Gdk.Gravity.SOUTH
-    elif args.center:
+    elif args.center or args.pointer:
         gravity = Gdk.Gravity.CENTER
     else:
         gravity = Gdk.Gravity.NORTH
 
-    if not other_wm:
+    if not other_wm or wm.upper() == "OPENBOX" or wm.upper() == "FLUXBOX":
         win.menu.popup_at_widget(win.anchor, gravity, gravity, None)
     else:
-        win.menu.popup_at_widget(win.anchor, Gdk.Gravity.CENTER, Gdk.Gravity.CENTER, None)
-        if not win.menu.get_visible():
-            # In Openbox, if the MainWindow (which is invisible!) gets accidentally clicked and dragged,
-            # the menu doesn't pop up, but the process is still alive. Let's kill the bastard, if so.
-            Gtk.main_quit()
+        win.menu.popup_at_widget(win.anchor, gravity, Gdk.Gravity.CENTER, None)
+
+    if other_wm and not win.menu.get_visible():
+        # In Openbox, if the MainWindow (which is invisible!) gets accidentally clicked and dragged,
+        # the menu doesn't pop up, but the process is still alive. Let's kill the bastard, if so.
+        Gtk.main_quit()
 
 
 def list_entries():
