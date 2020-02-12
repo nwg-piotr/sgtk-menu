@@ -174,7 +174,8 @@ def main():
         if args.center:
             win.move(x + (w // 2), y + (h // 2))
         elif args.bottom:
-            win.move(x, h - args.y)
+            # i3: moving to the VERY border results in unwanted centering. Let's offset by 1 pixel.
+            win.move(x + 1, h - args.y - 1)
         elif args.pointer:
             if mouse_pointer:
                 x, y = mouse_pointer.position
@@ -182,7 +183,8 @@ def main():
                 print("\nYou need the python-pynput package!\n")
             win.move(x, y)
         else:
-            win.move(x, y + args.y)
+            # top
+            win.move(x + 1, y + args.y + 1)
 
     win.set_skip_taskbar_hint(True)
 
