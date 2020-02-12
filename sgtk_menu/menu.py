@@ -235,7 +235,8 @@ def main():
         # resize to current screen dimensions on sway
         win.resize(w, h)
     else:
-        win.resize(1, 1)
+        win.resize(0, 0)
+        print(win.get_size())
         if args.center:
             win.move(x + (w // 2), y + (h // 2))
         elif args.bottom:
@@ -249,7 +250,7 @@ def main():
             win.move(x, y)
         else:
             # top
-            win.move(x + 1, y + args.y + 1)
+            win.move(x + 1, y + args.y)
 
     win.set_skip_taskbar_hint(True)
     win.menu = build_menu()
@@ -439,16 +440,19 @@ def open_menu():
         subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
 
     if args.bottom:
-        gravity = Gdk.Gravity.SOUTH
+        gravity_widget = Gdk.Gravity.NORTH
+        gravity_menu = Gdk.Gravity.SOUTH
     elif args.center or args.pointer:
-        gravity = Gdk.Gravity.CENTER
+        gravity_widget = Gdk.Gravity.CENTER
+        gravity_menu = Gdk.Gravity.CENTER
     else:
-        gravity = Gdk.Gravity.NORTH
+        gravity_widget = Gdk.Gravity.NORTH
+        gravity_menu = Gdk.Gravity.SOUTH
 
-    if wm.upper() in ["SWAY", "OPENBOX", "FLUXBOX"]:
-        win.menu.popup_at_widget(win.anchor, gravity, gravity, None)
+    if wm.upper() in ["FVWM"]:
+        win.menu.popup_at_widget(win.anchor, Gdk.Gravity.CENTER, Gdk.Gravity.CENTER, None)
     else:
-        win.menu.popup_at_widget(win.anchor, gravity, Gdk.Gravity.CENTER, None)
+        win.menu.popup_at_widget(win.anchor, gravity_widget, gravity_menu, None)
 
     if other_wm and not win.menu.get_visible():
         # In Openbox, if the MainWindow (which is invisible!) gets accidentally clicked and dragged,
