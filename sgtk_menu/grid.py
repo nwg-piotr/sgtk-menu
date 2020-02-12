@@ -215,6 +215,7 @@ class MainWindow(Gtk.Window):
         self.connect("destroy", Gtk.main_quit)
         self.connect("focus-out-event", Gtk.main_quit)
         self.connect("key-release-event", self.search_items)
+        self.connect("button-press-event", Gtk.main_quit)
         self.connect('draw', self.draw)  # transparency
         self.search_phrase = ''
         self.grid_favs = None

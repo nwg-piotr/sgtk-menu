@@ -22,7 +22,7 @@ import argparse
 import gi
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
+from gi.repository import Gtk, Gdk, GdkPixbuf
 import cairo
 
 from sgtk_menu.tools import (
@@ -156,7 +156,7 @@ def main():
     # Necessary in FVWM
     win.move(x, y)
 
-    show_bar()
+    win.show_all()
     Gtk.main()
 
 
@@ -229,15 +229,6 @@ class MainWindow(Gtk.Window):
             # Escape
             if event.keyval == 65307:
                 Gtk.main_quit()
-
-
-def show_bar():
-    if wm == "i3":
-        # we couldn't do this on i3 at the script start
-        subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
-        subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
-
-    win.show_all()
 
 
 def build_bar():
