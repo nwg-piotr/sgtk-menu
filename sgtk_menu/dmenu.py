@@ -357,8 +357,8 @@ def open_menu():
         gravity_widget = Gdk.Gravity.CENTER
         gravity_menu = Gdk.Gravity.CENTER
     else:
-        gravity_widget = Gdk.Gravity.NORTH
-        gravity_menu = Gdk.Gravity.SOUTH
+        gravity_widget = Gdk.Gravity.SOUTH
+        gravity_menu = Gdk.Gravity.NORTH
 
     if wm.upper() in ["FVWM"]:
         win.menu.popup_at_widget(win.anchor, Gdk.Gravity.CENTER, Gdk.Gravity.CENTER, None)
