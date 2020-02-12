@@ -22,7 +22,7 @@ import argparse
 import gi
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
+from gi.repository import Gtk, Gdk, GdkPixbuf
 import cairo
 
 from sgtk_menu.tools import (
@@ -85,9 +85,8 @@ def main():
     parser.add_argument("-y", type=int, default=0, help="vertical offset from edge")
     parser.add_argument("-v", "--vertical", action="store_true", help="arrange buttons vertically")
     parser.add_argument("-p", type=int, default=20, help="button padding (default: 20)")
-    parser.add_argument("-s", type=int, default=32, help="icon size (min: 16, max: 48, default: 32)")
-    parser.add_argument("-d", type=int, default=100, help="bar delay in milliseconds (default: 100; sway & i3 only)")
-    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3)")
+    parser.add_argument("-s", type=int, default=72, help="icon size (min: 16, max: 96, default: 72)")
+    parser.add_argument("-o", type=float, default=0.7, help="overlay opacity (min: 0.0, max: 1.0, default: 0.7)")
 
     parser.add_argument("-css", type=str, default="style.css",
                         help="use alternative {} style sheet instead of style.css"
@@ -103,8 +102,8 @@ def main():
 
     if args.s < 16:
         args.s = 16
-    elif args.s > 48:
-        args.s = 48
+    elif args.s > 96:
+        args.s = 96
 
     # We do not need any delay in other WMs
     if other_wm:
@@ -134,11 +133,11 @@ def main():
     # Overlay window
     global win
     win = MainWindow()
-    if other_wm:
-        # We need the window to be visible to obtain the screen geometry when i3ipc module unavailable
-        win.resize(1, 1)
-        win.show_all()
-    global geometry
+    win.show_all()
+    # hide the window from taskbars; when set in the window constructor, it kills listening to the key-release-event
+    win.set_skip_taskbar_hint(True)
+
+    geometry = (0, 0, 0, 0)
     # If we're not on sway neither i3, this won't return values until the window actually shows up.
     # Let's try as many times as needed. The retries int protects from an infinite loop.
     retries = 0
@@ -150,13 +149,14 @@ def main():
             sys.exit(2)
     x, y, w, h = geometry
 
-    win.resize(w, h)
-    win.set_skip_taskbar_hint(True)
-    if other_wm:
-        win.move(x, y)
-    win.show_all()
+    # On sway we don't execute window.fullscreen() in the constructor, as it would make it opaque.
+    if wm == "sway":
+        win.resize(w, h)
 
-    GLib.timeout_add(args.d, show_bar)
+    # Necessary in FVWM
+    win.move(x, y)
+
+    win.show_all()
     Gtk.main()
 
 
@@ -165,18 +165,18 @@ class MainWindow(Gtk.Window):
         Gtk.Window.__init__(self)
         self.set_title('~sgtk-bar')
         self.set_role('~sgtk-bar')
+        # On sway it would make the window opaque, so we'll have to resize the window when ready
+        if not wm == "sway":
+            self.fullscreen()
+        self.set_skip_pager_hint(True)
+
         self.connect("destroy", Gtk.main_quit)
         self.connect("focus-out-event", Gtk.main_quit)
         self.connect('draw', self.draw)  # transparency
         self.connect("key-release-event", self.key_pressed)
         self.connect("button-press-event", Gtk.main_quit)
 
-        if other_wm:
-            self.set_resizable(False)
-            self.set_decorated(False)
-            self.set_modal(True)
-
-        # Credits for transparency go to  KurtJacobson:
+        # Credits for transparency go to KurtJacobson:
         # https://gist.github.com/KurtJacobson/374c8cb83aee4851d39981b9c7e2c22c
         screen = self.get_screen()
         visual = screen.get_rgba_visual()
@@ -229,15 +229,6 @@ class MainWindow(Gtk.Window):
             # Escape
             if event.keyval == 65307:
                 Gtk.main_quit()
-
-
-def show_bar():
-    if wm == "i3":
-        # we couldn't do this on i3 at the script start
-        subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
-        subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
-
-    win.show_all()
 
 
 def build_bar():

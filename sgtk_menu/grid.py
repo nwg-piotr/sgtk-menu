@@ -23,24 +23,19 @@ import argparse
 import gi
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk, GLib, GdkPixbuf
+from gi.repository import Gtk, Gdk, GdkPixbuf
 import cairo
 
-from sgtk_menu.tools import (
-    get_locale_string, config_dirs, load_json, save_json, create_default_configs, check_wm,
-    display_geometry, data_dirs)
+from sgtk_menu.tools import (get_locale_string, config_dirs, load_json, save_json, create_default_configs, data_dirs,
+                             check_wm, display_geometry)
 
 wm = check_wm()
 
-# Will apply to the overlay window; we can't do so outside the config file on i3.
-# We'll do it for i3 by applying commands to the focused window in open_menu method.
 if wm == "sway":
     var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk*\"]', 'floating', 'enable'],
                          stdout=subprocess.DEVNULL).returncode == 0
     var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk*\"]', 'border', 'none'],
                          stdout=subprocess.DEVNULL).returncode == 0
-
-other_wm = not wm == "sway" and not wm == "i3"
 
 try:
     from pynput.mouse import Controller
@@ -49,8 +44,6 @@ try:
 except:
     mouse_pointer = None
     pass
-
-geometry = (0, 0, 0, 0)
 
 # List to hold AppButtons for favourites
 all_favs = []
@@ -84,7 +77,6 @@ if not os.path.exists(cache_dir):
 
 # We track clicks in the same cache file
 cache_file = os.path.join(cache_dir, 'sgtk-menu')
-
 cache = None
 sorted_cache = None
 
@@ -110,7 +102,6 @@ def main():
     favourites.add_argument("-f", action="store_true", help="prepend 1 row of favourites (most used items)")
     favourites.add_argument('-fn', default=0, type=int, help="prepend <FN> rows of favourites")
 
-    parser.add_argument("-d", type=int, default=50, help="window delay in milliseconds (default: 50; i3 only)")
     parser.add_argument("-l", type=str, help="force language (e.g. \"de\" for German)")
     parser.add_argument("-s", type=int, default=72, help="menu icon size (min: 16, max: 96, default: 72)")
     parser.add_argument("-o", type=float, default=0.9, help="overlay opacity (min: 0.0, max: 1.0, default: 0.9)")
@@ -170,13 +161,11 @@ def main():
     # Overlay window
     global win
     win = MainWindow()
-    win.connect("key-release-event", win.search_items)
+    win.show_all()
+    # hide the window from taskbars; when set in the window constructor, it kills listening to the key-release-event
+    win.set_skip_taskbar_hint(True)
 
-    if other_wm:
-        # We need the window to be visible to obtain the screen geometry when i3ipc module unavailable
-        win.resize(1, 1)
-        win.show_all()
-    global geometry
+    geometry = (0, 0, 0, 0)
     # If we're not on sway neither i3, this won't return values until the window actually shows up.
     # Let's try as many times as needed. The retries int protects from an infinite loop.
     retries = 0
@@ -188,11 +177,12 @@ def main():
             sys.exit(2)
     x, y, w, h = geometry
 
-    win.resize(w, h)
-    win.set_skip_taskbar_hint(True)
-    if other_wm:
-        win.move(x, y)
-    win.show_all()
+    # On sway we don't execute window.fullscreen() in the constructor, as it would make it opaque.
+    if wm == "sway":
+        win.resize(w, h)
+
+    # Necessary in FVWM
+    win.move(x, y)
 
     # align width of all buttons
     max_width = 0
@@ -208,15 +198,7 @@ def main():
     if all_favs:
         win.sep1.set_size_request(w / 3, 1)
 
-    if wm == "i3":
-        GLib.timeout_add(args.d, open_menu)
     Gtk.main()
-
-
-def open_menu():
-    # we couldn't do this on i3 at the script start
-    subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
-    subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
 
 
 class MainWindow(Gtk.Window):
@@ -225,23 +207,26 @@ class MainWindow(Gtk.Window):
         Gtk.Window.__init__(self)
         self.set_title('~sgtk-grid')
         self.set_role('~sgtk-grid')
+        # On sway it would make the window opaque, so we'll have to resize the window when ready
+        if not wm == "sway":
+            self.fullscreen()
+        self.set_skip_pager_hint(True)
+
         self.connect("destroy", Gtk.main_quit)
         self.connect("focus-out-event", Gtk.main_quit)
+        self.connect("key-release-event", self.search_items)
+        self.connect("button-press-event", Gtk.main_quit)
         self.connect('draw', self.draw)  # transparency
-        self.screen_dimensions = (0, 0)  # parent screen dimensions (obtained outside)
         self.search_phrase = ''
         self.grid_favs = None
-        # Credits for transparency go to  KurtJacobson:
+
+        # Credits for transparency go to KurtJacobson:
         # https://gist.github.com/KurtJacobson/374c8cb83aee4851d39981b9c7e2c22c
         screen = self.get_screen()
         visual = screen.get_rgba_visual()
         if visual and screen.is_composited():
             self.set_visual(visual)
         self.set_app_paintable(True)
-
-        if other_wm:
-            self.set_resizable(False)
-            self.set_decorated(False)
 
         outer_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 
@@ -348,10 +333,6 @@ class MainWindow(Gtk.Window):
                 filtered_items_list[0].button.set_property("has-focus", True)
 
         return True
-
-    def resize(self, w, h):
-        self.set_size_request(w, h)
-        self.screen_dimensions = w, h
 
     # transparency
     def draw(self, widget, context):
@@ -498,7 +479,8 @@ def app_image(icon):
             pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
             image = Gtk.Image.new_from_pixbuf(pixbuf)
         except:
-            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(os.path.join(config_dir, 'icon-missing.svg'), args.s, args.s)
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(os.path.join(config_dir, 'icon-missing.svg'), args.s,
+                                                            args.s)
             image = Gtk.Image.new_from_pixbuf(pixbuf)
     return image
 

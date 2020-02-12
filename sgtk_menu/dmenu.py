@@ -79,10 +79,11 @@ def main():
         sys.exit(2)
 
     global build_from_file
-    parser = argparse.ArgumentParser(description="GTK menu for sway, i3 and some floating WMs")
+    parser = argparse.ArgumentParser(description="GTK dmenu for sway, i3 and some other WMs")
     placement = parser.add_mutually_exclusive_group()
-    placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom (sway & i3 only)")
-    placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen (sway & i3 only)")
+    placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom")
+    placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen")
+    placement.add_argument("-p", "--pointer", action="store_true", help="display at mouse pointer (not-sway only)")
 
     appendix = parser.add_mutually_exclusive_group()
     appendix.add_argument("-a", "--append", action="store_true",
@@ -95,12 +96,16 @@ def main():
     parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3; "
                                                             "sway & i3 only)")
     parser.add_argument("-t", type=int, default=15, help="lines limit (default: 20)")
-    parser.add_argument("-y", type=int, default=0, help="y offset from edge to display menu at (sway & i3 only)")
+    parser.add_argument("-y", type=int, default=0, help="y offset from edge to display menu at")
     parser.add_argument("-css", type=str, default="style.css",
                         help="use alternative {} style sheet instead of style.css"
                         .format(os.path.join(config_dir, '<CSS>')))
     global args
     args = parser.parse_args()
+
+    if args.pointer and wm == "sway":
+        args.pointer = False
+        print("[--pointer] argument ignored in sway")
 
     # Copy default templates and style sheet - if not found
     create_default_configs(config_dir)
@@ -161,20 +166,26 @@ def main():
             sys.exit(2)
     x, y, w, h = geometry
 
-    if not other_wm:
-        # resize to the active screen dimensions on sway/i3
+    if wm == "sway":
+        # resize to current screen dimensions on sway
         win.resize(w, h)
     else:
-        win.resize(1, 1)
-        win.set_gravity(Gdk.Gravity.CENTER)
-        if mouse_pointer:
-            x, y = mouse_pointer.position
+        win.resize(0, 0)
+        if args.center:
+            win.move(x + (w // 2), y + (h // 2))
+        elif args.bottom:
+            # i3: moving to the VERY border results in unwanted centering. Let's offset by 1 pixel.
+            win.move(x + 1, h - args.y - 1)
+        elif args.pointer:
+            if mouse_pointer:
+                x, y = mouse_pointer.position
+            else:
+                print("\nYou need the python-pynput package!\n")
             win.move(x, y)
         else:
-            win.move(0, 0)
-            print("\nYou need the python-pynput package!\n")
+            # top
+            win.move(x + 1, y + args.y)
 
-    # hide window from panel on Openbox
     win.set_skip_taskbar_hint(True)
 
     win.menu = build_menu(all_commands_list)
@@ -205,8 +216,7 @@ class MainWindow(Gtk.Window):
         self.connect("destroy", Gtk.main_quit)
         self.connect('draw', self.draw)  # transparency
 
-        if other_wm:
-            # we just want the 1 x 1px window to stay unnoticed
+        if not wm == "sway":
             self.set_sensitive(False)
             self.set_resizable(False)
             self.set_decorated(False)
@@ -248,8 +258,8 @@ class MainWindow(Gtk.Window):
             else:
                 # display on top
                 vbox.pack_start(hbox, False, False, 0)
-        # vertical margin
-        outer_box.pack_start(vbox, True, True, args.y)
+        margin = args.y if wm == "sway" else 0
+        outer_box.pack_start(vbox, True, True, margin)
 
         self.add(outer_box)
 
@@ -334,27 +344,27 @@ class MainWindow(Gtk.Window):
 
 
 def open_menu():
-    # Now we can do this, as we've just shown the window
     if wm == "i3":
         # we couldn't do this on i3 at the script start
         subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
         subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
 
     if args.bottom:
-        gravity = Gdk.Gravity.SOUTH
-    elif args.center:
-        gravity = Gdk.Gravity.CENTER
+        gravity_widget = Gdk.Gravity.NORTH
+        gravity_menu = Gdk.Gravity.SOUTH
+    elif args.center or args.pointer:
+        gravity_widget = Gdk.Gravity.CENTER
+        gravity_menu = Gdk.Gravity.CENTER
     else:
-        gravity = Gdk.Gravity.NORTH
+        gravity_widget = Gdk.Gravity.SOUTH
+        gravity_menu = Gdk.Gravity.NORTH
 
-    if not other_wm:
-        win.menu.popup_at_widget(win.anchor, gravity, gravity, None)
-    else:
-        win.menu.popup_at_widget(win.anchor, Gdk.Gravity.CENTER, Gdk.Gravity.CENTER, None)
-        if not win.menu.get_visible():
-            # In Openbox, if the MainWindow (which is invisible!) gets accidentally clicked and dragged,
-            # the menu doesn't pop up, but the process is still alive. Let's kill the bastard, if so.
-            Gtk.main_quit()
+    win.menu.popup_at_widget(win.anchor, gravity_widget, gravity_menu, None)
+
+    if other_wm and not win.menu.get_visible():
+        # In Openbox, if the MainWindow (which is invisible!) gets accidentally clicked and dragged,
+        # the menu doesn't pop up, but the process is still alive. Let's kill the bastard, if so.
+        Gtk.main_quit()
 
 
 def list_commands():
