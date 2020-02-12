@@ -171,7 +171,6 @@ def main():
         win.resize(w, h)
     else:
         win.resize(0, 0)
-        print(win.get_size())
         if args.center:
             win.move(x + (w // 2), y + (h // 2))
         elif args.bottom:
