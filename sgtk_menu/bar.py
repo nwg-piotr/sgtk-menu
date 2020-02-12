@@ -85,9 +85,8 @@ def main():
     parser.add_argument("-y", type=int, default=0, help="vertical offset from edge")
     parser.add_argument("-v", "--vertical", action="store_true", help="arrange buttons vertically")
     parser.add_argument("-p", type=int, default=20, help="button padding (default: 20)")
-    parser.add_argument("-s", type=int, default=32, help="icon size (min: 16, max: 48, default: 32)")
-    parser.add_argument("-d", type=int, default=100, help="bar delay in milliseconds (default: 100; sway & i3 only)")
-    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3)")
+    parser.add_argument("-s", type=int, default=72, help="icon size (min: 16, max: 96, default: 72)")
+    parser.add_argument("-o", type=float, default=0.7, help="overlay opacity (min: 0.0, max: 1.0, default: 0.7)")
 
     parser.add_argument("-css", type=str, default="style.css",
                         help="use alternative {} style sheet instead of style.css"
@@ -103,8 +102,8 @@ def main():
 
     if args.s < 16:
         args.s = 16
-    elif args.s > 48:
-        args.s = 48
+    elif args.s > 96:
+        args.s = 96
 
     # We do not need any delay in other WMs
     if other_wm:
@@ -157,7 +156,7 @@ def main():
     # Necessary in FVWM
     win.move(x, y)
 
-    GLib.timeout_add(args.d, show_bar)
+    show_bar()
     Gtk.main()
 
 

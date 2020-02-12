@@ -79,11 +79,11 @@ def main():
         sys.exit(2)
 
     global build_from_file
-    parser = argparse.ArgumentParser(description="GTK menu for sway, i3 and some floating WMs")
+    parser = argparse.ArgumentParser(description="GTK dmenu for sway, i3 and some other WMs")
     placement = parser.add_mutually_exclusive_group()
     placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom")
     placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen")
-    placement.add_argument("-p", "--pointer", action="store_true", help="display at mouse pointer (not-sway/i3 only)")
+    placement.add_argument("-p", "--pointer", action="store_true", help="display at mouse pointer (not-sway only)")
 
     appendix = parser.add_mutually_exclusive_group()
     appendix.add_argument("-a", "--append", action="store_true",
@@ -96,7 +96,7 @@ def main():
     parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3; "
                                                             "sway & i3 only)")
     parser.add_argument("-t", type=int, default=15, help="lines limit (default: 20)")
-    parser.add_argument("-y", type=int, default=0, help="y offset from edge to display menu at (sway & i3 only)")
+    parser.add_argument("-y", type=int, default=0, help="y offset from edge to display menu at")
     parser.add_argument("-css", type=str, default="style.css",
                         help="use alternative {} style sheet instead of style.css"
                         .format(os.path.join(config_dir, '<CSS>')))

@@ -112,11 +112,11 @@ def main():
         sys.exit(2)
 
     global build_from_file
-    parser = argparse.ArgumentParser(description="GTK menu for sway, i3 and some floating WMs")
+    parser = argparse.ArgumentParser(description="GTK menu for sway, i3 and some other WMs")
     placement = parser.add_mutually_exclusive_group()
     placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom")
     placement.add_argument("-c", "--center", action="store_true", help="center menu on the screen")
-    placement.add_argument("-p", "--pointer", action="store_true", help="display at mouse pointer (not-sway/i3 only)")
+    placement.add_argument("-p", "--pointer", action="store_true", help="display at mouse pointer (not-sway only)")
 
     favourites = parser.add_mutually_exclusive_group()
     favourites.add_argument("-f", "--favourites", action="store_true", help="prepend 5 most used items")
@@ -132,17 +132,17 @@ def main():
     parser.add_argument("-s", type=int, default=20, help="menu icon size (min: 16, max: 48, default: 20)")
     parser.add_argument("-w", type=int, help="menu width in px (integer, default: screen width / 8)")
     parser.add_argument("-d", type=int, default=100, help="menu delay in milliseconds (default: 100; sway & i3 only)")
-    parser.add_argument("-o", type=float, default=0.3, help="overlay opacity (min: 0.0, max: 1.0, default: 0.3; "
-                                                            "sway & i3 only)")
+    parser.add_argument("-o", type=float, default=0.3,
+                        help="overlay opacity (min: 0.0, max: 1.0, default: 0.3; sway only)")
     parser.add_argument("-t", type=int, default=30, help="sway submenu lines limit (default: 30)")
-    parser.add_argument("-y", type=int, default=0, help="y offset from edge to display menu at (sway & i3 only)")
+    parser.add_argument("-y", type=int, default=0, help="y offset from edge to display menu at")
     parser.add_argument("-css", type=str, default="style.css",
                         help="use alternative {} style sheet instead of style.css"
                         .format(os.path.join(config_dir, '<CSS>')))
     parser.add_argument("-v", "--version", action="store_true", help="display version and exit")
     global args
     args = parser.parse_args()
-    
+
     if args.version:
         print_version()
         sys.exit(0)

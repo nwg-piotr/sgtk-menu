@@ -23,7 +23,7 @@ import argparse
 import gi
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk, GLib, GdkPixbuf
+from gi.repository import Gtk, Gdk, GdkPixbuf
 import cairo
 
 from sgtk_menu.tools import (get_locale_string, config_dirs, load_json, save_json, create_default_configs, data_dirs,
@@ -102,7 +102,6 @@ def main():
     favourites.add_argument("-f", action="store_true", help="prepend 1 row of favourites (most used items)")
     favourites.add_argument('-fn', default=0, type=int, help="prepend <FN> rows of favourites")
 
-    parser.add_argument("-d", type=int, default=50, help="window delay in milliseconds (default: 50; i3 only)")
     parser.add_argument("-l", type=str, help="force language (e.g. \"de\" for German)")
     parser.add_argument("-s", type=int, default=72, help="menu icon size (min: 16, max: 96, default: 72)")
     parser.add_argument("-o", type=float, default=0.9, help="overlay opacity (min: 0.0, max: 1.0, default: 0.9)")
