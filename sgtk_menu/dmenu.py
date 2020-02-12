@@ -360,10 +360,7 @@ def open_menu():
         gravity_widget = Gdk.Gravity.SOUTH
         gravity_menu = Gdk.Gravity.NORTH
 
-    if wm.upper() in ["FVWM"]:
-        win.menu.popup_at_widget(win.anchor, Gdk.Gravity.CENTER, Gdk.Gravity.CENTER, None)
-    else:
-        win.menu.popup_at_widget(win.anchor, gravity_widget, gravity_menu, None)
+    win.menu.popup_at_widget(win.anchor, gravity_widget, gravity_menu, None)
 
     if other_wm and not win.menu.get_visible():
         # In Openbox, if the MainWindow (which is invisible!) gets accidentally clicked and dragged,
