@@ -321,7 +321,7 @@ class MainWindow(Gtk.Window):
             else:
                 # display on top
                 vbox.pack_start(hbox, False, False, 0)
-        margin = args.y if not other_wm else 0
+        margin = args.y if wm == "sway" else 0
         outer_box.pack_start(vbox, True, True, margin)
 
         self.add(outer_box)

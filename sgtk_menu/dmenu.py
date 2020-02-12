@@ -165,6 +165,7 @@ def main():
             print("\nFailed to get the current screen geometry, exiting...\n")
             sys.exit(2)
     x, y, w, h = geometry
+    print(args.y)
 
     if wm == "sway":
         # resize to current screen dimensions on sway
@@ -258,8 +259,8 @@ class MainWindow(Gtk.Window):
             else:
                 # display on top
                 vbox.pack_start(hbox, False, False, 0)
-        # vertical margin
-        outer_box.pack_start(vbox, True, True, args.y)
+        margin = args.y if wm == "sway" else 0
+        outer_box.pack_start(vbox, True, True, margin)
 
         self.add(outer_box)
 
