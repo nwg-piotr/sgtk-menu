@@ -452,10 +452,6 @@ class AppBox(Gtk.EventBox):
         self.add(box)
 
 
-def dont_care(button, event):
-    print(event)
-
-
 def app_image(icon):
     """
     Creates a Gtk.Image instance
