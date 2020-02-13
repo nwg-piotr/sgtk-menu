@@ -29,8 +29,7 @@ from sgtk_menu.tools import (config_dirs, load_json, create_default_configs, che
 
 wm = check_wm()
 
-# Will apply to the overlay window; we can't do so outside the config file on i3.
-# We'll do it for i3 by applying commands to the focused window in open_menu method.
+# This will apply to the overlay window, as setting the window type POPUP does not impress sway :)
 if wm == "sway":
     var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk*\"]', 'floating', 'enable'],
                          stdout=subprocess.DEVNULL).returncode == 0
@@ -174,22 +173,16 @@ def main():
             x = x + (w // 2)
             y = y + (h // 2)
         elif args.bottom:
-            # i3: moving to the VERY border results in unwanted centering. Let's offset by 1 pixel.
-            x = x + 1
-            y = h - args.y - 1
+            y = h - args.y
         elif args.pointer:
             if mouse_pointer:
                 x, y = mouse_pointer.position
             else:
                 print("\nYou need the python-pynput package!\n")
         else:
-            # top
-            x = x + 1
             y = y + args.y
 
         win.move(x, y)
-
-    win.set_skip_taskbar_hint(True)
 
     win.menu = build_menu(all_commands_list)
     win.menu.set_property("name", "menu")
@@ -213,7 +206,10 @@ def main():
 
 class MainWindow(Gtk.Window):
     def __init__(self):
-        Gtk.Window.__init__(self, type=Gtk.WindowType.POPUP)
+        if wm == "sway":
+            Gtk.Window.__init__(self)
+        else:
+            Gtk.Window.__init__(self, type=Gtk.WindowType.POPUP)
         self.set_title('~sgtk-dmenu')
         self.set_role('~sgtk-dmenu')
         self.connect("destroy", Gtk.main_quit)

@@ -150,9 +150,9 @@ def main():
         print(wm)
         sys.exit(0)
 
-    if args.pointer and wm == "sway":
-        args.pointer = False
-        print("[--pointer] argument ignored in sway")
+    if not wm == "sway" and not args.d == 100:
+        args.d = 0
+        print("[-d] argument ignored in not-sway")
 
     # Create default config files if not found
     create_default_configs(config_dir)
@@ -233,7 +233,6 @@ def main():
             print("\nFailed to get the current screen geometry, exiting...\n")
             sys.exit(2)
     x, y, w, h = geometry
-    print(geometry)
 
     if wm == "sway":
         # resize to current screen dimensions on sway
@@ -244,22 +243,16 @@ def main():
             x = x + (w // 2)
             y = y + (h // 2)
         elif args.bottom:
-            # i3: moving to the VERY border results in unwanted centering. Let's offset by 1 pixel.
-            x = x + 1
-            y = h - args.y - 1
+            y = h - args.y
         elif args.pointer:
             if mouse_pointer:
                 x, y = mouse_pointer.position
             else:
                 print("\nYou need the python-pynput package!\n")
         else:
-            # top
-            x = x + 1
             y = y + args.y
 
         win.move(x, y)
-
-    win.set_skip_taskbar_hint(True)
 
     win.menu = build_menu()
     win.menu.set_property("name", "menu")
@@ -282,7 +275,10 @@ def main():
 
 class MainWindow(Gtk.Window):
     def __init__(self):
-        Gtk.Window.__init__(self, type=Gtk.WindowType.POPUP)
+        if wm == "sway":
+            Gtk.Window.__init__(self)
+        else:
+            Gtk.Window.__init__(self, type=Gtk.WindowType.POPUP)
         self.set_title('~sgtk-menu')
         self.set_role('~sgtk-menu')
         self.connect("destroy", Gtk.main_quit)
