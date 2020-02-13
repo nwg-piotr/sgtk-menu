@@ -140,11 +140,15 @@ def main():
                         help="use alternative {} style sheet instead of style.css"
                         .format(os.path.join(config_dir, '<CSS>')))
     parser.add_argument("-v", "--version", action="store_true", help="display version and exit")
+    parser.add_argument("-wm", action="store_true", help="display detected Window Manager and exit")
     global args
     args = parser.parse_args()
 
     if args.version:
         print_version()
+        sys.exit(0)
+    if args.wm:
+        print(wm)
         sys.exit(0)
 
     if args.pointer and wm == "sway":
@@ -230,6 +234,7 @@ def main():
             print("\nFailed to get the current screen geometry, exiting...\n")
             sys.exit(2)
     x, y, w, h = geometry
+    print(geometry)
 
     if wm == "sway":
         # resize to current screen dimensions on sway
@@ -237,21 +242,30 @@ def main():
     else:
         win.resize(0, 0)
         if args.center:
-            win.move(x + (w // 2), y + (h // 2))
+            x = x + (w // 2)
+            y = y + (h // 2)
         elif args.bottom:
             # i3: moving to the VERY border results in unwanted centering. Let's offset by 1 pixel.
-            win.move(x + 1, h - args.y - 1)
+            x = x + 1
+            y = h - args.y - 1
         elif args.pointer:
             if mouse_pointer:
                 x, y = mouse_pointer.position
             else:
                 print("\nYou need the python-pynput package!\n")
-            win.move(x, y)
         else:
             # top
-            win.move(x + 1, y + args.y)
+            x = x + 1
+            y = y + args.y
+
+        # Workaround to odd screen coordinates on dwm w/ multi-headed setup
+        if wm in ["dwm", "yaxwm"] and x > w:
+            x -= w
+
+        win.move(x, y)
 
     win.set_skip_taskbar_hint(True)
+
     win.menu = build_menu()
     win.menu.set_property("name", "menu")
 
