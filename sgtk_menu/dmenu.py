@@ -172,19 +172,27 @@ def main():
     else:
         win.resize(0, 0)
         if args.center:
-            win.move(x + (w // 2), y + (h // 2))
+            x = x + (w // 2)
+            y = y + (h // 2)
         elif args.bottom:
             # i3: moving to the VERY border results in unwanted centering. Let's offset by 1 pixel.
-            win.move(x + 1, h - args.y - 1)
+            x = x + 1
+            y = h - args.y - 1
         elif args.pointer:
             if mouse_pointer:
                 x, y = mouse_pointer.position
             else:
                 print("\nYou need the python-pynput package!\n")
-            win.move(x, y)
         else:
             # top
-            win.move(x + 1, y + args.y)
+            x = x + 1
+            y = y + args.y
+
+        # Workaround to odd screen coordinates on dwm w/ multi-headed setup
+        if wm in ["dwm", "yaxwm"] and x > w:
+            x -= w
+
+        win.move(x, y)
 
     win.set_skip_taskbar_hint(True)
 

@@ -27,6 +27,8 @@ def check_wm():
                 return "i3"
             elif env[key].endswith("openbox"):
                 return "openbox"
+            elif "/usr" in env[key]:
+                return env[key].split("/")[-1]
         elif key == "I3SOCK":
             if "sway" in env[key]:
                 return "sway"
