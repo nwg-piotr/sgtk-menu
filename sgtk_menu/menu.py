@@ -32,6 +32,13 @@ from sgtk_menu.tools import (
 
 wm = check_wm()
 
+# This will apply to the overlay window, as setting the window type POPUP does not impress sway :)
+if wm == "sway":
+    var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk*\"]', 'floating', 'enable'],
+                         stdout=subprocess.DEVNULL).returncode == 0
+    var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk*\"]', 'border', 'none'],
+                         stdout=subprocess.DEVNULL).returncode == 0
+
 other_wm = not wm == "sway" and not wm == "i3"
 
 try:

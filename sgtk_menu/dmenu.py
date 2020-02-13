@@ -29,7 +29,7 @@ from sgtk_menu.tools import (config_dirs, load_json, create_default_configs, che
 
 wm = check_wm()
 
-# The swaymsg command will apply to the overlay window; we can't do so outside the config file on i3.
+# Will apply to the overlay window; we can't do so outside the config file on i3.
 # We'll do it for i3 by applying commands to the focused window in open_menu method.
 if wm == "sway":
     var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk*\"]', 'floating', 'enable'],
@@ -37,7 +37,6 @@ if wm == "sway":
     var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk*\"]', 'border', 'none'],
                          stdout=subprocess.DEVNULL).returncode == 0
 
-# We expect 'other_wm' to be a floating WM. Otherwise we don't know how the window is going to behave.
 other_wm = not wm == "sway" and not wm == "i3"
 
 # Optional dependency: needed to popup the menu at the cursor position in floating WMs
@@ -188,10 +187,6 @@ def main():
             x = x + 1
             y = y + args.y
 
-        # Workaround to odd screen coordinates on dwm w/ multi-headed setup
-        if wm in ["dwm", "yaxwm"] and x > w:
-            x -= w
-
         win.move(x, y)
 
     win.set_skip_taskbar_hint(True)
@@ -218,7 +213,7 @@ def main():
 
 class MainWindow(Gtk.Window):
     def __init__(self):
-        Gtk.Window.__init__(self)
+        Gtk.Window.__init__(self, type=Gtk.WindowType.POPUP)
         self.set_title('~sgtk-dmenu')
         self.set_role('~sgtk-dmenu')
         self.connect("destroy", Gtk.main_quit)
@@ -352,11 +347,6 @@ class MainWindow(Gtk.Window):
 
 
 def open_menu():
-    if wm == "i3":
-        # we couldn't do this on i3 at the script start
-        subprocess.run(['i3-msg', 'floating', 'enable'], stdout=subprocess.DEVNULL)
-        subprocess.run(['i3-msg', 'border', 'none'], stdout=subprocess.DEVNULL)
-
     if args.bottom:
         gravity_widget = Gdk.Gravity.NORTH
         gravity_menu = Gdk.Gravity.SOUTH
