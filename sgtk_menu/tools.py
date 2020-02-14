@@ -25,12 +25,9 @@ def check_wm():
         if val:
             if val.startswith("/"):
                 wm = val.split("/")[-1]
-                print("from DESKTOP_SESSION /")
             else:
-                print("from DESKTOP_SESSION")
                 wm = val
         if wm:
-            print(wm)
             return wm
     except KeyError:
         pass
@@ -42,8 +39,6 @@ def check_wm():
         elif "i3" in val:
             wm = "i3"
         if wm:
-            print("from I3SOCK")
-            print(wm)
             return wm
     except KeyError:
         pass
@@ -53,8 +48,6 @@ def check_wm():
         if "sway" in val:
             wm = "sway"
         if wm:
-            print("from I3SOCK")
-            print(wm)
             return wm
     except KeyError:
         pass
