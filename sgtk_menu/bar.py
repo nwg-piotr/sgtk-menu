@@ -105,10 +105,6 @@ def main():
     elif args.s > 96:
         args.s = 96
 
-    # We do not need any delay in other WMs
-    if other_wm:
-        args.d = 0
-
     # Replace appendix file name with custom - if any
     if args.bf:
         build_from_file = os.path.join(config_dirs()[0], args.bf)
@@ -153,7 +149,7 @@ def main():
     if wm == "sway":
         win.resize(w, h)
 
-    # Necessary in FVWM
+    # Necessary in FVWM, otherwise it gets always on screen 0
     win.move(x, y)
 
     win.show_all()

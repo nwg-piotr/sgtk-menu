@@ -181,7 +181,7 @@ def main():
     if wm == "sway":
         win.resize(w, h)
 
-    # Necessary in FVWM
+    # Necessary in FVWM, otherwise it gets always on screen 0
     win.move(x, y)
 
     # align width of all buttons

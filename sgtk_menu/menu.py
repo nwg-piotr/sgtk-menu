@@ -152,7 +152,7 @@ def main():
 
     if not wm == "sway" and not args.d == 100:
         args.d = 0
-        print("[-d] argument ignored in not-sway")
+        print("[-d] argument ignored if not-sway")
 
     # Create default config files if not found
     create_default_configs(config_dir)
@@ -164,10 +164,6 @@ def main():
         args.s = 16
     elif args.s > 48:
         args.s = 48
-
-    # We do not need any delay in other WMs
-    if other_wm:
-        args.d = 0
 
     # Replace appendix file name with custom - if any
     if args.af:
@@ -283,11 +279,6 @@ class MainWindow(Gtk.Window):
         self.set_role('~sgtk-menu')
         self.connect("destroy", Gtk.main_quit)
         self.connect('draw', self.draw)  # transparency
-
-        if not wm == "sway":
-            self.set_sensitive(False)
-            self.set_resizable(False)
-            self.set_decorated(False)
 
         self.search_box = Gtk.SearchEntry()
         self.search_box.set_property("name", "searchbox")

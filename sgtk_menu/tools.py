@@ -18,36 +18,70 @@ import pkg_resources
 
 
 def check_wm():
+    wm = ""
     env = os.environ
-    for key in env:
-        if key == "DESKTOP_SESSION":
-            if env[key].endswith("sway"):
-                return "sway"
-            elif env[key].endswith("i3"):
-                return "i3"
-            elif env[key].endswith("openbox"):
-                return "openbox"
-            elif "/usr" in env[key]:
-                return env[key].split("/")[-1]
-        elif key == "I3SOCK":
-            if "sway" in env[key]:
-                return "sway"
-            elif "i3" in env[key]:
-                return "i3"
+    try:
+        val = env["DESKTOP_SESSION"]
+        if val:
+            if val.startswith("/"):
+                wm = val.split("/")[-1]
+                print("from DESKTOP_SESSION /")
+            else:
+                print("from DESKTOP_SESSION")
+                wm = val
+        if wm:
+            print(wm)
+            return wm
+    except KeyError:
+        pass
+
+    try:
+        val = env["I3SOCK"]
+        if "sway" in val:
+            wm = "sway"
+        elif "i3" in val:
+            wm = "i3"
+        if wm:
+            print("from I3SOCK")
+            print(wm)
+            return wm
+    except KeyError:
+        pass
+
+    try:
+        val = env["SWAYSOCK"]
+        if "sway" in val:
+            wm = "sway"
+        if wm:
+            print("from I3SOCK")
+            print(wm)
+            return wm
+    except KeyError:
+        pass
+
     try:
         if subprocess.run(
                 ['swaymsg', '-t', 'get_seats'], stdout=subprocess.DEVNULL).returncode == 0:
+            print("from swaymsg")
+            print(wm)
             return "sway"
     except:
         pass
 
     try:
         if subprocess.run(['i3-msg', '-t', 'get_outputs'], stdout=subprocess.DEVNULL).returncode == 0:
+            print("from i3-msg")
+            print(wm)
             return "i3"
     except:
         pass
     
-    return "other"
+    if wm:
+        print(wm)
+        return wm
+    else:
+        print(wm)
+        return "other"
 
 
 def display_geometry(win, wm, mouse_pointer):
