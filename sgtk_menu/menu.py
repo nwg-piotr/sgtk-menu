@@ -49,8 +49,6 @@ except:
     mouse_pointer = None
     pass
 
-geometry = (0, 0, 0, 0)
-
 # Lists to hold DesktopEntry objects of each category
 c_audio_video, c_development, c_game, c_graphics, c_network, c_office, c_science, c_settings, c_system, \
 c_utility, c_other, all_entries = [], [], [], [], [], [], [], [], [], [], [], []
@@ -214,11 +212,9 @@ def main():
     # Overlay window
     global win
     win = MainWindow()
-    if other_wm:
-        # We need this to obtain the screen geometry when i3ipc module unavailable
-        win.resize(1, 1)
-        win.show_all()
-    global geometry
+    win.show_all()
+
+    geometry = (0, 0, 0, 0)
     # If we're not on sway neither i3, this won't return values until the window actually shows up.
     # Let's try as many times as needed. The retries int protects from an infinite loop.
     retries = 0

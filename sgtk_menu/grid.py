@@ -162,8 +162,6 @@ def main():
     global win
     win = MainWindow()
     win.show_all()
-    # hide the window from taskbars; when set in the window constructor, it kills listening to the key-release-event
-    win.set_skip_taskbar_hint(True)
 
     geometry = (0, 0, 0, 0)
     # If we're not on sway neither i3, this won't return values until the window actually shows up.
@@ -177,10 +175,7 @@ def main():
             sys.exit(2)
     x, y, w, h = geometry
 
-    # On sway we don't execute window.fullscreen() in the constructor, as it would make it opaque.
-    if wm == "sway":
-        win.resize(w, h)
-
+    win.resize(w, h)
     # Necessary in FVWM, otherwise it gets always on screen 0
     win.move(x, y)
 
@@ -204,13 +199,12 @@ def main():
 class MainWindow(Gtk.Window):
     def __init__(self):
         global args
-        Gtk.Window.__init__(self)
+        if wm == "sway":
+            Gtk.Window.__init__(self)
+        else:
+            Gtk.Window.__init__(self, type=Gtk.WindowType.POPUP)
         self.set_title('~sgtk-grid')
         self.set_role('~sgtk-grid')
-        # On sway it would make the window opaque, so we'll have to resize the window when ready
-        if not wm == "sway":
-            self.fullscreen()
-        self.set_skip_pager_hint(True)
 
         self.connect("destroy", Gtk.main_quit)
         self.connect("focus-out-event", Gtk.main_quit)
