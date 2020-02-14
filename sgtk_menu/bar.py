@@ -143,12 +143,12 @@ def main():
     if wm == "sway":
         win.resize(w, h)
 
-    # Necessary in FVWM, otherwise it gets always on screen 0
-    win.move(x, y)
-
     win.show_all()
     # If done inside the constructor on Openbox, stops the window from grabbing focus!
     win.set_skip_taskbar_hint(True)
+
+    # Necessary in FVWM, otherwise it always gets on screen 0
+    win.move(x, y)
 
     Gtk.main()
 
