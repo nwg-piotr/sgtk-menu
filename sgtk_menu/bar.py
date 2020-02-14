@@ -50,8 +50,6 @@ except:
     mouse_pointer = None
     pass
 
-geometry = (0, 0, 0, 0)
-
 win = None  # overlay window
 args = None
 
@@ -129,7 +127,6 @@ def main():
     # Overlay window
     global win
     win = MainWindow()
-    win.show_all()
 
     geometry = (0, 0, 0, 0)
     # If we're not on sway neither i3, this won't return values until the window actually shows up.
@@ -143,24 +140,27 @@ def main():
             sys.exit(2)
     x, y, w, h = geometry
 
-    win.resize(w, h)
+    if wm == "sway":
+        win.resize(w, h)
     # Necessary in FVWM, otherwise it gets always on screen 0
     win.move(x, y)
 
+    win.show_all()
     Gtk.main()
 
 
 class MainWindow(Gtk.Window):
     def __init__(self):
-        if wm == "sway":
-            Gtk.Window.__init__(self)
-        else:
-            Gtk.Window.__init__(self, type=Gtk.WindowType.POPUP)
+        Gtk.Window.__init__(self)
+        if not wm == "sway":
+            self.fullscreen()
+            self.set_skip_pager_hint(True)
+            self.set_skip_taskbar_hint(True)
+
         self.set_title('~sgtk-bar')
         self.set_role('~sgtk-bar')
 
         self.connect("destroy", Gtk.main_quit)
-        self.connect("focus-out-event", Gtk.main_quit)
         self.connect('draw', self.draw)  # transparency
         self.connect("key-release-event", self.key_pressed)
         self.connect("button-press-event", Gtk.main_quit)

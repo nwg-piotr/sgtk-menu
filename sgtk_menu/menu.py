@@ -212,7 +212,6 @@ def main():
     # Overlay window
     global win
     win = MainWindow()
-    win.show_all()
 
     geometry = (0, 0, 0, 0)
     # If we're not on sway neither i3, this won't return values until the window actually shows up.
