@@ -2,7 +2,7 @@
 This project is an attempt to create a launcher, that behaves decently on **sway**, but also on other WMs / DEs. 
 For what I managed to test so far, see the [Compatibility chart](https://github.com/nwg-piotr/sgtk-menu/wiki/Compatibility-chart).
 
-**sgtk-menu uses `pygobject` to create a themeable, searchable, gtk3-based system menu w/ some optional features:**
+**sgtk-menu uses `pygobject` to create a themeable, searchable, gtk3-based system launchers w/ some optional features:**
 
 - `.desktop` entries-based system menu;
 - search box to find what you need quickly;
@@ -48,13 +48,3 @@ on sway. So, I thought to share the code, which has already taken me more time t
 
 The problem to resolve on sway, was, that the Gtk.Menu class behaves differently / unexpectedly when open over Wayland and X11 windows. 
 To work it around, the script opens the menu over a (semi-)transparent, floating window, that covers all the screen.
-
-## i3 support, floating WMs support
-
-Even if there exist plenty of good X11 menus, with the most excellent [jgmenu](https://github.com/johanmalm/jgmenu) 
-on top, I'm doing my best to make sgtk-menu i3-compatible. It's also possible to use sgtk-menu in some floating window 
-managers, e.g. to replace the Openbox / Fluxbox menu. 
-See [wiki/Launching](https://github.com/nwg-piotr/sgtk-menu/wiki/Installation#launching) for details. 
-
-## TODO
-- On next sway / GTK release, check if the overflowed menus issue on sway is fixed; remove 50 SLOC long workaround if so.
