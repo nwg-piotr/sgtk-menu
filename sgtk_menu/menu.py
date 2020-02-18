@@ -21,6 +21,9 @@ import argparse
 
 import gi
 
+import time
+time_start = int(round(time.time() * 1000))
+
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 import cairo
@@ -41,13 +44,13 @@ if wm == "sway":
 
 other_wm = not wm == "sway" and not wm == "i3"
 
-try:
-    from pynput.mouse import Controller
-
-    mouse_pointer = Controller()
-except:
-    mouse_pointer = None
-    pass
+mouse_pointer = None
+if not wm == "sway":
+    try:
+        from pynput.mouse import Controller
+        mouse_pointer = Controller()
+    except:
+        pass
 
 # Lists to hold DesktopEntry objects of each category
 c_audio_video, c_development, c_game, c_graphics, c_network, c_office, c_science, c_settings, c_system, \
@@ -247,6 +250,7 @@ def main():
 
     win.menu = build_menu()
     win.menu.set_property("name", "menu")
+    win.menu.connect("popped-up", print_time)
 
     global menu_items_list
     menu_items_list = win.menu.get_children()
@@ -262,6 +266,10 @@ def main():
 
     GLib.timeout_add(args.d, open_menu)
     Gtk.main()
+
+
+def print_time(*args):
+    print(int(round(time.time() * 1000) - time_start))
 
 
 class MainWindow(Gtk.Window):
@@ -359,6 +367,7 @@ class MainWindow(Gtk.Window):
                             for i in filtered_items_list:
                                 if i.name == item.name:
                                     found = True
+                                    break
                             if not found:
                                 filtered_items_list.append(item)
 
@@ -374,6 +383,7 @@ class MainWindow(Gtk.Window):
                                 for i in filtered_items_list:
                                     if i.name == item.name:
                                         found = True
+                                        break
                                 if not found:
                                     filtered_items_list.append(item)
 
@@ -461,9 +471,11 @@ def list_entries():
 
                                 if line.startswith('Name='):
                                     _name = line.split('=')[1].strip()
+                                    continue
 
                                 if line.startswith(loc_name):
                                     _name = line.split('=')[1].strip()
+                                    continue
 
                                 if line.startswith('Exec='):
                                     cmd = line.split('=')[1:]
@@ -471,10 +483,15 @@ def list_entries():
                                     _exec = c.strip()
                                     if '%' in _exec:
                                         _exec = _exec.split('%')[0].strip()
+                                    continue
+
                                 if line.startswith('Icon='):
                                     _icon = line.split('=')[1].strip()
+                                    continue
+
                                 if line.startswith('Categories'):
                                     _categories = line.split('=')[1].strip()
+                                    continue
 
                         if not _icon:
                             _icon = os.path.join(config_dir, 'icon-missing.svg')
@@ -769,8 +786,9 @@ def sub_menu(entries_list, name, localized_name):
 
         item.add(outer_hbox)
         submenu.connect("key-release-event", win.search_items)
-        submenu.connect("popped-up", cheat_sway, submenu.entries_list)
-        submenu.connect("hide", cheat_sway_on_exit)
+        if wm == "sway":
+            submenu.connect("popped-up", cheat_sway, submenu.entries_list)
+            submenu.connect("hide", cheat_sway_on_exit)
         item.set_submenu(submenu)
 
     return item
@@ -793,6 +811,7 @@ def cheat_sway(menu, flipped_rect, final_rect, flipped_x, flipped_y, entries_lis
             for it in all_items_list:
                 if it.name == subitem.name:
                     found = True
+                    break
             if not found:
                 all_items_list.append(subitem)
 
@@ -804,6 +823,7 @@ def cheat_sway(menu, flipped_rect, final_rect, flipped_x, flipped_y, entries_lis
             for it in all_copies_list:
                 if it.name == subitem.name:
                     found = True
+                    break
             if not found:
                 all_copies_list.append(subitem_copy)
 
