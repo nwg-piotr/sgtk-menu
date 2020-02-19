@@ -38,13 +38,13 @@ if wm == "sway":
 
 other_wm = not wm == "sway" and not wm == "i3"
 
-# Optional dependency: needed to popup the menu at the cursor position in floating WMs
-try:
-    from pynput.mouse import Controller
-    mouse_pointer = Controller()
-except:
-    mouse_pointer = None
-    pass
+mouse_pointer = None
+if not wm == "sway":
+    try:
+        from pynput.mouse import Controller
+        mouse_pointer = Controller()
+    except:
+        pass
 
 win = None  # overlay window
 args = None

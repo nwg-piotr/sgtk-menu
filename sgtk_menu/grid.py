@@ -37,13 +37,13 @@ if wm == "sway":
     var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk*\"]', 'border', 'none'],
                          stdout=subprocess.DEVNULL).returncode == 0
 
-try:
-    from pynput.mouse import Controller
-
-    mouse_pointer = Controller()
-except:
-    mouse_pointer = None
-    pass
+mouse_pointer = None
+if not wm == "sway":
+    try:
+        from pynput.mouse import Controller
+        mouse_pointer = Controller()
+    except:
+        pass
 
 # List to hold AppButtons for favourites
 all_favs = []
