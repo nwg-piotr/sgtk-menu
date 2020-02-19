@@ -22,6 +22,7 @@ import argparse
 import gi
 
 import time
+
 time_start = int(round(time.time() * 1000))
 
 gi.require_version('Gtk', '3.0')
@@ -547,10 +548,8 @@ class DesktopEntry(object):
                 and self not in c_system and self not in c_utility:
             c_other.append(self)
 
-        groups = [c_audio_video, c_development, c_game, c_graphics, c_network, c_office, c_science,
-                  c_settings, c_system, c_utility]
-
-        for group in groups:
+        for group in [c_audio_video, c_development, c_game, c_graphics, c_network, c_office, c_science, c_settings,
+                      c_system, c_utility]:
             group.sort(key=lambda x: x.name)
 
 
@@ -591,7 +590,6 @@ def build_menu():
                 hbox = Gtk.HBox()
                 label = Gtk.Label()
                 label.set_text(name)
-                image = None
                 if icon.startswith('/'):
                     try:
                         pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
@@ -741,7 +739,7 @@ def sub_menu(entries_list, name, localized_name):
     submenu.entries_list = entries_list
 
     submenu.set_property("reserve_toggle_size", False)
-    # On sway 1.2, if popped-up menu length exceeds the screen height, no buttons to scroll appear,
+    # On sway 1.4, if popped-up menu length exceeds the screen height, no buttons to scroll appear,
     # and the mouse scroller does not work, too. We need a workaround!
     if not wm == "sway" or len(entries_list) < args.t:  # -t stands for sway submenu lines limit
         # We are not on sway or submenu is short enough
