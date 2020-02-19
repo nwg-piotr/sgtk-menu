@@ -21,9 +21,6 @@ import argparse
 
 import gi
 
-import time
-
-time_start = int(round(time.time() * 1000))
 
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
@@ -251,7 +248,6 @@ def main():
 
     win.menu = build_menu()
     win.menu.set_property("name", "menu")
-    win.menu.connect("popped-up", print_time)
 
     global menu_items_list
     menu_items_list = win.menu.get_children()
@@ -267,10 +263,6 @@ def main():
 
     GLib.timeout_add(args.d, open_menu)
     Gtk.main()
-
-
-def print_time(*args):
-    print(int(round(time.time() * 1000) - time_start))
 
 
 class MainWindow(Gtk.Window):
@@ -661,7 +653,6 @@ def build_menu():
             hbox = Gtk.HBox()
             label = Gtk.Label()
             label.set_text(name)
-            image = None
             if icon.startswith('/'):
                 try:
                     pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
