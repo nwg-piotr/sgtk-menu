@@ -1,6 +1,6 @@
 # sgtk-menu
 This project is an attempt to create a launcher, that behaves decently on **sway**, but also works on other window 
-managers. It may or may work on some DEs, but I don't care much about it. For what I managed to test so far, 
+managers. It may or may not work on some DEs - I don't care much about it. For what I managed to test so far, 
 see the [Compatibility chart](https://github.com/nwg-piotr/sgtk-menu/wiki/Compatibility-chart).
 
 **sgtk-menu uses `pygobject` to create a themeable, searchable, gtk3-based system launchers w/ some optional features:**

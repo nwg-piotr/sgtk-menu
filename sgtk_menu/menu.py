@@ -21,6 +21,7 @@ import argparse
 
 import gi
 
+
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GdkPixbuf, GLib
 import cairo
@@ -41,13 +42,13 @@ if wm == "sway":
 
 other_wm = not wm == "sway" and not wm == "i3"
 
-try:
-    from pynput.mouse import Controller
-
-    mouse_pointer = Controller()
-except:
-    mouse_pointer = None
-    pass
+mouse_pointer = None
+if not wm == "sway":
+    try:
+        from pynput.mouse import Controller
+        mouse_pointer = Controller()
+    except:
+        pass
 
 # Lists to hold DesktopEntry objects of each category
 c_audio_video, c_development, c_game, c_graphics, c_network, c_office, c_science, c_settings, c_system, \
@@ -359,6 +360,7 @@ class MainWindow(Gtk.Window):
                             for i in filtered_items_list:
                                 if i.name == item.name:
                                     found = True
+                                    break
                             if not found:
                                 filtered_items_list.append(item)
 
@@ -374,6 +376,7 @@ class MainWindow(Gtk.Window):
                                 for i in filtered_items_list:
                                     if i.name == item.name:
                                         found = True
+                                        break
                                 if not found:
                                     filtered_items_list.append(item)
 
@@ -461,9 +464,11 @@ def list_entries():
 
                                 if line.startswith('Name='):
                                     _name = line.split('=')[1].strip()
+                                    continue
 
                                 if line.startswith(loc_name):
                                     _name = line.split('=')[1].strip()
+                                    continue
 
                                 if line.startswith('Exec='):
                                     cmd = line.split('=')[1:]
@@ -471,10 +476,15 @@ def list_entries():
                                     _exec = c.strip()
                                     if '%' in _exec:
                                         _exec = _exec.split('%')[0].strip()
+                                    continue
+
                                 if line.startswith('Icon='):
                                     _icon = line.split('=')[1].strip()
+                                    continue
+
                                 if line.startswith('Categories'):
                                     _categories = line.split('=')[1].strip()
+                                    continue
 
                         if not _icon:
                             _icon = os.path.join(config_dir, 'icon-missing.svg')
@@ -530,10 +540,8 @@ class DesktopEntry(object):
                 and self not in c_system and self not in c_utility:
             c_other.append(self)
 
-        groups = [c_audio_video, c_development, c_game, c_graphics, c_network, c_office, c_science,
-                  c_settings, c_system, c_utility]
-
-        for group in groups:
+        for group in [c_audio_video, c_development, c_game, c_graphics, c_network, c_office, c_science, c_settings,
+                      c_system, c_utility]:
             group.sort(key=lambda x: x.name)
 
 
@@ -574,7 +582,6 @@ def build_menu():
                 hbox = Gtk.HBox()
                 label = Gtk.Label()
                 label.set_text(name)
-                image = None
                 if icon.startswith('/'):
                     try:
                         pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
@@ -646,7 +653,6 @@ def build_menu():
             hbox = Gtk.HBox()
             label = Gtk.Label()
             label.set_text(name)
-            image = None
             if icon.startswith('/'):
                 try:
                     pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
@@ -724,7 +730,7 @@ def sub_menu(entries_list, name, localized_name):
     submenu.entries_list = entries_list
 
     submenu.set_property("reserve_toggle_size", False)
-    # On sway 1.2, if popped-up menu length exceeds the screen height, no buttons to scroll appear,
+    # On sway 1.4, if popped-up menu length exceeds the screen height, no buttons to scroll appear,
     # and the mouse scroller does not work, too. We need a workaround!
     if not wm == "sway" or len(entries_list) < args.t:  # -t stands for sway submenu lines limit
         # We are not on sway or submenu is short enough
@@ -769,8 +775,9 @@ def sub_menu(entries_list, name, localized_name):
 
         item.add(outer_hbox)
         submenu.connect("key-release-event", win.search_items)
-        submenu.connect("popped-up", cheat_sway, submenu.entries_list)
-        submenu.connect("hide", cheat_sway_on_exit)
+        if wm == "sway":
+            submenu.connect("popped-up", cheat_sway, submenu.entries_list)
+            submenu.connect("hide", cheat_sway_on_exit)
         item.set_submenu(submenu)
 
     return item
@@ -793,6 +800,7 @@ def cheat_sway(menu, flipped_rect, final_rect, flipped_x, flipped_y, entries_lis
             for it in all_items_list:
                 if it.name == subitem.name:
                     found = True
+                    break
             if not found:
                 all_items_list.append(subitem)
 
@@ -804,6 +812,7 @@ def cheat_sway(menu, flipped_rect, final_rect, flipped_x, flipped_y, entries_lis
             for it in all_copies_list:
                 if it.name == subitem.name:
                     found = True
+                    break
             if not found:
                 all_copies_list.append(subitem_copy)
 

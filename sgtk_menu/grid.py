@@ -37,13 +37,13 @@ if wm == "sway":
     var = subprocess.run(['swaymsg', 'for_window', '[title=\"~sgtk*\"]', 'border', 'none'],
                          stdout=subprocess.DEVNULL).returncode == 0
 
-try:
-    from pynput.mouse import Controller
-
-    mouse_pointer = Controller()
-except:
-    mouse_pointer = None
-    pass
+mouse_pointer = None
+if not wm == "sway":
+    try:
+        from pynput.mouse import Controller
+        mouse_pointer = Controller()
+    except:
+        pass
 
 # List to hold AppButtons for favourites
 all_favs = []
@@ -365,17 +365,21 @@ def list_entries():
 
                                 if line.startswith('Name='):
                                     _name = line.split('=')[1].strip()
+                                    continue
 
                                 if line.startswith(loc_name):
                                     _name = line.split('=')[1].strip()
+                                    continue
 
                                 loc_comment = 'Comment{}='.format(locale)
 
                                 if line.startswith('Comment='):
                                     _comment = line.split('=')[1].strip()
+                                    continue
 
                                 if line.startswith(loc_comment):
                                     _comment = line.split('=')[1].strip()
+                                    continue
 
                                 if line.startswith('Exec='):
                                     cmd = line.split('=')[1:]
@@ -383,6 +387,8 @@ def list_entries():
                                     _exec = c.strip()
                                     if '%' in _exec:
                                         _exec = _exec.split('%')[0].strip()
+                                    continue
+
                                 if line.startswith('Icon='):
                                     _icon = line.split('=')[1].strip()
 
