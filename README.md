@@ -17,7 +17,7 @@ Read [wiki](https://github.com/nwg-piotr/sgtk-menu/wiki) for more information.
 See [screenshots](https://github.com/nwg-piotr/sgtk-menu/tree/master/screenshots) 
 for usage examples.
 
-### Python is too slow?
+## Python is too slow?
 
 There's a [C++ version](https://github.com/nwg-piotr/nwg-launchers) under development. Thanks in advance for testing.
 
