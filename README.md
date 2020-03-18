@@ -17,6 +17,11 @@ Read [wiki](https://github.com/nwg-piotr/sgtk-menu/wiki) for more information.
 See [screenshots](https://github.com/nwg-piotr/sgtk-menu/tree/master/screenshots) 
 for usage examples.
 
+| Python is too slow? |
+|---|
+| There's a [C++ version](https://github.com/nwg-piotr/nwg-launchers) under development. Thanks in advance for testing.|
+
+
 ### System menu w/ favourites above and custom appendix below
 
 ![screenshot](http://nwg.pl/Lychee/uploads/big/ac538b60c3f32c36b689049cb0172863.png)
