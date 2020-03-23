@@ -54,3 +54,9 @@ on sway. So, I thought to share the code, which has already taken me more time t
 
 The problem to resolve on sway, was, that the Gtk.Menu class behaves differently / unexpectedly when open over Wayland and X11 windows. 
 To work it around, the script opens the menu over a (semi-)transparent, floating window, that covers all the screen.
+
+## Packaging status
+
+### Fedora
+
+`sudo dnf install sgtk-menu`
