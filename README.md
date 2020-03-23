@@ -57,6 +57,14 @@ To work it around, the script opens the menu over a (semi-)transparent, floating
 
 ## Packaging status
 
+[![Packaging status](https://repology.org/badge/vertical-allrepos/sgtk-menu.svg)](https://repology.org/project/sgtk-menu/versions)
+
+### Arch Linux
+
+Install [sgtk-menu](https://aur.archlinux.org/packages/sgtk-menu) from AUR.
+
 ### Fedora
 
 `sudo dnf install sgtk-menu`
+
+See [wiki](https://github.com/nwg-piotr/sgtk-menu/wiki/Installation) for more info.
