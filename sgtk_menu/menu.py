@@ -18,6 +18,7 @@ import fcntl
 import sys
 import subprocess
 import argparse
+import json
 
 import gi
 
@@ -32,6 +33,7 @@ from sgtk_menu.tools import (
     display_geometry, data_dirs, print_version)
 
 wm = check_wm()
+pipe_menu = None
 
 # This will apply to the overlay window, as setting the window type POPUP does not impress sway :)
 if wm == "sway":
@@ -110,6 +112,13 @@ def main():
         sys.exit(2)
 
     global build_from_file
+
+    if not sys.stdin.isatty():
+        global pipe_menu
+        pipe_menu = []
+        for line in sys.stdin:
+            pipe_menu.append(line.rstrip())
+    
     parser = argparse.ArgumentParser(description="GTK menu for sway, i3 and some other WMs")
     placement = parser.add_mutually_exclusive_group()
     placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom")
@@ -148,6 +157,9 @@ def main():
     if args.wm:
         print(wm)
         sys.exit(0)
+        
+    if pipe_menu:
+        args.no_menu = True
 
     if not wm == "sway" and not args.d == 100:
         args.d = 0
@@ -640,46 +652,65 @@ def build_menu():
             append_submenu(c_other, menu, 'Other')
 
     # user-defined menu from default or custom file (see args)
-    if args.append or args.af or args.no_menu:
+    if args.append or args.af or args.no_menu or pipe_menu:
         if not args.no_menu:  # nothing above to separate
             separator = Gtk.SeparatorMenuItem()
             separator.set_property("name", "separator")
             menu.append(separator)
-        appendix = load_json(build_from_file)
-        for entry in appendix:
-            name = entry["name"]
-            exec = entry["exec"]
-            icon = entry["icon"]
-            hbox = Gtk.HBox()
-            label = Gtk.Label()
-            label.set_text(name)
-            if icon.startswith('/'):
+        if pipe_menu:
+            try:
+                appendix = json.loads(''.join(pipe_menu))
+            except:
+                appendix = None
+        else:
+            appendix = load_json(build_from_file)
+        if appendix:
+            for entry in appendix:
                 try:
-                    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
-                    image = Gtk.Image.new_from_pixbuf(pixbuf)
-                except:
-                    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(os.path.join(config_dir, 'icon-missing.svg'),
-                                                                    args.s, args.s)
-                    image = Gtk.Image.new_from_pixbuf(pixbuf)
-            else:
+                    name = entry["name"]
+                except KeyError:
+                    name = "No name given"
                 try:
-                    if icon.endswith('.svg') or icon.endswith('.png'):
-                        icon = entry.icon.split('.')[0]
-                    pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
-                    image = Gtk.Image.new_from_pixbuf(pixbuf)
-                except:
-                    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(os.path.join(config_dir, 'icon-missing.svg'),
-                                                                    args.s, args.s)
-                    image = Gtk.Image.new_from_pixbuf(pixbuf)
-            if image:
-                hbox.pack_start(image, False, False, 10)
-            if name:
-                hbox.pack_start(label, False, False, 0)
-            item = Gtk.MenuItem()
-            item.set_property("name", "item")
-            item.add(hbox)
-            item.connect('activate', launch, exec, True)  # do not cache!
-            menu.append(item)
+                    exec = entry["exec"]
+                except KeyError:
+                    exec = ''
+                try:
+                    icon = entry["icon"]
+                except KeyError:
+                    icon = None
+                hbox = Gtk.HBox()
+                label = Gtk.Label()
+                label.set_text(name)
+                if icon:
+                    if icon.startswith('/'):
+                        try:
+                            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon, args.s, args.s)
+                            image = Gtk.Image.new_from_pixbuf(pixbuf)
+                        except:
+                            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(os.path.join(config_dir, 'icon-missing.svg'),
+                                                                            args.s, args.s)
+                            image = Gtk.Image.new_from_pixbuf(pixbuf)
+                    else:
+                        try:
+                            if icon.endswith('.svg') or icon.endswith('.png'):
+                                icon = entry.icon.split('.')[0]
+                            pixbuf = icon_theme.load_icon(icon, args.s, Gtk.IconLookupFlags.FORCE_SIZE)
+                            image = Gtk.Image.new_from_pixbuf(pixbuf)
+                        except:
+                            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(os.path.join(config_dir, 'icon-missing.svg'),
+                                                                            args.s, args.s)
+                            image = Gtk.Image.new_from_pixbuf(pixbuf)
+                else:
+                    image = None
+                if image:
+                    hbox.pack_start(image, False, False, 10)
+                if name:
+                    hbox.pack_start(label, False, False, 0)
+                item = Gtk.MenuItem()
+                item.set_property("name", "item")
+                item.add(hbox)
+                item.connect('activate', launch, exec, True)  # do not cache!
+                menu.append(item)
 
     menu.connect("hide", win.die)
     menu.set_property("reserve_toggle_size", False)
