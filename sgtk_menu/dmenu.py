@@ -28,6 +28,7 @@ import cairo
 from sgtk_menu.tools import (config_dirs, load_json, create_default_configs, check_wm, display_geometry, path_dirs)
 
 wm = check_wm()
+pipe_menu = None
 
 # This will apply to the overlay window, as setting the window type POPUP does not impress sway :)
 if wm == "sway":
@@ -74,6 +75,14 @@ def main():
         sys.exit(2)
 
     global build_from_file
+
+    if not sys.stdin.isatty():
+        global pipe_menu
+        pipe_menu = []
+        for line in sys.stdin:
+            pipe_menu.append(line.rstrip())
+        print(pipe_menu)
+
     parser = argparse.ArgumentParser(description="GTK dmenu for sway, i3 and some other WMs")
     placement = parser.add_mutually_exclusive_group()
     placement.add_argument("-b", "--bottom", action="store_true", help="display menu at the bottom")
@@ -139,8 +148,11 @@ def main():
     )
 
     global all_commands_list
-    all_commands_list = list_commands()
-    all_commands_list.sort()
+    if not pipe_menu:
+        all_commands_list = list_commands()
+        all_commands_list.sort()
+    else:
+        all_commands_list = pipe_menu
 
     # Overlay window
     global win
