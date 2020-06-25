@@ -81,7 +81,6 @@ def main():
         pipe_menu = []
         for line in sys.stdin:
             pipe_menu.append(line.rstrip())
-        print(pipe_menu)
 
     parser = argparse.ArgumentParser(description="GTK dmenu for sway, i3 and some other WMs")
     placement = parser.add_mutually_exclusive_group()
