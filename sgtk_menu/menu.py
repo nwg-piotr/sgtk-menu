@@ -501,7 +501,9 @@ def list_entries():
                         if not _icon:
                             _icon = os.path.join(config_dir, 'icon-missing.svg')
 
-                        if _name and _exec and _categories:
+                        if _name and _exec:
+                            if not _categories:
+                                _categories = "Other;"
                             # this will hold the data we need, and also automagically append itself to the proper list
                             entry = DesktopEntry(_name, _exec, _icon, _categories)
                             # we need this list for the favourites menu
