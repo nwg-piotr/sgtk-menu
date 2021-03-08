@@ -107,9 +107,12 @@ def display_geometry(win, wm, mouse_pointer):
             if mouse_pointer:
                 x, y = mouse_pointer.position
                 display_number = screen.get_monitor_at_point(x, y)
-            else:
+            elif screen.get_active_window():
                 # If pynput missing, the bar will always appear at top left corner of the screen w/ active window.
                 display_number = screen.get_monitor_at_window(screen.get_active_window())
+            else:
+                # Could not detect active window; use first monitor
+                display_number = 0
             rectangle = screen.get_monitor_geometry(display_number)
             return rectangle.x, rectangle.y, rectangle.width, rectangle.height
         except:
