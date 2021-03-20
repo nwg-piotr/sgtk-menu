@@ -94,6 +94,7 @@ def main():
     global build_from_file
     parser = argparse.ArgumentParser(description="Application grid for sgtk-menu")
 
+    parser.add_argument('-d',type=str, default="", help="use alternate folder for .Desktop files (default behavior searches through $PATH")
     parser.add_argument('-c', type=int, default=6, help="number of grid columns (default: 6)")
     parser.add_argument('-t', type=int, default=30, help="top margin width in px (default: 30)")
     parser.add_argument('-b', type=int, default=15, help="bottom margin width in px (default: 15)")
@@ -348,7 +349,10 @@ class MainWindow(Gtk.Window):
 def list_entries():
     apps = []
     paths = ([os.path.join(p, 'applications') for p in data_dirs()])
+    if args.d != "":
+        paths=[args.d]
     for path in paths:
+        print(path) 
         if os.path.exists(path):
             for f in os.listdir(path):
                 _name, _exec, _icon, _comment = '', '', '', ''
@@ -400,9 +404,10 @@ def list_entries():
                                     found = True
                             if not found:
                                 apps.append((_name, _exec, _icon, _comment))
-
+                
                 except Exception as e:
                     print(e)
+
     apps = sorted(apps, key=lambda x: x[0].upper())
     for item in apps:
         all_apps.append(AppBox(item[0], item[1], item[2], item[3]))
