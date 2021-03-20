@@ -352,7 +352,6 @@ def list_entries():
     if args.d != "":
         paths=[args.d]
     for path in paths:
-        print(path) 
         if os.path.exists(path):
             for f in os.listdir(path):
                 _name, _exec, _icon, _comment = '', '', '', ''
