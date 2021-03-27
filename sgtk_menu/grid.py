@@ -94,7 +94,7 @@ def main():
     global build_from_file
     parser = argparse.ArgumentParser(description="Application grid for sgtk-menu")
 
-    parser.add_argument('-d',type=str, default="", help="use alternate folder for .Desktop files (default behavior searches through $PATH")
+    parser.add_argument('-d',type=str, default="", help="use alternate folder list (: delimited) for .Desktop files")
     parser.add_argument('-c', type=int, default=6, help="number of grid columns (default: 6)")
     parser.add_argument('-t', type=int, default=30, help="top margin width in px (default: 30)")
     parser.add_argument('-b', type=int, default=15, help="bottom margin width in px (default: 15)")
@@ -350,7 +350,10 @@ def list_entries():
     apps = []
     paths = ([os.path.join(p, 'applications') for p in data_dirs()])
     if args.d != "":
-        paths=[args.d]
+        if ":" not in args.d:
+            paths=[args.d]
+        else:
+            paths=args.d.split(':')
     for path in paths:
         if os.path.exists(path):
             for f in os.listdir(path):
