@@ -20,7 +20,7 @@ setup(
     author='Piotr Miller',
     author_email='nwg.piotr@gmail.com',
     python_requires='>=3.4.0',
-    install_requires=['pygobject', 'pycairo'],
+    install_requires=['pygobject', 'pycairo', 'setuptools'],
     entry_points={
         'gui_scripts': [
             'sgtk-menu = sgtk_menu.menu:main',
