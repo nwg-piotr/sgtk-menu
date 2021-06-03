@@ -1,4 +1,22 @@
 # sgtk-menu
+
+## This project is archival
+
+This project was my first attempt to launchers development. The code has been later reused and significantly improved
+in other projects. **I no longer work on sgtk-menu**. Please use launchers named below instead:
+
+### [nwg-launchers](https://github.com/nwg-piotr/nwg-launchers)
+
+C++ version of the launchers provided by sgtk-menu. It works as well on wlroots-based compositors, as on X11. 
+The project is community-driven, as I turned out to be a hopeless C++ programmer.
+
+### [nwg-shell](https://github.com/nwg-piotr/nwg-shell)
+
+An attempt to create a GTK-based shell for sway. The project includes a panel and a set of launcher, developed in
+Python and Go. The nwg-shell project is under active development.
+
+## The description below is archival as well
+
 This project is an attempt to create a launcher, that behaves decently on **sway**, but also works on other window 
 managers. It may or may not work on some DEs - I don't care much about it. For what I managed to test so far, 
 see the [Compatibility chart](https://github.com/nwg-piotr/sgtk-menu/wiki/Compatibility-chart).
@@ -16,28 +34,6 @@ see the [Compatibility chart](https://github.com/nwg-piotr/sgtk-menu/wiki/Compat
 Read [wiki](https://github.com/nwg-piotr/sgtk-menu/wiki) for more information. 
 See [screenshots](https://github.com/nwg-piotr/sgtk-menu/tree/master/screenshots) 
 for usage examples.
-
-## Python is too slow?
-
-There's a [C++ version](https://github.com/nwg-piotr/nwg-launchers) under development. Thanks in advance for testing.
-
-
-### System menu w/ favourites above and custom appendix below
-
-![screenshot](http://nwg.pl/Lychee/uploads/big/ac538b60c3f32c36b689049cb0172863.png)
-*The menu in Adwaita-dark GTK theme w/ Aqatix icons*
-
-### Horizontal button bar as the Exit menu
-
-![screenshot](http://nwg.pl/Lychee/uploads/big/e2d600d32e4bc0c8458fbe85c8428853.png)
-
-### sgtk-dmenu
-
-![screenshot](http://nwg.pl/Lychee/uploads/big/8397695512a2d655199f95db683060f8.png)
-
-### sgtk-grid
-
-![screenshot](http://nwg.pl/Lychee/uploads/big/5a00ddd6dbf4cd27a5eb088f8d3f8444.png)
 
 ## Background
 
