@@ -12,7 +12,7 @@ The project is community-driven, as I turned out to be a hopeless C++ programmer
 
 ### [nwg-shell](https://github.com/nwg-piotr/nwg-shell)
 
-An attempt to create a GTK-based shell for sway. The project includes a panel and a set of launcher, developed in
+An attempt to create a GTK-based shell for sway. The project includes a panel and a set of launchers, developed in
 Python and Go. The nwg-shell project is under active development.
 
 ## The description below is archival as well
