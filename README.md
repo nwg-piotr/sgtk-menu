@@ -9,7 +9,7 @@ in other projects. **I no longer work on sgtk-menu**. Please use launchers named
 
 C++ version of the launchers provided by sgtk-menu. It works as well on wlroots-based compositors, as on X11. 
 The project is community-driven, as I turned out to be a hopeless C++ programmer. I no longer maintain this code, 
-please use nwg-drawer, nwg-menu and nwg-dock instead.
+please use nwg-shell components instead.
 
 ### [nwg-shell](https://github.com/nwg-piotr/nwg-shell)
 
