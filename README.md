@@ -8,12 +8,13 @@ in other projects. **I no longer work on sgtk-menu**. Please use launchers named
 ### [nwg-launchers](https://github.com/nwg-piotr/nwg-launchers)
 
 C++ version of the launchers provided by sgtk-menu. It works as well on wlroots-based compositors, as on X11. 
-The project is community-driven, as I turned out to be a hopeless C++ programmer.
+The project is community-driven, as I turned out to be a hopeless C++ programmer. I no longer maintain this code, 
+please use nwg-drawer, nwg-menu and nwg-dock instead.
 
 ### [nwg-shell](https://github.com/nwg-piotr/nwg-shell)
 
-An attempt to create a GTK-based shell for sway. The project includes a panel and a set of launchers, developed in
-Python and Go. The nwg-shell project is under active development.
+GTK-based shell for sway and Hyprland. The project includes a panel and a set of launchers, developed in
+Python and Go, that may also be used standalone. The nwg-shell project is under active development.
 
 ## The description below is archival as well
 
